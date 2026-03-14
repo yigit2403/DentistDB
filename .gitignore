@@ -27,3 +27,4 @@ appsettings.*.local.json
 *.db
 *.db-shm
 *.db-wal
+codex-build.zip
