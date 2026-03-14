@@ -16,6 +16,7 @@ public static class SeedData
                 new Patient
                 {
                     FullName = "Alice Johnson",
+                    Tckn = "11111111110",
                     Phone = "555-0101",
                     Email = "alice@example.com",
                     BirthDate = new DateOnly(1985, 4, 12),
@@ -28,6 +29,7 @@ public static class SeedData
                 new Patient
                 {
                     FullName = "Bob Martinez",
+                    Tckn = "22222222220",
                     Phone = "555-0102",
                     Email = "bob@example.com",
                     BirthDate = new DateOnly(1978, 9, 3),
@@ -39,6 +41,7 @@ public static class SeedData
                 new Patient
                 {
                     FullName = "Carol White",
+                    Tckn = "33333333330",
                     Phone = "555-0103",
                     Email = "carol@example.com",
                     BirthDate = new DateOnly(1992, 6, 25),
@@ -94,22 +97,23 @@ public static class SeedData
             };
             db.Appointments.AddRange(appointments);
 
-            // Seed treatment records
-            var treatments = new[]
+            var previousOperations = new[]
             {
-                new TreatmentRecord
+                new PreviousOperation
                 {
                     PatientId = patients[0].Id,
                     Date = DateOnly.FromDateTime(today.AddDays(-7)),
-                    Diagnosis = "Dental caries - upper left molar",
-                    Procedures = "Composite filling",
-                    Prescriptions = "Ibuprofen 400mg as needed",
-                    Notes = "Patient tolerated procedure well.",
+                    Title = "Kompozit dolgu",
+                    Diagnosis = "Üst sol molarda çürük",
+                    Procedures = "Kompozit dolgu uygulandı",
+                    Prescriptions = "İbuprofen 400 mg gerektiğinde",
+                    Notes = "Hasta işlemi sorunsuz tolere etti.",
+                    SelectedTeethData = "26",
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
                 }
             };
-            db.TreatmentRecords.AddRange(treatments);
+            db.PreviousOperations.AddRange(previousOperations);
 
             // Seed invoices
             var invoices = new[]
@@ -147,6 +151,9 @@ public static class SeedData
                 PaymentDate = DateOnly.FromDateTime(today.AddDays(-10)),
                 Amount = 180.00m,
                 PaymentMethod = PaymentMethod.Cash,
+                IsPlanned = false,
+                IsSettled = true,
+                SettledDate = DateOnly.FromDateTime(today.AddDays(-10)),
                 CreatedAt = DateTime.UtcNow
             });
             await db.SaveChangesAsync();

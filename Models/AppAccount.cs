@@ -20,14 +20,14 @@ public static class AppAccounts
     public static readonly AppAccount Admin = new()
     {
         Key = "admin",
-        Name = "Admin",
+        Name = "Yönetici",
         Role = AppAccountRole.Admin
     };
 
     public static readonly AppAccount Worker = new()
     {
         Key = "worker",
-        Name = "Worker",
+        Name = "Çalışan",
         Role = AppAccountRole.Worker
     };
 

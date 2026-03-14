@@ -15,6 +15,7 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Duzenle</a>
+        <a asp-controller="PreviousOperations" asp-action="Index" asp-route-patientId="@Model.Id" class="btn btn-outline-secondary">Onceki Islemler</a>
         @if (!Model.IsArchived)
         {
             <form asp-action="Archive" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Bu hastayi arsive tasimak istiyor musunuz?')">
@@ -40,13 +41,32 @@
 }
 
 <div class="row g-4 mb-4">
-    <div class="col-lg-6">
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header"><h3 class="section-title">Kimlik ve Fotograf</h3></div>
+            <div class="card-body text-center">
+                @if (!string.IsNullOrWhiteSpace(Model.PhotoBase64) && !string.IsNullOrWhiteSpace(Model.PhotoContentType))
+                {
+                    <img src="data:@Model.PhotoContentType;base64,@Model.PhotoBase64" alt="@Model.FullName" class="patient-photo-preview__img patient-photo-preview__img--large mb-3" />
+                }
+                else
+                {
+                    <div class="patient-photo-placeholder mb-3">Fotograf yok</div>
+                }
+                <div class="small text-muted">TCKN</div>
+                <div class="fs-5 fw-semibold">@Model.Tckn</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
         <div class="card h-100">
             <div class="card-header"><h3 class="section-title">Iletisim Bilgileri</h3></div>
             <div class="card-body">
                 <dl class="row mb-0">
                     <dt class="col-sm-4">Telefon</dt>
                     <dd class="col-sm-8">@(Model.Phone ?? "-")</dd>
+                    <dt class="col-sm-4">TCKN</dt>
+                    <dd class="col-sm-8">@Model.Tckn</dd>
                     <dt class="col-sm-4">E-posta</dt>
                     <dd class="col-sm-8">@(Model.Email ?? "-")</dd>
                     <dt class="col-sm-4">Dogum Tarihi</dt>
@@ -57,7 +77,7 @@
             </div>
         </div>
     </div>
-    <div class="col-lg-6">
+    <div class="col-lg-4">
         <div class="card h-100">
             <div class="card-header"><h3 class="section-title">Klinik Notlar</h3></div>
             <div class="card-body">
@@ -84,7 +104,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>Tarih</th>
-                            <th>Neden</th>
+                            <th>Konu</th>
                             <th>Durum</th>
                             <th class="text-end">Islem</th>
                         </tr>
@@ -92,57 +112,28 @@
                     <tbody>
                         @foreach (var appt in Model.Appointments)
                         {
+                            var selectedTeeth = TeethSelectionSerializer.Parse(appt.SelectedTeethData);
                             <tr>
                                 <td>@appt.AppointmentDate.ToString("f")</td>
-                                <td>@appt.Purpose</td>
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(appt.Purpose) ? "Belirtilmedi" : appt.Purpose)
+                                    @if (selectedTeeth.Any())
+                                    {
+                                        <div class="operation-teeth mt-2">
+                                            @foreach (var tooth in selectedTeeth)
+                                            {
+                                                <span class="badge-soft info">@tooth</span>
+                                            }
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(appt.Notes))
+                                    {
+                                        <div class="text-muted small mt-1">@appt.Notes</div>
+                                    }
+                                </td>
                                 <td><span class="badge-soft @(appt.Status == AppointmentStatus.Completed ? "success" : appt.Status == AppointmentStatus.Cancelled ? "neutral" : appt.Status == AppointmentStatus.NoShow ? "warning" : "info")">@appt.Status.GetDisplayName()</span></td>
                                 <td class="text-end">
                                     <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-secondary">Duzenle</a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </div>
-</div>
-
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="section-title">Tedavi Kayitlari</h3>
-        <a asp-controller="TreatmentRecords" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Yeni Kayit</a>
-    </div>
-    <div class="card-body p-0">
-        @if (!Model.TreatmentRecords.Any())
-        {
-            <p class="empty-state mb-0">Tedavi kaydi bulunmuyor.</p>
-        }
-        else
-        {
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Tarih</th>
-                            <th>Tani</th>
-                            <th>Islemler</th>
-                            <th class="text-end">Islem</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var rec in Model.TreatmentRecords)
-                        {
-                            <tr>
-                                <td>@rec.Date.ToString("d")</td>
-                                <td>@(string.IsNullOrWhiteSpace(rec.Diagnosis) ? "-" : rec.Diagnosis)</td>
-                                <td>@(string.IsNullOrWhiteSpace(rec.Procedures) ? "-" : rec.Procedures)</td>
-                                <td class="text-end">
-                                    <a asp-controller="TreatmentRecords" asp-action="Edit" asp-route-id="@rec.Id" class="btn btn-sm btn-outline-secondary">Duzenle</a>
-                                    <form asp-controller="TreatmentRecords" asp-action="Delete" asp-route-id="@rec.Id" method="post" class="d-inline" onsubmit="return confirm('Bu tedavi kaydini silmek istiyor musunuz?')">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
-                                    </form>
                                 </td>
                             </tr>
                         }
@@ -186,10 +177,6 @@
                                 <td>@((scan.FileSize / 1024.0).ToString("F1")) KB</td>
                                 <td class="text-end">
                                     <a asp-controller="Scans" asp-action="View" asp-route-id="@scan.Id" class="btn btn-sm btn-outline-primary">Incele</a>
-                                    <form asp-controller="Scans" asp-action="Delete" asp-route-id="@scan.Id" method="post" class="d-inline" onsubmit="return confirm('Bu taramayi silmek istiyor musunuz?')">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
-                                    </form>
                                 </td>
                             </tr>
                         }
@@ -222,6 +209,7 @@
                                 <th>Toplam</th>
                                 <th>Odenen</th>
                                 <th>Kalan</th>
+                                <th>Plan</th>
                             }
                             <th>Durum</th>
                             <th class="text-end">Islem</th>
@@ -237,6 +225,7 @@
                                     <td>@inv.TotalAmount.ToString("C")</td>
                                     <td>@inv.TotalPaid.ToString("C")</td>
                                     <td>@inv.Balance.ToString("C")</td>
+                                    <td>@inv.PlannedPayments.Count(p => !p.IsSettled)</td>
                                 }
                                 <td><span class="badge-soft @(inv.Status == InvoiceStatus.Paid ? "success" : inv.Status == InvoiceStatus.Cancelled ? "neutral" : inv.Status == InvoiceStatus.PartiallyPaid ? "warning" : "info")">@inv.Status.GetDisplayName()</span></td>
                                 <td class="text-end">

@@ -10,7 +10,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Patient> Patients => Set<Patient>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
-    public DbSet<TreatmentRecord> TreatmentRecords => Set<TreatmentRecord>();
+    public DbSet<PreviousOperation> PreviousOperations => Set<PreviousOperation>();
     public DbSet<Scan> Scans => Set<Scan>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<Payment> Payments => Set<Payment>();
@@ -33,11 +33,12 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
              .OnDelete(DeleteBehavior.Cascade);
         });
 
-        builder.Entity<TreatmentRecord>(e =>
+        builder.Entity<PreviousOperation>(e =>
         {
-            e.HasOne(t => t.Patient)
-             .WithMany(p => p.TreatmentRecords)
-             .HasForeignKey(t => t.PatientId)
+            e.HasIndex(o => new { o.PatientId, o.Date });
+            e.HasOne(o => o.Patient)
+             .WithMany(p => p.PreviousOperations)
+             .HasForeignKey(o => o.PatientId)
              .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -59,6 +60,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
         builder.Entity<Payment>(e =>
         {
+            e.HasIndex(p => new { p.InvoiceId, p.PaymentDate, p.IsPlanned });
             e.HasOne(p => p.Invoice)
              .WithMany(i => i.Payments)
              .HasForeignKey(p => p.InvoiceId)

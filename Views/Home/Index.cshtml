@@ -8,7 +8,7 @@
     <div class="page-header mb-0">
         <div>
             <div class="eyebrow">Gunluk Operasyon Ozeti</div>
-            <h2 class="page-title">Klinigin bugunku akisini tek bakista yonetin.</h2>
+            <h2 class="page-title">Klinigin bugunku akisina tek bakista hakim olun.</h2>
             <p class="page-subtitle">@DateTime.Today.ToString("D") tarihli plan, tahsilat ve hasta hareketleri burada toplanir.</p>
         </div>
         <div class="d-flex gap-2 flex-wrap">
@@ -77,7 +77,7 @@
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h3 class="section-title">Siradaki 7 Gun</h3>
-                <a asp-controller="Appointments" asp-action="Index" class="btn btn-sm btn-outline-secondary">Tumunu Gor</a>
+                <a asp-controller="Appointments" asp-action="Index" asp-route-view="Weekly" class="btn btn-sm btn-outline-secondary">Tumunu Gor</a>
             </div>
             <div class="card-body p-0">
                 @if (!Model.UpcomingAppointments.Any())
@@ -93,6 +93,36 @@
                                 <div class="fw-semibold">@appt.AppointmentDate.ToString("dd MMMM, HH:mm")</div>
                                 <div>@appt.Patient?.FullName</div>
                                 <div class="text-muted small">@appt.Purpose</div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="section-title">Yaklasan Odeme Planlari</h3>
+                <a asp-controller="Billing" asp-action="Index" class="btn btn-sm btn-outline-secondary">Finans</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.UpcomingPaymentPlanItems.Any())
+                {
+                    <p class="empty-state mb-0">Yaklasan planli odeme bulunmuyor.</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var item in Model.UpcomingPaymentPlanItems)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <a asp-controller="Billing" asp-action="Details" asp-route-id="@item.InvoiceId" class="text-decoration-none fw-semibold">@item.Invoice?.Patient?.FullName</a>
+                                    <div class="text-muted small">Taksit @(item.InstallmentNumber ?? 0) - @item.PaymentDate.ToString("D")</div>
+                                </div>
+                                <span class="badge-soft warning">@item.Amount.ToString("C")</span>
                             </li>
                         }
                     </ul>
@@ -167,6 +197,47 @@
                             </li>
                         }
                     </ul>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h3 class="section-title">Son Islemler</h3>
+                <a asp-controller="PreviousOperations" asp-action="Index" class="btn btn-sm btn-outline-secondary">Islem Gecmisi</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.RecentOperations.Any())
+                {
+                    <p class="empty-state mb-0">Henuz islem kaydi bulunmuyor.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Hasta</th>
+                                    <th>Baslik</th>
+                                    <th>Uygulanan Islem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var operation in Model.RecentOperations)
+                                {
+                                    <tr>
+                                        <td>@operation.Date.ToString("d")</td>
+                                        <td><a asp-controller="Patients" asp-action="Details" asp-route-id="@operation.PatientId" class="text-decoration-none">@operation.Patient?.FullName</a></td>
+                                        <td>@operation.Title</td>
+                                        <td>@(string.IsNullOrWhiteSpace(operation.Procedures) ? "-" : operation.Procedures)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
                 }
             </div>
         </div>

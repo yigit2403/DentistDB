@@ -1,13 +1,13 @@
 @model DentistDB.ViewModels.ScanUploadViewModel
 @{
-    ViewData["Title"] = "Tarama Yukle";
+    ViewData["Title"] = "Tarama Yükle";
     var patientName = ViewBag.PatientName as string;
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Goruntu Yukleme</div>
-        <h2 class="page-title">Yeni tarama dosyasi ekleyin.</h2>
+        <div class="eyebrow">Görüntü Yükleme</div>
+        <h2 class="page-title">Yeni tarama dosyası ekleyin.</h2>
         @if (!string.IsNullOrEmpty(patientName))
         {
             <p class="page-subtitle">Hasta: <strong>@patientName</strong></p>
@@ -44,8 +44,8 @@
             </div>
 
             <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">Dosyayi Yukle</button>
-                <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" class="btn btn-outline-secondary">Vazgec</a>
+                <button type="submit" class="btn btn-primary">Dosyayı Yükle</button>
+                <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" class="btn btn-outline-secondary">Vazgeç</a>
             </div>
         </form>
     </div>

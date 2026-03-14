@@ -44,7 +44,7 @@
 }
 else
 {
-    <div class="alert alert-info mb-4">Worker hesabi fatura tutarlarini, odemeleri ve bakiyeleri goremez.</div>
+    <div class="alert alert-info mb-4">Calisan hesabi tutarlari, odemeleri ve bakiyeleri goremez.</div>
 }
 
 <div class="row g-4">
@@ -70,20 +70,20 @@ else
             <div class="card h-100">
                 <div class="card-header"><h3 class="section-title">Odeme Gecmisi</h3></div>
                 <div class="card-body p-0">
-                    @if (!Model.Payments.Any())
+                    @if (!Model.Payments.Any(p => !p.IsPlanned || p.IsSettled))
                     {
                         <p class="empty-state mb-0">Bu fatura icin kayitli odeme yok.</p>
                     }
                     else
                     {
                         <ul class="list-group list-group-flush">
-                            @foreach (var pay in Model.Payments)
+                            @foreach (var pay in Model.Payments.Where(p => !p.IsPlanned || p.IsSettled).OrderByDescending(p => p.SettledDate ?? p.PaymentDate))
                             {
                                 <li class="list-group-item">
                                     <div class="d-flex justify-content-between gap-3">
                                         <div>
                                             <div class="fw-semibold">@pay.Amount.ToString("C")</div>
-                                            <div class="text-muted small">@pay.PaymentDate.ToString("D")</div>
+                                            <div class="text-muted small">@((pay.SettledDate ?? pay.PaymentDate).ToString("D"))</div>
                                             @if (!string.IsNullOrWhiteSpace(pay.Notes))
                                             {
                                                 <div class="text-muted small">@pay.Notes</div>
@@ -94,6 +94,46 @@ else
                                 </li>
                             }
                         </ul>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header"><h3 class="section-title">Odeme Plani</h3></div>
+                <div class="card-body p-0">
+                    @if (!Model.PlannedPayments.Any())
+                    {
+                        <p class="empty-state mb-0">Bu fatura icin tanimli odeme plani yok.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Taksit</th>
+                                        <th>Planlanan Tarih</th>
+                                        <th>Tutar</th>
+                                        <th>Durum</th>
+                                        <th>Tahsil Tarihi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.PlannedPayments)
+                                    {
+                                        <tr>
+                                            <td>@(item.InstallmentNumber ?? 0)</td>
+                                            <td>@item.PaymentDate.ToString("D")</td>
+                                            <td>@item.Amount.ToString("C")</td>
+                                            <td><span class="badge-soft @(item.IsSettled ? "success" : "warning")">@(item.IsSettled ? "Tahsil edildi" : "Bekliyor")</span></td>
+                                            <td>@(item.SettledDate?.ToString("D") ?? "-")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     }
                 </div>
             </div>

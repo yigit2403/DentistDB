@@ -41,6 +41,21 @@ public class HomeController : Controller
                 .OrderBy(a => a.AppointmentDate)
                 .ToListAsync(),
 
+            UpcomingPaymentPlanItems = await _db.Payments
+                .Include(p => p.Invoice!)
+                .ThenInclude(i => i.Patient)
+                .Where(p => p.IsPlanned && !p.IsSettled && p.PaymentDate >= DateOnly.FromDateTime(today))
+                .OrderBy(p => p.PaymentDate)
+                .Take(8)
+                .ToListAsync(),
+
+            RecentOperations = await _db.PreviousOperations
+                .Include(o => o.Patient)
+                .OrderByDescending(o => o.Date)
+                .ThenByDescending(o => o.UpdatedAt)
+                .Take(8)
+                .ToListAsync(),
+
             RecentPatients = await _db.Patients
                 .Where(p => !p.IsArchived)
                 .OrderByDescending(p => p.CreatedAt)

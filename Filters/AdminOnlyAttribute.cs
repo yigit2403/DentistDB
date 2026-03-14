@@ -27,7 +27,7 @@ public class AdminOnlyAttribute : ActionFilterAttribute
 
         if (context.Controller is Controller controller)
         {
-            controller.TempData["Error"] = "Bu alan yalnızca admin hesabı için kullanılabilir.";
+            controller.TempData["Error"] = "Bu alan yalnızca yönetici hesabı için kullanılabilir.";
         }
 
         context.Result = new RedirectToActionResult("Index", "Home", null);

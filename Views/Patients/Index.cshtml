@@ -19,7 +19,7 @@
         <form method="get" class="row g-3 align-items-end">
             <div class="col-lg-7">
                 <label class="form-label">Arama</label>
-                <input type="text" name="search" value="@search" class="form-control" placeholder="Ad, telefon veya e-posta ile ara" />
+                <input type="text" name="search" value="@search" class="form-control" placeholder="Ad, TCKN, telefon veya e-posta ile ara" />
             </div>
             <div class="col-lg-3">
                 <div class="form-check pt-4">
@@ -50,6 +50,7 @@ else
                 <thead class="table-light">
                     <tr>
                         <th>Hasta</th>
+                        <th>TCKN</th>
                         <th>Telefon</th>
                         <th>E-posta</th>
                         <th>Dogum Tarihi</th>
@@ -65,6 +66,7 @@ else
                             <td>
                                 <a asp-action="Details" asp-route-id="@patient.Id" class="text-decoration-none fw-semibold">@patient.FullName</a>
                             </td>
+                            <td>@patient.Tckn</td>
                             <td>@(string.IsNullOrWhiteSpace(patient.Phone) ? "-" : patient.Phone)</td>
                             <td>@(string.IsNullOrWhiteSpace(patient.Email) ? "-" : patient.Email)</td>
                             <td>@(patient.BirthDate?.ToString("d") ?? "-")</td>

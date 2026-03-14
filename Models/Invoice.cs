@@ -54,8 +54,14 @@ public class Invoice
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
     [NotMapped]
-    public decimal TotalPaid => Payments.Sum(p => p.Amount);
+    public decimal TotalPaid => Payments.Where(p => !p.IsPlanned || p.IsSettled).Sum(p => p.Amount);
 
     [NotMapped]
     public decimal Balance => TotalAmount - TotalPaid;
+
+    [NotMapped]
+    public IEnumerable<Payment> PlannedPayments => Payments
+        .Where(p => p.IsPlanned)
+        .OrderBy(p => p.PaymentDate)
+        .ThenBy(p => p.InstallmentNumber);
 }

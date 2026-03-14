@@ -1,9 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using DentistDB.Data;
+using DentistDB.Models;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<AccessPinOptions>(
+    builder.Configuration.GetSection(AccessPinOptions.SectionName));
 
 // Database – SQLite in development, MySQL in production
 if (builder.Environment.IsDevelopment())
@@ -20,11 +24,23 @@ else
 }
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddLocalization();
 builder.Services.AddSession(options =>
 {
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
     options.IdleTimeout = TimeSpan.FromHours(12);
+});
+
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(options =>
+{
+    var provider = options.ModelBindingMessageProvider;
+    provider.SetValueIsInvalidAccessor(_ => "Geçersiz bir değer girdiniz.");
+    provider.SetValueMustBeANumberAccessor(_ => "Bu alan sayısal olmalıdır.");
+    provider.SetMissingBindRequiredValueAccessor(_ => "Bu alan zorunludur.");
+    provider.SetAttemptedValueIsInvalidAccessor((value, fieldName) => $"{fieldName} alanına girilen '{value}' değeri geçerli değildir.");
+    provider.SetMissingKeyOrValueAccessor(() => "Bu alan zorunludur.");
+    provider.SetUnknownValueIsInvalidAccessor(_ => "Geçersiz bir seçim yaptınız.");
 });
 
 var app = builder.Build();
@@ -53,6 +69,7 @@ using (var scope = app.Services.CreateScope())
             // MySQL production: apply EF migrations
             db.Database.Migrate();
         }
+        await DatabaseSchemaInitializer.EnsureAsync(db);
         await SeedData.InitializeAsync(scope.ServiceProvider);
     }
     catch (Exception ex)

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace DentistDB.ViewModels;
 
@@ -11,9 +12,16 @@ public class PatientFormViewModel
     public string FullName { get; set; } = string.Empty;
 
     [Phone, MaxLength(20)]
+    [Display(Name = "Telefon")]
     public string? Phone { get; set; }
 
+    [Required, StringLength(11, MinimumLength = 11)]
+    [RegularExpression(@"^\d{11}$", ErrorMessage = "TCKN 11 haneli olmalıdır.")]
+    [Display(Name = "TCKN")]
+    public string Tckn { get; set; } = string.Empty;
+
     [EmailAddress, MaxLength(150)]
+    [Display(Name = "E-posta")]
     public string? Email { get; set; }
 
     [Display(Name = "Doğum Tarihi")]
@@ -31,6 +39,12 @@ public class PatientFormViewModel
     [MaxLength(500)]
     [Display(Name = "Tıbbi Uyarılar")]
     public string? MedicalAlerts { get; set; }
+
+    [Display(Name = "Hasta Fotoğrafı")]
+    public IFormFile? PhotoFile { get; set; }
+
+    public string? ExistingPhotoBase64 { get; set; }
+    public string? ExistingPhotoContentType { get; set; }
 
     [Display(Name = "Arşivlendi")]
     public bool IsArchived { get; set; }

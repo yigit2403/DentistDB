@@ -1,0 +1,103 @@
+@model DentistDB.ViewModels.PreviousOperationsIndexViewModel
+@{
+    ViewData["Title"] = "Onceki Islemler";
+}
+
+<div class="page-header">
+    <div>
+        <div class="eyebrow">Hasta Gecmisi</div>
+        <h2 class="page-title">@(Model.Patient is null ? "Tum Onceki Islemler" : $"{Model.Patient.FullName} icin Onceki Islemler")</h2>
+        <p class="page-subtitle">Son islemleri gorun, filtreleyin ve gecmis kayitlari arayin.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Create" asp-route-patientId="@Model.PatientId" class="btn btn-primary">Yeni Islem Kaydi</a>
+        @if (Model.Patient is not null)
+        {
+            <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.Patient.Id" class="btn btn-outline-secondary">Hasta Detayina Don</a>
+        }
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form method="get" class="row g-3 mb-4">
+            @if (Model.PatientId.HasValue)
+            {
+                <input type="hidden" name="patientId" value="@Model.PatientId" />
+            }
+            <div class="col-md-9">
+                <label class="form-label">Islem Ara</label>
+                <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="Hasta adi, tani, islem veya not ile ara" />
+            </div>
+            <div class="col-md-3 d-flex gap-2 align-items-end">
+                <button type="submit" class="btn btn-primary flex-fill">Ara</button>
+                <a asp-action="Index" asp-route-patientId="@Model.PatientId" class="btn btn-outline-secondary">Temizle</a>
+            </div>
+        </form>
+
+        @if (!Model.Operations.Any())
+        {
+            <p class="empty-state mb-0">Bu filtreye uygun islem kaydi bulunmuyor.</p>
+        }
+        else
+        {
+            <div class="operation-stack">
+                @foreach (var operation in Model.Operations)
+                {
+                    var selectedTeeth = TeethSelectionSerializer.Parse(operation.SelectedTeethData);
+                    <article class="operation-card">
+                        <div class="operation-card__header">
+                            <div>
+                                <div class="operation-card__date">@operation.Date.ToString("dd MMMM yyyy")</div>
+                                <div class="operation-card__title">@operation.Title</div>
+                                <div class="text-muted small">@operation.Patient?.FullName</div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a asp-action="Edit" asp-route-id="@operation.Id" class="btn btn-sm btn-outline-secondary">Duzenle</a>
+                                <form asp-action="Delete" asp-route-id="@operation.Id" method="post" onsubmit="return confirm('Bu islem kaydini silmek istiyor musunuz?')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="operation-card__grid">
+                            <div>
+                                <div class="operation-card__label">Tani</div>
+                                <div>@(string.IsNullOrWhiteSpace(operation.Diagnosis) ? "-" : operation.Diagnosis)</div>
+                            </div>
+                            <div>
+                                <div class="operation-card__label">Uygulanan Islemler</div>
+                                <div>@(string.IsNullOrWhiteSpace(operation.Procedures) ? "-" : operation.Procedures)</div>
+                            </div>
+                            <div>
+                                <div class="operation-card__label">Receteler</div>
+                                <div>@(string.IsNullOrWhiteSpace(operation.Prescriptions) ? "-" : operation.Prescriptions)</div>
+                            </div>
+                            <div>
+                                <div class="operation-card__label">Secilen Disler</div>
+                                @if (selectedTeeth.Any())
+                                {
+                                    <div class="operation-teeth">
+                                        @foreach (var tooth in selectedTeeth)
+                                        {
+                                            <span class="badge-soft info">@tooth</span>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div>-</div>
+                                }
+                            </div>
+                            <div class="operation-card__full">
+                                <div class="operation-card__label">Notlar</div>
+                                <div>@(string.IsNullOrWhiteSpace(operation.Notes) ? "-" : operation.Notes)</div>
+                            </div>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</div>
