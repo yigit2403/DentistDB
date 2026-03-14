@@ -62,7 +62,16 @@
                     </div>
                 </div>
                 <div class="col-lg-5">
-                    @{ await Html.RenderPartialAsync("_ToothSelector", Model.SelectedTeeth, new ViewDataDictionary(ViewData) { ["InputName"] = "SelectedTeeth" }); }
+                    @{
+                        await Html.RenderPartialAsync("_ToothSelector", new DentistDB.ViewModels.ToothSelectorViewModel
+                        {
+                            Label = "Dis Secimi",
+                            InputId = "SelectedTeeth",
+                            InputName = "SelectedTeeth",
+                            SummaryId = "SelectedTeethSummary",
+                            SelectedTeethCsv = string.Join(",", Model.SelectedTeeth)
+                        });
+                    }
                 </div>
             </div>
 

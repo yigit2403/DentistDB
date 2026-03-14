@@ -525,6 +525,97 @@ dl dt {
   gap: 1rem;
 }
 
+.calendar-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.calendar-grid--weekly,
+.calendar-grid--monthly {
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calendar-year-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.calendar-cell {
+  min-height: 220px;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-cell--month {
+  min-height: 260px;
+}
+
+.calendar-cell__header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.8rem;
+}
+
+.calendar-cell__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.calendar-cell__subtitle,
+.calendar-cell__count {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.calendar-cell__content {
+  display: flex;
+  flex: 1;
+}
+
+.calendar-entry-list {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 0.55rem;
+}
+
+.calendar-chip {
+  min-width: 110px;
+  padding: 0.7rem 0.75rem;
+  border-radius: 14px;
+  background: rgba(47, 130, 255, 0.12);
+  border: 1px solid rgba(120, 166, 242, 0.18);
+  color: var(--ink);
+  display: inline-flex;
+  flex-direction: column;
+  gap: 0.22rem;
+}
+
+.calendar-chip strong {
+  font-size: 0.82rem;
+}
+
+.calendar-chip span {
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.calendar-chip small {
+  color: var(--muted);
+}
+
+.calendar-empty {
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
 .agenda-day {
   padding: 1.25rem;
 }
@@ -667,15 +758,15 @@ dl dt {
 }
 
 .tooth-node {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   background: #f2f6fb;
   color: #314155;
-  font-size: 0.82rem;
+  font-size: 0.74rem;
   font-weight: 700;
   cursor: pointer;
   border: 2px solid #aab4c1;
@@ -776,6 +867,12 @@ dl dt {
   .operation-card__grid {
     grid-template-columns: 1fr;
   }
+
+  .calendar-grid--weekly,
+  .calendar-grid--monthly,
+  .calendar-year-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 767.98px) {
@@ -800,6 +897,12 @@ dl dt {
   }
 
   .agenda-entry {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-grid--weekly,
+  .calendar-grid--monthly,
+  .calendar-year-grid {
     grid-template-columns: 1fr;
   }
 

@@ -1,6 +1,16 @@
 @model DentistDB.ViewModels.AppointmentIndexViewModel
 @{
     ViewData["Title"] = "Randevular";
+    string GetViewLabel(AppointmentCalendarView view) => view switch
+    {
+        AppointmentCalendarView.Daily => "Gunluk",
+        AppointmentCalendarView.Weekly => "Haftalik",
+        AppointmentCalendarView.Monthly => "Aylik",
+        AppointmentCalendarView.Yearly => "Yillik",
+        _ => view.ToString()
+    };
+
+    var hasAppointments = Model.Buckets.Any(bucket => bucket.Appointments.Any());
 }
 
 <div class="page-header">
@@ -25,7 +35,7 @@
             <div class="filter-strip">
                 @foreach (var view in Enum.GetValues<AppointmentCalendarView>())
                 {
-                    <a asp-action="Index" asp-route-view="@view" asp-route-status="@Model.StatusFilter" asp-route-date="@Model.ReferenceDate.ToString("yyyy-MM-dd")" class="btn btn-sm @(Model.CalendarView == view ? "btn-primary" : "btn-outline-secondary")">@view</a>
+                    <a asp-action="Index" asp-route-view="@view" asp-route-status="@Model.StatusFilter" asp-route-date="@Model.ReferenceDate.ToString("yyyy-MM-dd")" class="btn btn-sm @(Model.CalendarView == view ? "btn-primary" : "btn-outline-secondary")">@GetViewLabel(view)</a>
                 }
             </div>
         </div>
@@ -37,11 +47,11 @@
     </div>
 </div>
 
-@if (!Model.Buckets.Any(bucket => bucket.Appointments.Any()))
+@if (!hasAppointments)
 {
     <div class="alert alert-info">Bu gorunum icin randevu kaydi bulunamadi.</div>
 }
-else
+else if (Model.CalendarView == AppointmentCalendarView.Daily)
 {
     <div class="agenda-grid">
         @foreach (var bucket in Model.Buckets.Where(bucket => bucket.Appointments.Any()))
@@ -86,6 +96,72 @@ else
                                 </div>
                             </div>
                         </article>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+}
+else if (Model.CalendarView == AppointmentCalendarView.Yearly)
+{
+    <div class="calendar-year-grid">
+        @foreach (var bucket in Model.Buckets)
+        {
+            <section class="calendar-cell calendar-cell--month">
+                <header class="calendar-cell__header">
+                    <div class="calendar-cell__title">@bucket.Label</div>
+                    <div class="calendar-cell__count">@bucket.Appointments.Count kayit</div>
+                </header>
+                <div class="calendar-cell__content">
+                    @if (!bucket.Appointments.Any())
+                    {
+                        <div class="calendar-empty">Kayit yok</div>
+                    }
+                    else
+                    {
+                        <div class="calendar-entry-list">
+                            @foreach (var appt in bucket.Appointments.OrderBy(item => item.AppointmentDate))
+                            {
+                                <a asp-action="Edit" asp-route-id="@appt.Id" class="calendar-chip text-decoration-none">
+                                    <strong>@appt.AppointmentDate.ToString("dd MMM")</strong>
+                                    <span>@appt.Patient?.FullName</span>
+                                    <small>@appt.AppointmentDate.ToString("HH:mm")</small>
+                                </a>
+                            }
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+}
+else
+{
+    <div class="calendar-grid @(Model.CalendarView == AppointmentCalendarView.Monthly ? "calendar-grid--monthly" : "calendar-grid--weekly")">
+        @foreach (var bucket in Model.Buckets)
+        {
+            <section class="calendar-cell">
+                <header class="calendar-cell__header">
+                    <div class="calendar-cell__title">@bucket.Start.ToString("dd")</div>
+                    <div class="calendar-cell__subtitle">@bucket.Start.ToString("ddd")</div>
+                </header>
+                <div class="calendar-cell__content">
+                    @if (!bucket.Appointments.Any())
+                    {
+                        <div class="calendar-empty">Bos</div>
+                    }
+                    else
+                    {
+                        <div class="calendar-entry-list">
+                            @foreach (var appt in bucket.Appointments.OrderBy(item => item.AppointmentDate))
+                            {
+                                <a asp-action="Edit" asp-route-id="@appt.Id" class="calendar-chip text-decoration-none">
+                                    <strong>@appt.AppointmentDate.ToString("HH:mm")</strong>
+                                    <span>@appt.Patient?.FullName</span>
+                                    <small>@appt.Purpose</small>
+                                </a>
+                            }
+                        </div>
                     }
                 </div>
             </section>
