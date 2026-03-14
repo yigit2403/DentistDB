@@ -1,0 +1,29 @@
+## .NET build artifacts
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+## Published output
+out/
+publish/
+
+## NuGet
+*.nupkg
+packages/
+
+## Uploaded scan files (runtime, not source)
+wwwroot/uploads/
+
+## Logs
+*.log
+logs/
+
+## User secrets
+appsettings.*.local.json
+
+## SQLite development database
+*.db
+*.db-shm
+*.db-wal

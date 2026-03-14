@@ -1,0 +1,194 @@
+﻿@model DentistDB.ViewModels.DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h2>📊 Dashboard</h2>
+    <small class="text-muted">@DateTime.Today.ToString("dddd, MMMM d, yyyy")</small>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card text-bg-primary">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="fs-4 fw-bold">@Model.TotalPatients</div>
+                        <div>Active Patients</div>
+                    </div>
+                    <div class="fs-1 opacity-50">👤</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-success">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="fs-4 fw-bold">@Model.TodaysAppointments.Count</div>
+                        <div>Today's Appointments</div>
+                    </div>
+                    <div class="fs-1 opacity-50">📅</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-info">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="fs-4 fw-bold">@Model.AppointmentsThisMonth</div>
+                        <div>This Month</div>
+                    </div>
+                    <div class="fs-1 opacity-50">📆</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-bg-warning">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <div class="fs-4 fw-bold">@Model.UnpaidInvoices.Count</div>
+                        <div>Unpaid Invoices</div>
+                    </div>
+                    <div class="fs-1 opacity-50">💳</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>📅 Today's Appointments</strong>
+                <a asp-controller="Appointments" asp-action="Create" class="btn btn-sm btn-outline-primary">+ New</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.TodaysAppointments.Any())
+                {
+                    <p class="text-muted p-3 mb-0">No appointments scheduled for today.</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var appt in Model.TodaysAppointments)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>@appt.AppointmentDate.ToString("h:mm tt")</strong>
+                                    <span class="ms-2">@appt.Patient?.FullName</span>
+                                    <div class="text-muted small">@appt.Purpose</div>
+                                </div>
+                                <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@appt.Id"
+                                   class="btn btn-sm btn-outline-secondary">Edit</a>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>🔜 Upcoming (next 7 days)</strong>
+                <a asp-controller="Appointments" asp-action="Index" class="btn btn-sm btn-outline-secondary">View all</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.UpcomingAppointments.Any())
+                {
+                    <p class="text-muted p-3 mb-0">No upcoming appointments.</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var appt in Model.UpcomingAppointments)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>@appt.AppointmentDate.ToString("MMM d, h:mm tt")</strong>
+                                    <span class="ms-2">@appt.Patient?.FullName</span>
+                                    <div class="text-muted small">@appt.Purpose</div>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>👤 Recent Patients</strong>
+                <a asp-controller="Patients" asp-action="Index" class="btn btn-sm btn-outline-secondary">View all</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.RecentPatients.Any())
+                {
+                    <p class="text-muted p-3 mb-0">No patients yet.</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var patient in Model.RecentPatients)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <a asp-controller="Patients" asp-action="Details" asp-route-id="@patient.Id"
+                                       class="text-decoration-none">@patient.FullName</a>
+                                    @if (!string.IsNullOrEmpty(patient.MedicalAlerts))
+                                    {
+                                        <span class="badge bg-danger ms-1" title="@patient.MedicalAlerts">⚠</span>
+                                    }
+                                    <div class="text-muted small">@patient.Phone</div>
+                                </div>
+                                <span class="text-muted small">@patient.CreatedAt.ToString("MMM d")</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <strong>💳 Unpaid Invoices</strong>
+                <a asp-controller="Billing" asp-action="Index" class="btn btn-sm btn-outline-secondary">View all</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!Model.UnpaidInvoices.Any())
+                {
+                    <p class="text-muted p-3 mb-0">No outstanding invoices. 🎉</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var inv in Model.UnpaidInvoices)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <a asp-controller="Billing" asp-action="Details" asp-route-id="@inv.Id"
+                                       class="text-decoration-none">@inv.Patient?.FullName</a>
+                                    <div class="text-muted small">Due: @inv.DueDate?.ToString("MMM d, yyyy")</div>
+                                </div>
+                                <span class="fw-bold text-danger">@inv.Balance.ToString("C")</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,129 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - DentistDB</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/DentistDB.styles.css" asp-append-version="true" />
+    <style>
+        body { background-color: #f8f9fa; }
+        .sidebar { min-height: calc(100vh - 56px); background-color: #212529; }
+        .sidebar .nav-link { color: #adb5bd; padding: .5rem 1rem; }
+        .sidebar .nav-link:hover, .sidebar .nav-link.active { color: #fff; background-color: rgba(255,255,255,.1); border-radius: .25rem; }
+        .sidebar .nav-section { color: #6c757d; font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; padding: .5rem 1rem .25rem; margin-top: .5rem; }
+        .page-header { border-bottom: 1px solid #dee2e6; padding-bottom: .5rem; margin-bottom: 1.5rem; }
+        .card { box-shadow: 0 .125rem .25rem rgba(0,0,0,.075); border: none; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" asp-controller="Home" asp-action="Index">
+                🦷 DentistDB
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarTop">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarTop">
+                <ul class="navbar-nav ms-auto">
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="Identity" asp-page="/Account/Logout"
+                               asp-route-returnUrl="/">Logout (@User.Identity.Name)</a>
+                        </li>
+                    }
+                    else
+                    {
+                        <li class="nav-item">
+                            <a class="nav-link" asp-area="Identity" asp-page="/Account/Login">Login</a>
+                        </li>
+                    }
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid">
+        <div class="row">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <nav class="col-md-2 col-lg-2 d-md-block sidebar py-3">
+                    <div class="position-sticky">
+                        <ul class="nav flex-column">
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Home" asp-action="Index">
+                                    📊 Dashboard
+                                </a>
+                            </li>
+                            <li><div class="nav-section">Patients</div></li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Patients" asp-action="Index">
+                                    👤 All Patients
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Patients" asp-action="Create">
+                                    ➕ New Patient
+                                </a>
+                            </li>
+                            <li><div class="nav-section">Appointments</div></li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Appointments" asp-action="Index">
+                                    📅 Appointments
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Appointments" asp-action="Create">
+                                    ➕ New Appointment
+                                </a>
+                            </li>
+                            <li><div class="nav-section">Billing</div></li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Billing" asp-action="Index">
+                                    💳 Invoices
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" asp-controller="Billing" asp-action="Create">
+                                    ➕ New Invoice
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                <main class="col-md-10 col-lg-10 ms-sm-auto py-4 px-4">
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                            @TempData["Success"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+                    @if (TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            @TempData["Error"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+                    @RenderBody()
+                </main>
+            }
+            else
+            {
+                <main class="col-12 py-4 px-4">
+                    @RenderBody()
+                </main>
+            }
+        </div>
+    </div>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

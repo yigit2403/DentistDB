@@ -1,0 +1,273 @@
+@model DentistDB.Models.Patient
+@{
+    ViewData["Title"] = Model.FullName;
+}
+
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2>
+            @Model.FullName
+            @if (Model.IsArchived)
+            {
+                <span class="badge bg-secondary fs-6">Archived</span>
+            }
+        </h2>
+        <small class="text-muted">Patient since @Model.CreatedAt.ToString("MMMM yyyy")</small>
+    </div>
+    <div class="d-flex gap-2">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Edit</a>
+        @if (!Model.IsArchived)
+        {
+            <form asp-action="Archive" asp-route-id="@Model.Id" method="post"
+                  onsubmit="return confirm('Archive this patient?')">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-warning">Archive</button>
+            </form>
+        }
+        else
+        {
+            <form asp-action="Restore" asp-route-id="@Model.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-success">Restore</button>
+            </form>
+        }
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.MedicalAlerts))
+{
+    <div class="alert alert-danger d-flex align-items-center mb-3">
+        <strong>⚠ Medical Alerts:</strong>
+        <span class="ms-2">@Model.MedicalAlerts</span>
+    </div>
+}
+
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>Contact Information</strong></div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Phone</dt>
+                    <dd class="col-sm-8">@(Model.Phone ?? "—")</dd>
+                    <dt class="col-sm-4">Email</dt>
+                    <dd class="col-sm-8">@(Model.Email ?? "—")</dd>
+                    <dt class="col-sm-4">Date of Birth</dt>
+                    <dd class="col-sm-8">@(Model.BirthDate?.ToString("MMMM d, yyyy") ?? "—")</dd>
+                    <dt class="col-sm-4">Address</dt>
+                    <dd class="col-sm-8">@(Model.Address ?? "—")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header"><strong>Notes</strong></div>
+            <div class="card-body">
+                <p class="mb-0">@(Model.Notes ?? "No notes.")</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Appointments Section -->
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>📅 Appointments</strong>
+        <a asp-controller="Appointments" asp-action="Create" asp-route-patientId="@Model.Id"
+           class="btn btn-sm btn-outline-primary">+ New Appointment</a>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Appointments.Any())
+        {
+            <p class="text-muted p-3 mb-0">No appointments recorded.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date & Time</th>
+                            <th>Purpose</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var appt in Model.Appointments)
+                        {
+                            <tr>
+                                <td>@appt.AppointmentDate.ToString("MMM d, yyyy h:mm tt")</td>
+                                <td>@appt.Purpose</td>
+                                <td>
+                                    <span class="badge @(appt.Status == AppointmentStatus.Completed ? "bg-success" :
+                                                         appt.Status == AppointmentStatus.Cancelled ? "bg-secondary" :
+                                                         appt.Status == AppointmentStatus.NoShow ? "bg-warning" : "bg-primary")">
+                                        @appt.Status
+                                    </span>
+                                </td>
+                                <td>
+                                    <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@appt.Id"
+                                       class="btn btn-sm btn-outline-secondary">Edit</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Treatment Records Section -->
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>🩺 Treatment Records</strong>
+        <a asp-controller="TreatmentRecords" asp-action="Create" asp-route-patientId="@Model.Id"
+           class="btn btn-sm btn-outline-primary">+ New Record</a>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.TreatmentRecords.Any())
+        {
+            <p class="text-muted p-3 mb-0">No treatment records.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Diagnosis</th>
+                            <th>Procedures</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var rec in Model.TreatmentRecords)
+                        {
+                            <tr>
+                                <td>@rec.Date.ToString("MMM d, yyyy")</td>
+                                <td>@rec.Diagnosis</td>
+                                <td>@rec.Procedures</td>
+                                <td>
+                                    <a asp-controller="TreatmentRecords" asp-action="Edit" asp-route-id="@rec.Id"
+                                       class="btn btn-sm btn-outline-secondary">Edit</a>
+                                    <form asp-controller="TreatmentRecords" asp-action="Delete" asp-route-id="@rec.Id"
+                                          method="post" class="d-inline"
+                                          onsubmit="return confirm('Delete this treatment record?')">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Scans Section -->
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>🔬 Scans</strong>
+        <a asp-controller="Scans" asp-action="Upload" asp-route-patientId="@Model.Id"
+           class="btn btn-sm btn-outline-primary">+ Upload Scan</a>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Scans.Any())
+        {
+            <p class="text-muted p-3 mb-0">No scans uploaded.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>File Name</th>
+                            <th>Type</th>
+                            <th>Size</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var scan in Model.Scans)
+                        {
+                            <tr>
+                                <td>@scan.ScanDate.ToString("MMM d, yyyy")</td>
+                                <td>@scan.FileName</td>
+                                <td><span class="badge bg-info">@scan.ScanType</span></td>
+                                <td>@((scan.FileSize / 1024.0).ToString("F1")) KB</td>
+                                <td>
+                                    <a asp-controller="Scans" asp-action="View" asp-route-id="@scan.Id"
+                                       class="btn btn-sm btn-outline-primary">View</a>
+                                    <form asp-controller="Scans" asp-action="Delete" asp-route-id="@scan.Id"
+                                          method="post" class="d-inline"
+                                          onsubmit="return confirm('Delete this scan?')">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Invoices Section -->
+<div class="card mb-3">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <strong>💳 Invoices</strong>
+        <a asp-controller="Billing" asp-action="Create" asp-route-patientId="@Model.Id"
+           class="btn btn-sm btn-outline-primary">+ New Invoice</a>
+    </div>
+    <div class="card-body p-0">
+        @if (!Model.Invoices.Any())
+        {
+            <p class="text-muted p-3 mb-0">No invoices.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Total</th>
+                            <th>Paid</th>
+                            <th>Balance</th>
+                            <th>Status</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var inv in Model.Invoices)
+                        {
+                            <tr>
+                                <td>@inv.InvoiceDate.ToString("MMM d, yyyy")</td>
+                                <td>@inv.TotalAmount.ToString("C")</td>
+                                <td>@inv.TotalPaid.ToString("C")</td>
+                                <td class="@(inv.Balance > 0 ? "text-danger fw-bold" : "text-success")">
+                                    @inv.Balance.ToString("C")
+                                </td>
+                                <td><span class="badge @(inv.Status == InvoiceStatus.Paid ? "bg-success" : inv.Status == InvoiceStatus.Cancelled ? "bg-secondary" : "bg-warning text-dark")">@inv.Status</span></td>
+                                <td>
+                                    <a asp-controller="Billing" asp-action="Details" asp-route-id="@inv.Id"
+                                       class="btn btn-sm btn-outline-secondary">View</a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
