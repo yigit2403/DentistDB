@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using System.Data.Common;
 
 namespace DentistDB.Data;
 
@@ -82,13 +83,77 @@ public static class DatabaseSchemaInitializer
 
     private static async Task EnsureColumnAsync(ApplicationDbContext db, string tableName, string columnName, string alterSql)
     {
+        if (await ColumnExistsAsync(db, tableName, columnName))
+        {
+            return;
+        }
+
+        await db.Database.ExecuteSqlRawAsync(alterSql);
+    }
+
+    private static async Task<bool> ColumnExistsAsync(ApplicationDbContext db, string tableName, string columnName)
+    {
+        var provider = db.Database.ProviderName ?? string.Empty;
+        var connection = db.Database.GetDbConnection();
+        var shouldCloseConnection = connection.State != System.Data.ConnectionState.Open;
+
+        if (shouldCloseConnection)
+        {
+            await connection.OpenAsync();
+        }
+
         try
         {
-            await db.Database.ExecuteSqlRawAsync(alterSql);
+            await using var command = connection.CreateCommand();
+
+            if (provider.Contains("Sqlite", StringComparison.OrdinalIgnoreCase))
+            {
+                command.CommandText =
+                    """
+                    SELECT COUNT(*)
+                    FROM pragma_table_info(@tableName)
+                    WHERE name = @columnName;
+                    """;
+
+                AddParameter(command, "@tableName", tableName);
+                AddParameter(command, "@columnName", columnName);
+            }
+            else if (provider.Contains("MySql", StringComparison.OrdinalIgnoreCase))
+            {
+                command.CommandText =
+                    """
+                    SELECT COUNT(*)
+                    FROM INFORMATION_SCHEMA.COLUMNS
+                    WHERE TABLE_SCHEMA = DATABASE()
+                      AND TABLE_NAME = @tableName
+                      AND COLUMN_NAME = @columnName;
+                    """;
+
+                AddParameter(command, "@tableName", tableName);
+                AddParameter(command, "@columnName", columnName);
+            }
+            else
+            {
+                return false;
+            }
+
+            var result = await command.ExecuteScalarAsync();
+            return Convert.ToInt32(result) > 0;
         }
-        catch
+        finally
         {
-            // Column already exists on upgraded databases.
+            if (shouldCloseConnection)
+            {
+                await connection.CloseAsync();
+            }
         }
+    }
+
+    private static void AddParameter(DbCommand command, string name, object value)
+    {
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.Value = value;
+        command.Parameters.Add(parameter);
     }
 }

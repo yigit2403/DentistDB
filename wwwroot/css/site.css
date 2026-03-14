@@ -58,7 +58,10 @@ a:hover {
   color: var(--ink);
   position: sticky;
   top: 0;
-  height: 100vh;
+  height: 100dvh;
+  max-height: 100dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-right: 1px solid rgba(255, 255, 255, 0.04);
 }
 
@@ -850,6 +853,7 @@ dl dt {
     position: relative;
     width: auto;
     height: auto;
+    max-height: calc(100dvh - 32px);
     margin: 16px;
     border-radius: var(--radius-lg);
   }
@@ -878,6 +882,12 @@ dl dt {
 @media (max-width: 767.98px) {
   html {
     font-size: 14px;
+  }
+
+  .app-sidebar {
+    max-height: calc(100dvh - 24px);
+    margin: 12px;
+    padding: 18px 14px;
   }
 
   .topbar,
