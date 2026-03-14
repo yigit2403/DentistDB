@@ -1,0 +1,58 @@
+@model DentistDB.ViewModels.PaymentFormViewModel
+@{
+    ViewData["Title"] = "Record Payment";
+    var invoice = ViewBag.Invoice as DentistDB.Models.Invoice;
+}
+
+<div class="page-header">
+    <h2>Record Payment</h2>
+    @if (invoice != null)
+    {
+        <p class="text-muted mb-0">
+            Invoice #@invoice.Id &mdash; @invoice.Patient?.FullName &mdash;
+            Balance: <strong class="text-danger">@invoice.Balance.ToString("C")</strong>
+        </p>
+    }
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <form asp-action="AddPayment" method="post">
+            @Html.AntiForgeryToken()
+            <input asp-for="InvoiceId" type="hidden" />
+            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label asp-for="PaymentDate" class="form-label"></label>
+                    <input asp-for="PaymentDate" class="form-control" type="date" />
+                </div>
+                <div class="col-md-3">
+                    <label asp-for="Amount" class="form-label"></label>
+                    <div class="input-group">
+                        <span class="input-group-text">$</span>
+                        <input asp-for="Amount" class="form-control" type="number" step="0.01" min="0.01" />
+                    </div>
+                    <span asp-validation-for="Amount" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="PaymentMethod" class="form-label"></label>
+                    <select asp-for="PaymentMethod" asp-items="Html.GetEnumSelectList<PaymentMethod>()" class="form-select"></select>
+                </div>
+                <div class="col-md-12">
+                    <label asp-for="Notes" class="form-label"></label>
+                    <input asp-for="Notes" class="form-control" />
+                </div>
+            </div>
+
+            <div class="mt-3 d-flex gap-2">
+                <button type="submit" class="btn btn-success">Record Payment</button>
+                <a asp-action="Details" asp-route-id="@Model.InvoiceId" class="btn btn-outline-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}
