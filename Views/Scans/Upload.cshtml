@@ -26,7 +26,11 @@
                 <div class="col-md-12">
                     <label asp-for="File" class="form-label"></label>
                     <input asp-for="File" class="form-control" type="file" accept=".jpg,.jpeg,.png,.pdf" />
-                    <div class="form-text">Kabul edilen formatlar: JPG, PNG, PDF. Maksimum boyut: 20 MB.</div>
+                    <div class="form-text">
+                        Yüklenebilecek içerikler: röntgen görüntüleri (panoramik, periapikal, bitewing, BT),
+                        ağız içi fotoğraflar ve PDF raporları (laboratuvar sonuçları, sevk mektupları vb.).<br />
+                        Kabul edilen formatlar: <strong>JPG, PNG, PDF</strong>. Maksimum boyut: <strong>20 MB</strong>.
+                    </div>
                     <span asp-validation-for="File" class="text-danger small"></span>
                 </div>
                 <div class="col-md-4">
