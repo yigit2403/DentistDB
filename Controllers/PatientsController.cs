@@ -1,13 +1,13 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DentistDB.Data;
+using DentistDB.Filters;
 using DentistDB.Models;
 using DentistDB.ViewModels;
 
 namespace DentistDB.Controllers;
 
-[Authorize]
+[RequireAppAccount]
 public class PatientsController : Controller
 {
     private readonly ApplicationDbContext _db;

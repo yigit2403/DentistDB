@@ -1,7 +1,9 @@
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
-    var isAuthenticated = User.Identity?.IsAuthenticated == true;
+    var currentAccount = Context.GetCurrentAccount();
+    var isSignedIn = currentAccount != null;
+    var canViewFinancials = Context.CanViewFinancials();
 }
 <!DOCTYPE html>
 <html lang="tr">
@@ -15,28 +17,28 @@
 </head>
 <body>
     <div class="app-shell">
-        <aside class="app-sidebar @(isAuthenticated ? string.Empty : "d-none")">
+        <aside class="app-sidebar @(isSignedIn ? string.Empty : "d-none")">
             <a class="brand-mark" asp-controller="Home" asp-action="Index">
-                <span class="brand-kicker">Klinik Yönetimi</span>
+                <span class="brand-kicker">Klinik Yonetimi</span>
                 <strong>DentistDB</strong>
-                <small>Diş kliniği operasyon paneli</small>
+                <small>Dis klinigi operasyon paneli</small>
             </a>
 
             <nav class="nav-cluster">
-                <div class="nav-caption">Genel Bakış</div>
+                <div class="nav-caption">Genel Bakis</div>
                 <a class="nav-pill @(currentController == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">Kontrol Paneli</a>
 
-                <div class="nav-caption">Hasta Yönetimi</div>
-                <a class="nav-pill @(currentController == "Patients" && currentAction == "Index" ? "active" : "")" asp-controller="Patients" asp-action="Index">Tüm Hastalar</a>
+                <div class="nav-caption">Hasta Yonetimi</div>
+                <a class="nav-pill @(currentController == "Patients" && currentAction == "Index" ? "active" : "")" asp-controller="Patients" asp-action="Index">Tum Hastalar</a>
                 <a class="nav-pill @(currentController == "Patients" && currentAction == "Create" ? "active" : "")" asp-controller="Patients" asp-action="Create">Yeni Hasta</a>
 
                 <div class="nav-caption">Takvim</div>
                 <a class="nav-pill @(currentController == "Appointments" && currentAction == "Index" ? "active" : "")" asp-controller="Appointments" asp-action="Index">Randevular</a>
-                <a class="nav-pill @(currentController == "Appointments" && currentAction == "Create" ? "active" : "")" asp-controller="Appointments" asp-action="Create">Randevu Oluştur</a>
+                <a class="nav-pill @(currentController == "Appointments" && currentAction == "Create" ? "active" : "")" asp-controller="Appointments" asp-action="Create">Randevu Olustur</a>
 
                 <div class="nav-caption">Finans</div>
                 <a class="nav-pill @(currentController == "Billing" && currentAction == "Index" ? "active" : "")" asp-controller="Billing" asp-action="Index">Faturalar</a>
-                <a class="nav-pill @(currentController == "Billing" && currentAction == "Create" ? "active" : "")" asp-controller="Billing" asp-action="Create">Fatura Oluştur</a>
+                <a class="nav-pill @(currentController == "Billing" && currentAction == "Create" ? "active" : "")" asp-controller="Billing" asp-action="Create">Fatura Olustur</a>
             </nav>
         </aside>
 
@@ -47,21 +49,21 @@
                     <h1 class="topbar-title">@ViewData["Title"]</h1>
                 </div>
                 <div class="topbar-actions">
-                    @if (isAuthenticated)
+                    @if (isSignedIn)
                     {
-                        <div class="topbar-user">@User.Identity?.Name</div>
-                        <form asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="/" method="post" class="m-0">
-                            <button type="submit" class="btn btn-outline-light">Çıkış Yap</button>
+                        <div class="topbar-user">
+                            <strong>@currentAccount!.Name</strong>
+                            <span>@(canViewFinancials ? "Admin" : "Worker")</span>
+                        </div>
+                        <form asp-controller="Access" asp-action="Logout" method="post" class="m-0">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-light">Hesap Degistir</button>
                         </form>
-                    }
-                    else
-                    {
-                        <a class="btn btn-primary" asp-area="Identity" asp-page="/Account/Login">Giriş Yap</a>
                     }
                 </div>
             </header>
 
-            <main class="content-stage @(isAuthenticated ? string.Empty : "content-stage--wide")">
+            <main class="content-stage @(isSignedIn ? string.Empty : "content-stage--wide")">
                 @if (TempData["Success"] != null)
                 {
                     <div class="alert alert-success shadow-sm border-0" role="alert">

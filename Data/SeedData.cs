@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Identity;
 using DentistDB.Models;
 
 namespace DentistDB.Data;
@@ -7,22 +6,7 @@ public static class SeedData
 {
     public static async Task InitializeAsync(IServiceProvider services)
     {
-        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var db = services.GetRequiredService<ApplicationDbContext>();
-
-        // Seed the dentist user
-        const string email = "dentist@dentistdb.local";
-        if (await userManager.FindByEmailAsync(email) == null)
-        {
-            var user = new ApplicationUser
-            {
-                UserName = email,
-                Email = email,
-                FullName = "Dr. Demo Dentist",
-                EmailConfirmed = true
-            };
-            await userManager.CreateAsync(user, "Dentist@123");
-        }
 
         // Seed patients if empty
         if (!db.Patients.Any())

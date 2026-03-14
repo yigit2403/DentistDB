@@ -1,14 +1,14 @@
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using DentistDB.Data;
+using DentistDB.Filters;
 using DentistDB.Models;
 using DentistDB.ViewModels;
 
 namespace DentistDB.Controllers;
 
-[Authorize]
+[RequireAppAccount]
 public class BillingController : Controller
 {
     private readonly ApplicationDbContext _db;
@@ -88,6 +88,7 @@ public class BillingController : Controller
     }
 
     // GET: /Billing/Edit/5
+    [AdminOnly]
     public async Task<IActionResult> Edit(int id)
     {
         var invoice = await _db.Invoices.FindAsync(id);
@@ -109,6 +110,7 @@ public class BillingController : Controller
 
     // POST: /Billing/Edit/5
     [HttpPost, ValidateAntiForgeryToken]
+    [AdminOnly]
     public async Task<IActionResult> Edit(int id, InvoiceFormViewModel vm)
     {
         if (id != vm.Id) return BadRequest();
@@ -135,6 +137,7 @@ public class BillingController : Controller
     }
 
     // GET: /Billing/AddPayment/5 (invoiceId)
+    [AdminOnly]
     public async Task<IActionResult> AddPayment(int invoiceId)
     {
         var invoice = await _db.Invoices
@@ -156,6 +159,7 @@ public class BillingController : Controller
 
     // POST: /Billing/AddPayment
     [HttpPost, ValidateAntiForgeryToken]
+    [AdminOnly]
     public async Task<IActionResult> AddPayment(PaymentFormViewModel vm)
     {
         if (!ModelState.IsValid)
