@@ -1,12 +1,12 @@
-@model DentistDB.ViewModels.TreatmentRecordFormViewModel
+@model DentistDB.ViewModels.PreviousOperationFormViewModel
 @{
-    ViewData["Title"] = "Yeni Tedavi Kaydı";
+    ViewData["Title"] = "Yeni Önceki İşlem";
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Klinik Kayıt</div>
-        <h2 class="page-title">Yeni tedavi kaydı ekleyin.</h2>
+        <div class="eyebrow">Önceki İşlem Kaydı</div>
+        <h2 class="page-title">Yeni işlem geçmişi kaydı ekleyin.</h2>
     </div>
 </div>
 
@@ -32,31 +32,34 @@
                                 <input asp-for="Date" class="form-control js-picker" type="date" />
                                 <button class="btn btn-outline-secondary js-picker-button" type="button" data-picker-target="Date">Takvim</button>
                             </div>
-                            <span asp-validation-for="Date" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-12">
+                            <label asp-for="Title" class="form-label"></label>
+                            <input asp-for="Title" class="form-control" placeholder="Örn. Kanal tedavisi - 26 numara" />
+                            <span asp-validation-for="Title" class="text-danger small"></span>
                         </div>
                         <div class="col-md-12">
                             <label asp-for="Diagnosis" class="form-label"></label>
-                            <input asp-for="Diagnosis" class="form-control" placeholder="Örn. çürük, hassasiyet, implant kontrolü" />
+                            <input asp-for="Diagnosis" class="form-control" />
                             <span asp-validation-for="Diagnosis" class="text-danger small"></span>
                         </div>
                         <div class="col-md-12">
                             <label asp-for="Procedures" class="form-label"></label>
-                            <input asp-for="Procedures" class="form-control" placeholder="Yapılan işlemleri yazın" />
+                            <input asp-for="Procedures" class="form-control" />
                             <span asp-validation-for="Procedures" class="text-danger small"></span>
                         </div>
                         <div class="col-md-12">
                             <label asp-for="Prescriptions" class="form-label"></label>
-                            <input asp-for="Prescriptions" class="form-control" placeholder="Varsa reçete edilen ilaçlar" />
+                            <input asp-for="Prescriptions" class="form-control" />
                             <span asp-validation-for="Prescriptions" class="text-danger small"></span>
                         </div>
                         <div class="col-md-12">
                             <label asp-for="Notes" class="form-label"></label>
-                            <textarea asp-for="Notes" class="form-control" rows="4" placeholder="Tedaviye dair ek notlar"></textarea>
+                            <textarea asp-for="Notes" class="form-control" rows="4"></textarea>
                             <span asp-validation-for="Notes" class="text-danger small"></span>
                         </div>
                     </div>
                 </div>
-
                 <div class="col-lg-5">
                     @{ await Html.RenderPartialAsync("_ToothSelector", Model.SelectedTeeth, new ViewDataDictionary(ViewData) { ["InputName"] = "SelectedTeeth" }); }
                 </div>
@@ -64,7 +67,7 @@
 
             <div class="mt-4 d-flex gap-2">
                 <button type="submit" class="btn btn-primary">Kaydı Oluştur</button>
-                <a asp-controller="Patients" asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+                <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" class="btn btn-outline-secondary">Vazgeç</a>
             </div>
         </form>
     </div>

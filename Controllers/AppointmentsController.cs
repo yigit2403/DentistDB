@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using DentistDB.Data;
+using DentistDB.Extensions;
 using DentistDB.Filters;
 using DentistDB.Models;
 using DentistDB.ViewModels;
@@ -18,7 +19,6 @@ public class AppointmentsController : Controller
         _db = db;
     }
 
-    // GET: /Appointments
     public async Task<IActionResult> Index(string? status, int? patientId)
     {
         var query = _db.Appointments.Include(a => a.Patient).AsQueryable();
@@ -31,28 +31,27 @@ public class AppointmentsController : Controller
 
         ViewBag.StatusFilter = status;
         ViewBag.Statuses = Enum.GetValues<AppointmentStatus>();
-        return View(await query.OrderByDescending(a => a.AppointmentDate).ToListAsync());
+        return View(await query.OrderBy(a => a.AppointmentDate).ToListAsync());
     }
 
-    // GET: /Appointments/Create
     public async Task<IActionResult> Create(int? patientId)
     {
         var vm = new AppointmentFormViewModel
         {
             PatientId = patientId ?? 0,
-            AppointmentDate = DateTime.Today.AddHours(9),
-            Patients = await GetPatientSelectList()
+            AppointmentDate = DateTime.Today.AddHours(9)
         };
+
+        await PopulateFormOptionsAsync(vm);
         return View(vm);
     }
 
-    // POST: /Appointments/Create
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(AppointmentFormViewModel vm)
     {
         if (!ModelState.IsValid)
         {
-            vm.Patients = await GetPatientSelectList();
+            await PopulateFormOptionsAsync(vm);
             return View(vm);
         }
 
@@ -60,46 +59,46 @@ public class AppointmentsController : Controller
         {
             PatientId = vm.PatientId,
             AppointmentDate = vm.AppointmentDate,
-            Purpose = vm.Purpose,
+            Purpose = vm.Purpose?.Trim() ?? string.Empty,
             Status = vm.Status,
-            Notes = vm.Notes,
+            Notes = TreatmentRecordTeethSerializer.Merge(vm.Notes, vm.SelectedTeeth),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
         _db.Appointments.Add(appointment);
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Randevu basariyla olusturuldu.";
+        TempData["Success"] = "Randevu başarıyla oluşturuldu.";
         return RedirectToAction(nameof(Index));
     }
 
-    // GET: /Appointments/Edit/5
     public async Task<IActionResult> Edit(int id)
     {
-        var a = await _db.Appointments.FindAsync(id);
-        if (a == null) return NotFound();
+        var appointment = await _db.Appointments.FindAsync(id);
+        if (appointment == null) return NotFound();
 
         var vm = new AppointmentFormViewModel
         {
-            Id = a.Id,
-            PatientId = a.PatientId,
-            AppointmentDate = a.AppointmentDate,
-            Purpose = a.Purpose,
-            Status = a.Status,
-            Notes = a.Notes,
-            Patients = await GetPatientSelectList()
+            Id = appointment.Id,
+            PatientId = appointment.PatientId,
+            AppointmentDate = appointment.AppointmentDate,
+            Purpose = appointment.Purpose,
+            Status = appointment.Status,
+            Notes = TreatmentRecordTeethSerializer.StripMetadata(appointment.Notes),
+            SelectedTeeth = TreatmentRecordTeethSerializer.ParseSelectedTeeth(appointment.Notes)
         };
+
+        await PopulateFormOptionsAsync(vm);
         return View(vm);
     }
 
-    // POST: /Appointments/Edit/5
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, AppointmentFormViewModel vm)
     {
         if (id != vm.Id) return BadRequest();
         if (!ModelState.IsValid)
         {
-            vm.Patients = await GetPatientSelectList();
+            await PopulateFormOptionsAsync(vm);
             return View(vm);
         }
 
@@ -108,17 +107,16 @@ public class AppointmentsController : Controller
 
         appointment.PatientId = vm.PatientId;
         appointment.AppointmentDate = vm.AppointmentDate;
-        appointment.Purpose = vm.Purpose;
+        appointment.Purpose = vm.Purpose?.Trim() ?? string.Empty;
         appointment.Status = vm.Status;
-        appointment.Notes = vm.Notes;
+        appointment.Notes = TreatmentRecordTeethSerializer.Merge(vm.Notes, vm.SelectedTeeth);
         appointment.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Randevu bilgileri guncellendi.";
+        TempData["Success"] = "Randevu bilgileri güncellendi.";
         return RedirectToAction(nameof(Index));
     }
 
-    // POST: /Appointments/Cancel/5
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Cancel(int id)
     {
@@ -130,6 +128,12 @@ public class AppointmentsController : Controller
         await _db.SaveChangesAsync();
         TempData["Success"] = "Randevu iptal edildi.";
         return RedirectToAction(nameof(Index));
+    }
+
+    private async Task PopulateFormOptionsAsync(AppointmentFormViewModel vm)
+    {
+        vm.Patients = await GetPatientSelectList();
+        vm.PurposeSuggestions = AppointmentPurposeCatalog.Default;
     }
 
     private async Task<IEnumerable<SelectListItem>> GetPatientSelectList()

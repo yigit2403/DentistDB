@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace DentistDB.ViewModels;
 
-public class TreatmentRecordFormViewModel
+public class PreviousOperationFormViewModel
 {
     public int Id { get; set; }
 
@@ -14,6 +14,11 @@ public class TreatmentRecordFormViewModel
     [Display(Name = "Tarih")]
     [DataType(DataType.Date)]
     public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+
+    [Required(ErrorMessage = "İşlem başlığı zorunludur.")]
+    [MaxLength(200, ErrorMessage = "İşlem başlığı en fazla 200 karakter olabilir.")]
+    [Display(Name = "İşlem Başlığı")]
+    public string Title { get; set; } = string.Empty;
 
     [MaxLength(500, ErrorMessage = "Tanı en fazla 500 karakter olabilir.")]
     [Display(Name = "Tanı")]

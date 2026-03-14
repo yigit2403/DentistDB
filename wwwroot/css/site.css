@@ -492,9 +492,219 @@ thead.table-light th {
   background: rgba(255, 107, 129, 0.12);
 }
 
+.alert-light {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--line);
+}
+
 dl dt {
   color: var(--muted);
   font-weight: 600;
+}
+
+.patient-tabs {
+  border-bottom-color: var(--line);
+}
+
+.patient-tabs .nav-link {
+  color: var(--muted);
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 18px 18px 0 0;
+}
+
+.patient-tabs .nav-link.active,
+.patient-tabs .nav-link:hover {
+  color: var(--ink);
+  background: rgba(47, 130, 255, 0.08);
+  border-color: var(--line);
+}
+
+.agenda-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.agenda-day {
+  padding: 1.25rem;
+}
+
+.agenda-day__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.agenda-day__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.agenda-day__count {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.agenda-day__timeline {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.agenda-entry {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(120, 166, 242, 0.12);
+}
+
+.agenda-entry__time {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  color: var(--muted);
+}
+
+.agenda-entry__patient {
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.agenda-entry__purpose {
+  color: var(--muted);
+  margin-top: 0.15rem;
+}
+
+.quick-choice-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.bootstrap-picker .btn {
+  min-width: 84px;
+}
+
+.operation-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.operation-card {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.operation-card__header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.operation-card__date {
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.operation-card__title {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.operation-card__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.operation-card__label {
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 0.35rem;
+}
+
+.operation-teeth {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.tooth-selector {
+  padding: 1.25rem;
+}
+
+.tooth-arch {
+  display: grid;
+  grid-template-columns: 72px 1fr 72px;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 250px;
+  padding: 1rem 0.4rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tooth-arch--lower {
+  min-height: 250px;
+}
+
+.tooth-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.tooth-column--left {
+  align-items: flex-end;
+}
+
+.tooth-arch__center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  border: 2px dashed rgba(120, 166, 242, 0.16);
+  border-radius: 999px;
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.tooth-check {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.tooth-node {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #f2f6fb;
+  color: #314155;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.tooth-check:checked + .tooth-node {
+  background: #54b0ff;
+  color: #04111f;
+  border-color: #c6e8ff;
+  transform: scale(1.05);
 }
 
 @media (max-width: 991.98px) {
@@ -519,6 +729,10 @@ dl dt {
   .account-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .operation-card__grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 767.98px) {
@@ -540,5 +754,19 @@ dl dt {
 
   .hero-panel {
     padding: 24px;
+  }
+
+  .agenda-entry {
+    grid-template-columns: 1fr;
+  }
+
+  .tooth-arch {
+    grid-template-columns: 54px 1fr 54px;
+    min-height: 220px;
+  }
+
+  .tooth-node {
+    width: 38px;
+    height: 38px;
   }
 }

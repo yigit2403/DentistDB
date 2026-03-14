@@ -15,6 +15,7 @@
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Düzenle</a>
+        <a asp-controller="PreviousOperations" asp-action="Index" asp-route-patientId="@Model.Id" class="btn btn-outline-secondary">Önceki İşlemler</a>
         @if (!Model.IsArchived)
         {
             <form asp-action="Archive" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Bu hastayı arşive taşımak istiyor musunuz?')">
@@ -84,7 +85,7 @@
                     <thead class="table-light">
                         <tr>
                             <th>Tarih</th>
-                            <th>Neden</th>
+                            <th>Konu</th>
                             <th>Durum</th>
                             <th class="text-end">İşlem</th>
                         </tr>
@@ -92,57 +93,29 @@
                     <tbody>
                         @foreach (var appt in Model.Appointments)
                         {
+                            var selectedTeeth = TreatmentRecordTeethSerializer.ParseSelectedTeeth(appt.Notes);
+                            var cleanNotes = TreatmentRecordTeethSerializer.StripMetadata(appt.Notes);
                             <tr>
                                 <td>@appt.AppointmentDate.ToString("f")</td>
-                                <td>@appt.Purpose</td>
+                                <td>
+                                    @(string.IsNullOrWhiteSpace(appt.Purpose) ? "Belirtilmedi" : appt.Purpose)
+                                    @if (selectedTeeth.Any())
+                                    {
+                                        <div class="operation-teeth mt-2">
+                                            @foreach (var tooth in selectedTeeth)
+                                            {
+                                                <span class="badge-soft info">@tooth</span>
+                                            }
+                                        </div>
+                                    }
+                                    @if (!string.IsNullOrWhiteSpace(cleanNotes))
+                                    {
+                                        <div class="text-muted small mt-1">@cleanNotes</div>
+                                    }
+                                </td>
                                 <td><span class="badge-soft @(appt.Status == AppointmentStatus.Completed ? "success" : appt.Status == AppointmentStatus.Cancelled ? "neutral" : appt.Status == AppointmentStatus.NoShow ? "warning" : "info")">@appt.Status.GetDisplayName()</span></td>
                                 <td class="text-end">
                                     <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-secondary">Düzenle</a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </div>
-</div>
-
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="section-title">Tedavi Kayıtları</h3>
-        <a asp-controller="TreatmentRecords" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Yeni Kayıt</a>
-    </div>
-    <div class="card-body p-0">
-        @if (!Model.TreatmentRecords.Any())
-        {
-            <p class="empty-state mb-0">Tedavi kaydı bulunmuyor.</p>
-        }
-        else
-        {
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Tarih</th>
-                            <th>Tanı</th>
-                            <th>İşlemler</th>
-                            <th class="text-end">İşlem</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var rec in Model.TreatmentRecords)
-                        {
-                            <tr>
-                                <td>@rec.Date.ToString("d")</td>
-                                <td>@(string.IsNullOrWhiteSpace(rec.Diagnosis) ? "-" : rec.Diagnosis)</td>
-                                <td>@(string.IsNullOrWhiteSpace(rec.Procedures) ? "-" : rec.Procedures)</td>
-                                <td class="text-end">
-                                    <a asp-controller="TreatmentRecords" asp-action="Edit" asp-route-id="@rec.Id" class="btn btn-sm btn-outline-secondary">Düzenle</a>
-                                    <form asp-controller="TreatmentRecords" asp-action="Delete" asp-route-id="@rec.Id" method="post" class="d-inline" onsubmit="return confirm('Bu tedavi kaydını silmek istiyor musunuz?')">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
-                                    </form>
                                 </td>
                             </tr>
                         }
@@ -186,10 +159,6 @@
                                 <td>@((scan.FileSize / 1024.0).ToString("F1")) KB</td>
                                 <td class="text-end">
                                     <a asp-controller="Scans" asp-action="View" asp-route-id="@scan.Id" class="btn btn-sm btn-outline-primary">İncele</a>
-                                    <form asp-controller="Scans" asp-action="Delete" asp-route-id="@scan.Id" method="post" class="d-inline" onsubmit="return confirm('Bu taramayı silmek istiyor musunuz?')">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
-                                    </form>
                                 </td>
                             </tr>
                         }

@@ -1,0 +1,84 @@
+@model DentistDB.Models.Patient
+@{
+    ViewData["Title"] = "Önceki İşlemler";
+}
+
+<div class="page-header">
+    <div>
+        <div class="eyebrow">Hasta Geçmişi</div>
+        <h2 class="page-title">@Model.FullName için Önceki İşlemler</h2>
+        <p class="page-subtitle">Geçmiş ziyaretlerde yapılan tüm işlemler burada listelenir.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-primary">Yeni İşlem Kaydı</a>
+        <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Hasta Detayına Dön</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        @if (!Model.PreviousOperations.Any())
+        {
+            <p class="empty-state mb-0">Bu hasta için önceki işlem kaydı bulunmuyor.</p>
+        }
+        else
+        {
+            <div class="operation-stack">
+                @foreach (var operation in Model.PreviousOperations.OrderByDescending(o => o.Date))
+                {
+                    var selectedTeeth = TeethSelectionSerializer.Parse(operation.SelectedTeethData);
+                    <article class="operation-card">
+                        <div class="operation-card__header">
+                            <div>
+                                <div class="operation-card__date">@operation.Date.ToString("dd MMMM yyyy")</div>
+                                <div class="operation-card__title">@operation.Title</div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a asp-action="Edit" asp-route-id="@operation.Id" class="btn btn-sm btn-outline-secondary">Düzenle</a>
+                                <form asp-action="Delete" asp-route-id="@operation.Id" method="post" onsubmit="return confirm('Bu işlem kaydını silmek istiyor musunuz?')">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="operation-card__grid">
+                            <div>
+                                <div class="operation-card__label">Tanı</div>
+                                <div>@(string.IsNullOrWhiteSpace(operation.Diagnosis) ? "-" : operation.Diagnosis)</div>
+                            </div>
+                            <div>
+                                <div class="operation-card__label">Uygulanan İşlemler</div>
+                                <div>@(string.IsNullOrWhiteSpace(operation.Procedures) ? "-" : operation.Procedures)</div>
+                            </div>
+                            <div>
+                                <div class="operation-card__label">Reçeteler</div>
+                                <div>@(string.IsNullOrWhiteSpace(operation.Prescriptions) ? "-" : operation.Prescriptions)</div>
+                            </div>
+                            <div>
+                                <div class="operation-card__label">Seçilen Dişler</div>
+                                @if (selectedTeeth.Any())
+                                {
+                                    <div class="operation-teeth">
+                                        @foreach (var tooth in selectedTeeth)
+                                        {
+                                            <span class="badge-soft info">@tooth</span>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div>-</div>
+                                }
+                            </div>
+                            <div class="operation-card__full">
+                                <div class="operation-card__label">Notlar</div>
+                                <div>@(string.IsNullOrWhiteSpace(operation.Notes) ? "-" : operation.Notes)</div>
+                            </div>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </div>
+</div>

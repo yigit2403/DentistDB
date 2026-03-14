@@ -3,12 +3,16 @@
     ViewData["Title"] = "Randevular";
     var statusFilter = ViewBag.StatusFilter as string;
     var statuses = ViewBag.Statuses as AppointmentStatus[] ?? Array.Empty<AppointmentStatus>();
+    var groupedAppointments = Model
+        .GroupBy(appt => appt.AppointmentDate.Date)
+        .OrderBy(group => group.Key)
+        .ToList();
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Takvim Yönetimi</div>
-        <h2 class="page-title">Randevu akışını filtreleyin ve düzenleyin.</h2>
+        <div class="eyebrow">Ajanda Görünümü</div>
+        <h2 class="page-title">Randevuları gün gün takip edin.</h2>
     </div>
     <a asp-action="Create" class="btn btn-primary">Yeni Randevu</a>
 </div>
@@ -25,50 +29,58 @@
     </div>
 </div>
 
-@if (!Model.Any())
+@if (!groupedAppointments.Any())
 {
     <div class="alert alert-info">Randevu kaydı bulunamadı.</div>
 }
 else
 {
-    <div class="card">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Tarih ve Saat</th>
-                        <th>Hasta</th>
-                        <th>Neden</th>
-                        <th>Durum</th>
-                        <th>Not</th>
-                        <th class="text-end">İşlem</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var appt in Model)
+    <div class="agenda-grid">
+        @foreach (var day in groupedAppointments)
+        {
+            <section class="agenda-day glass-card">
+                <header class="agenda-day__header">
+                    <div>
+                        <div class="agenda-day__title">@day.Key.ToString("dddd, dd MMMM")</div>
+                        <div class="agenda-day__count">@day.Count() kayıt</div>
+                    </div>
+                </header>
+
+                <div class="agenda-day__timeline">
+                    @foreach (var appt in day.OrderBy(item => item.AppointmentDate))
                     {
-                        <tr>
-                            <td>@appt.AppointmentDate.ToString("f")</td>
-                            <td>
-                                <a asp-controller="Patients" asp-action="Details" asp-route-id="@appt.PatientId" class="text-decoration-none">@appt.Patient?.FullName</a>
-                            </td>
-                            <td>@appt.Purpose</td>
-                            <td><span class="badge-soft @(appt.Status == AppointmentStatus.Completed ? "success" : appt.Status == AppointmentStatus.Cancelled ? "neutral" : appt.Status == AppointmentStatus.NoShow ? "warning" : "info")">@appt.Status.GetDisplayName()</span></td>
-                            <td class="text-muted small">@(string.IsNullOrWhiteSpace(appt.Notes) ? "-" : appt.Notes)</td>
-                            <td class="text-end">
-                                <a asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
-                                @if (appt.Status == AppointmentStatus.Scheduled)
-                                {
-                                    <form asp-action="Cancel" asp-route-id="@appt.Id" method="post" class="d-inline" onsubmit="return confirm('Bu randevuyu iptal etmek istiyor musunuz?')">
-                                        @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">İptal Et</button>
-                                    </form>
-                                }
-                            </td>
-                        </tr>
+                        <article class="agenda-entry">
+                            <div class="agenda-entry__time">
+                                <strong>@appt.AppointmentDate.ToString("HH:mm")</strong>
+                                <span>@appt.Status.GetDisplayName()</span>
+                            </div>
+                            <div class="agenda-entry__content">
+                                <div class="d-flex justify-content-between gap-3 flex-wrap">
+                                    <div>
+                                        <div class="agenda-entry__patient">@appt.Patient?.FullName</div>
+                                        <div class="agenda-entry__purpose">@appt.Purpose</div>
+                                        @if (!string.IsNullOrWhiteSpace(appt.Notes))
+                                        {
+                                            <div class="text-muted small mt-1">@appt.Notes</div>
+                                        }
+                                    </div>
+                                    <div class="d-flex gap-2 align-self-start">
+                                        <a asp-controller="Patients" asp-action="Details" asp-route-id="@appt.PatientId" class="btn btn-sm btn-outline-secondary">Hasta</a>
+                                        <a asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                        @if (appt.Status == AppointmentStatus.Scheduled)
+                                        {
+                                            <form asp-action="Cancel" asp-route-id="@appt.Id" method="post" class="d-inline" onsubmit="return confirm('Bu randevuyu iptal etmek istiyor musunuz?')">
+                                                @Html.AntiForgeryToken()
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">İptal Et</button>
+                                            </form>
+                                        }
+                                    </div>
+                                </div>
+                            </div>
+                        </article>
                     }
-                </tbody>
-            </table>
-        </div>
+                </div>
+            </section>
+        }
     </div>
 }

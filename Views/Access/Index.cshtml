@@ -8,7 +8,6 @@
         <div>
             <div class="eyebrow">Hızlı Giriş</div>
             <h2 class="page-title">Çalışacağınız hesabı seçin.</h2>
-            <p class="page-subtitle">Her hesap için ayrı bir PIN doğrulaması vardır. Yönetici tüm finansal detayları görür, çalışan hesabı ise operasyonları yönetir ancak bakiye ve ödeme detaylarını göremez.</p>
         </div>
     </div>
 </section>
@@ -18,13 +17,8 @@
     {
         var isAdmin = account.Role == AppAccountRole.Admin;
         <div class="account-card glass-card">
-            <div class="eyebrow">@(isAdmin ? "Tam Yetki" : "Sınırlı Finans Erişimi")</div>
+            <div class="eyebrow">@(isAdmin ? "Yönetici" : "Çalışan")</div>
             <h3 class="section-title mt-2">@account.Name</h3>
-            <p class="page-subtitle">
-                @(isAdmin
-                    ? "Hasta, randevu ve tüm fatura/ödeme detaylarına erişir."
-                    : "Hasta ve operasyon ekranlarını kullanır, fatura oluşturur ama parasal detayları görmez.")
-            </p>
 
             <form asp-action="Select" method="post" class="mt-4">
                 @Html.AntiForgeryToken()

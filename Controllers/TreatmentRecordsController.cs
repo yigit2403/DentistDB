@@ -5,6 +5,7 @@ using DentistDB.Data;
 using DentistDB.Filters;
 using DentistDB.Models;
 using DentistDB.ViewModels;
+using DentistDB.Extensions;
 
 namespace DentistDB.Controllers;
 
@@ -18,19 +19,18 @@ public class TreatmentRecordsController : Controller
         _db = db;
     }
 
-    // GET: /TreatmentRecords/Create?patientId=5
     public async Task<IActionResult> Create(int? patientId)
     {
         var vm = new TreatmentRecordFormViewModel
         {
             PatientId = patientId ?? 0,
-            Date = DateOnly.FromDateTime(DateTime.Today),
-            Patients = await GetPatientSelectList()
+            Date = DateOnly.FromDateTime(DateTime.Today)
         };
+
+        vm.Patients = await GetPatientSelectList();
         return View(vm);
     }
 
-    // POST: /TreatmentRecords/Create
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(TreatmentRecordFormViewModel vm)
     {
@@ -47,18 +47,17 @@ public class TreatmentRecordsController : Controller
             Diagnosis = vm.Diagnosis,
             Procedures = vm.Procedures,
             Prescriptions = vm.Prescriptions,
-            Notes = vm.Notes,
+            Notes = TreatmentRecordTeethSerializer.Merge(vm.Notes, vm.SelectedTeeth),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
         _db.TreatmentRecords.Add(record);
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Tedavi kaydi kaydedildi.";
+        TempData["Success"] = "Tedavi kaydı kaydedildi.";
         return RedirectToAction("Details", "Patients", new { id = record.PatientId });
     }
 
-    // GET: /TreatmentRecords/Edit/5
     public async Task<IActionResult> Edit(int id)
     {
         var record = await _db.TreatmentRecords.FindAsync(id);
@@ -72,13 +71,14 @@ public class TreatmentRecordsController : Controller
             Diagnosis = record.Diagnosis,
             Procedures = record.Procedures,
             Prescriptions = record.Prescriptions,
-            Notes = record.Notes,
-            Patients = await GetPatientSelectList()
+            Notes = TreatmentRecordTeethSerializer.StripMetadata(record.Notes),
+            SelectedTeeth = TreatmentRecordTeethSerializer.ParseSelectedTeeth(record.Notes)
         };
+
+        vm.Patients = await GetPatientSelectList();
         return View(vm);
     }
 
-    // POST: /TreatmentRecords/Edit/5
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, TreatmentRecordFormViewModel vm)
     {
@@ -97,15 +97,14 @@ public class TreatmentRecordsController : Controller
         record.Diagnosis = vm.Diagnosis;
         record.Procedures = vm.Procedures;
         record.Prescriptions = vm.Prescriptions;
-        record.Notes = vm.Notes;
+        record.Notes = TreatmentRecordTeethSerializer.Merge(vm.Notes, vm.SelectedTeeth);
         record.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Tedavi kaydi guncellendi.";
+        TempData["Success"] = "Tedavi kaydı güncellendi.";
         return RedirectToAction("Details", "Patients", new { id = record.PatientId });
     }
 
-    // POST: /TreatmentRecords/Delete/5
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
     {
@@ -115,7 +114,7 @@ public class TreatmentRecordsController : Controller
         var patientId = record.PatientId;
         _db.TreatmentRecords.Remove(record);
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Tedavi kaydi silindi.";
+        TempData["Success"] = "Tedavi kaydı silindi.";
         return RedirectToAction("Details", "Patients", new { id = patientId });
     }
 
