@@ -6,7 +6,7 @@
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Fatura Detayi</div>
+        <div class="eyebrow">Fatura Detayı</div>
         <h2 class="page-title">Fatura #@Model.Id</h2>
         <p class="page-subtitle">
             <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" class="text-decoration-none">@Model.Patient?.FullName</a>
@@ -16,10 +16,10 @@
     <div class="d-flex gap-2 flex-wrap">
         @if (canViewFinancials)
         {
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Duzenle</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Düzenle</a>
             @if (Model.Status != InvoiceStatus.Paid && Model.Status != InvoiceStatus.Cancelled)
             {
-                <a asp-action="AddPayment" asp-route-invoiceId="@Model.Id" class="btn btn-success">Odeme Ekle</a>
+                <a asp-action="AddPayment" asp-route-invoiceId="@Model.Id" class="btn btn-success">Ödeme Ekle</a>
             }
         }
     </div>
@@ -33,7 +33,7 @@
             <div class="value">@Model.TotalAmount.ToString("C")</div>
         </article>
         <article class="stats-card glass-card text-center">
-            <div class="label">Odenen</div>
+            <div class="label">Ödenen</div>
             <div class="value text-success">@Model.TotalPaid.ToString("C")</div>
         </article>
         <article class="stats-card glass-card text-center">
@@ -44,7 +44,7 @@
 }
 else
 {
-    <div class="alert alert-info mb-4">Worker hesabi fatura tutarlarini, odemeleri ve bakiyeleri goremez.</div>
+    <div class="alert alert-info mb-4">Çalışan hesabı fatura tutarlarını, ödemeleri ve bakiyeleri göremez.</div>
 }
 
 <div class="row g-4">
@@ -55,7 +55,7 @@ else
                 <dl class="row mb-0">
                     <dt class="col-sm-5">Fatura Tarihi</dt>
                     <dd class="col-sm-7">@Model.InvoiceDate.ToString("D")</dd>
-                    <dt class="col-sm-5">Son Odeme Tarihi</dt>
+                    <dt class="col-sm-5">Son Ödeme Tarihi</dt>
                     <dd class="col-sm-7">@(Model.DueDate?.ToString("D") ?? "-")</dd>
                     <dt class="col-sm-5">Notlar</dt>
                     <dd class="col-sm-7">@(string.IsNullOrWhiteSpace(Model.Notes) ? "-" : Model.Notes)</dd>
@@ -68,11 +68,11 @@ else
     {
         <div class="col-lg-6">
             <div class="card h-100">
-                <div class="card-header"><h3 class="section-title">Odeme Gecmisi</h3></div>
+                <div class="card-header"><h3 class="section-title">Ödeme Geçmişi</h3></div>
                 <div class="card-body p-0">
                     @if (!Model.Payments.Any())
                     {
-                        <p class="empty-state mb-0">Bu fatura icin kayitli odeme yok.</p>
+                        <p class="empty-state mb-0">Bu fatura için kayıtlı ödeme yok.</p>
                     }
                     else
                     {

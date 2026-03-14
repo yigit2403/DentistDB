@@ -13,7 +13,7 @@ public enum ScanType
     Periapical,
     [Display(Name = "Bitewing")]
     Bitewing,
-    [Display(Name = "Diger")]
+    [Display(Name = "Diğer")]
     Other
 }
 

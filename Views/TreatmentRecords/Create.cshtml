@@ -1,12 +1,12 @@
 @model DentistDB.ViewModels.TreatmentRecordFormViewModel
 @{
-    ViewData["Title"] = "Yeni Tedavi Kaydi";
+    ViewData["Title"] = "Yeni Tedavi Kaydı";
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Klinik Kayit</div>
-        <h2 class="page-title">Yeni tedavi kaydi ekleyin.</h2>
+        <div class="eyebrow">Klinik Kayıt</div>
+        <h2 class="page-title">Yeni tedavi kaydı ekleyin.</h2>
     </div>
 </div>
 
@@ -20,7 +20,7 @@
                 <div class="col-md-6">
                     <label asp-for="PatientId" class="form-label"></label>
                     <select asp-for="PatientId" asp-items="Model.Patients" class="form-select">
-                        <option value="">Hasta secin</option>
+                        <option value="">Hasta seçin</option>
                     </select>
                     <span asp-validation-for="PatientId" class="text-danger small"></span>
                 </div>
@@ -48,8 +48,8 @@
             </div>
 
             <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">Kaydi Olustur</button>
-                <a asp-controller="Patients" asp-action="Index" class="btn btn-outline-secondary">Vazgec</a>
+                <button type="submit" class="btn btn-primary">Kaydı Oluştur</button>
+                <a asp-controller="Patients" asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
             </div>
         </form>
     </div>

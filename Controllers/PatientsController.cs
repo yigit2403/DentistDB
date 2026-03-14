@@ -17,7 +17,6 @@ public class PatientsController : Controller
         _db = db;
     }
 
-    // GET: /Patients
     public async Task<IActionResult> Index(string? search, bool showArchived = false)
     {
         var query = _db.Patients.AsQueryable();
@@ -37,7 +36,6 @@ public class PatientsController : Controller
         return View(await query.OrderBy(p => p.FullName).ToListAsync());
     }
 
-    // GET: /Patients/Details/5
     public async Task<IActionResult> Details(int id)
     {
         var patient = await _db.Patients
@@ -52,10 +50,8 @@ public class PatientsController : Controller
         return View(patient);
     }
 
-    // GET: /Patients/Create
     public IActionResult Create() => View(new PatientFormViewModel());
 
-    // POST: /Patients/Create
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(PatientFormViewModel vm)
     {
@@ -76,11 +72,10 @@ public class PatientsController : Controller
 
         _db.Patients.Add(patient);
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Hasta kaydi basariyla olusturuldu.";
+        TempData["Success"] = "Hasta kaydı başarıyla oluşturuldu.";
         return RedirectToAction(nameof(Details), new { id = patient.Id });
     }
 
-    // GET: /Patients/Edit/5
     public async Task<IActionResult> Edit(int id)
     {
         var patient = await _db.Patients.FindAsync(id);
@@ -101,7 +96,6 @@ public class PatientsController : Controller
         return View(vm);
     }
 
-    // POST: /Patients/Edit/5
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, PatientFormViewModel vm)
     {
@@ -122,11 +116,10 @@ public class PatientsController : Controller
         patient.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Hasta bilgileri basariyla guncellendi.";
+        TempData["Success"] = "Hasta bilgileri başarıyla güncellendi.";
         return RedirectToAction(nameof(Details), new { id = patient.Id });
     }
 
-    // POST: /Patients/Archive/5
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Archive(int id)
     {
@@ -136,11 +129,10 @@ public class PatientsController : Controller
         patient.IsArchived = true;
         patient.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
-        TempData["Success"] = $"{patient.FullName} arsive tasindi.";
+        TempData["Success"] = $"{patient.FullName} arşive taşındı.";
         return RedirectToAction(nameof(Index));
     }
 
-    // POST: /Patients/Restore/5
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Restore(int id)
     {
@@ -150,7 +142,7 @@ public class PatientsController : Controller
         patient.IsArchived = false;
         patient.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
-        TempData["Success"] = $"{patient.FullName} kaydi tekrar aktif edildi.";
+        TempData["Success"] = $"{patient.FullName} kaydı tekrar aktif edildi.";
         return RedirectToAction(nameof(Details), new { id = patient.Id });
     }
 }

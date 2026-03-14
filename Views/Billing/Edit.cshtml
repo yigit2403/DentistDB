@@ -1,12 +1,12 @@
 @model DentistDB.ViewModels.InvoiceFormViewModel
 @{
-    ViewData["Title"] = "Fatura Duzenle";
+    ViewData["Title"] = "Fatura Düzenle";
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Fatura Guncelleme</div>
-        <h2 class="page-title">Fatura #@Model.Id bilgilerini duzenleyin.</h2>
+        <div class="eyebrow">Fatura Güncelleme</div>
+        <h2 class="page-title">Fatura #@Model.Id bilgilerini düzenleyin.</h2>
     </div>
 </div>
 
@@ -21,7 +21,7 @@
                 <div class="col-md-6">
                     <label asp-for="PatientId" class="form-label"></label>
                     <select asp-for="PatientId" asp-items="Model.Patients" class="form-select">
-                        <option value="">Hasta secin</option>
+                        <option value="">Hasta seçin</option>
                     </select>
                     <span asp-validation-for="PatientId" class="text-danger small"></span>
                 </div>
@@ -52,8 +52,8 @@
             </div>
 
             <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">Degisiklikleri Kaydet</button>
-                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Vazgec</a>
+                <button type="submit" class="btn btn-primary">Değişiklikleri Kaydet</button>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Vazgeç</a>
             </div>
         </form>
     </div>

@@ -18,7 +18,6 @@ public class BillingController : Controller
         _db = db;
     }
 
-    // GET: /Billing
     public async Task<IActionResult> Index(string? status)
     {
         var query = _db.Invoices
@@ -34,7 +33,6 @@ public class BillingController : Controller
         return View(await query.OrderByDescending(i => i.InvoiceDate).ToListAsync());
     }
 
-    // GET: /Billing/Details/5
     public async Task<IActionResult> Details(int id)
     {
         var invoice = await _db.Invoices
@@ -46,7 +44,6 @@ public class BillingController : Controller
         return View(invoice);
     }
 
-    // GET: /Billing/Create?patientId=5
     public async Task<IActionResult> Create(int? patientId)
     {
         var vm = new InvoiceFormViewModel
@@ -59,7 +56,6 @@ public class BillingController : Controller
         return View(vm);
     }
 
-    // POST: /Billing/Create
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(InvoiceFormViewModel vm)
     {
@@ -83,11 +79,10 @@ public class BillingController : Controller
 
         _db.Invoices.Add(invoice);
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Fatura olusturuldu.";
+        TempData["Success"] = "Fatura oluşturuldu.";
         return RedirectToAction(nameof(Details), new { id = invoice.Id });
     }
 
-    // GET: /Billing/Edit/5
     [AdminOnly]
     public async Task<IActionResult> Edit(int id)
     {
@@ -108,7 +103,6 @@ public class BillingController : Controller
         return View(vm);
     }
 
-    // POST: /Billing/Edit/5
     [HttpPost, ValidateAntiForgeryToken]
     [AdminOnly]
     public async Task<IActionResult> Edit(int id, InvoiceFormViewModel vm)
@@ -132,11 +126,10 @@ public class BillingController : Controller
         invoice.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Fatura guncellendi.";
+        TempData["Success"] = "Fatura güncellendi.";
         return RedirectToAction(nameof(Details), new { id = invoice.Id });
     }
 
-    // GET: /Billing/AddPayment/5 (invoiceId)
     [AdminOnly]
     public async Task<IActionResult> AddPayment(int invoiceId)
     {
@@ -157,7 +150,6 @@ public class BillingController : Controller
         return View(vm);
     }
 
-    // POST: /Billing/AddPayment
     [HttpPost, ValidateAntiForgeryToken]
     [AdminOnly]
     public async Task<IActionResult> AddPayment(PaymentFormViewModel vm)
@@ -189,7 +181,6 @@ public class BillingController : Controller
         };
         _db.Payments.Add(payment);
 
-        // Update invoice status
         var totalPaid = invoice.Payments.Sum(p => p.Amount) + vm.Amount;
         if (totalPaid >= invoice.TotalAmount)
             invoice.Status = InvoiceStatus.Paid;
@@ -198,7 +189,7 @@ public class BillingController : Controller
         invoice.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Odeme kaydi olusturuldu.";
+        TempData["Success"] = "Ödeme kaydı oluşturuldu.";
         return RedirectToAction(nameof(Details), new { id = vm.InvoiceId });
     }
 

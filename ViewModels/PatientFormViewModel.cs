@@ -11,9 +11,11 @@ public class PatientFormViewModel
     public string FullName { get; set; } = string.Empty;
 
     [Phone, MaxLength(20)]
+    [Display(Name = "Telefon")]
     public string? Phone { get; set; }
 
     [EmailAddress, MaxLength(150)]
+    [Display(Name = "E-posta")]
     public string? Email { get; set; }
 
     [Display(Name = "Doğum Tarihi")]

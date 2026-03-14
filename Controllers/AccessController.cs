@@ -1,6 +1,8 @@
 using DentistDB.Extensions;
 using DentistDB.Models;
+using DentistDB.ViewModels;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 
 namespace DentistDB.Controllers;
 
@@ -19,26 +21,45 @@ public class AccessController : Controller
             return RedirectToAction("Index", "Home");
         }
 
-        ViewBag.ReturnUrl = returnUrl;
-        return View(AppAccounts.All);
+        return View(new AccessSelectionViewModel
+        {
+            Accounts = AppAccounts.All,
+            ReturnUrl = returnUrl
+        });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public IActionResult Select(string accountKey, string? returnUrl = null)
+    public IActionResult Select(
+        AccessSelectionViewModel model,
+        [FromServices] IOptions<AccessPinOptions> pinOptions)
     {
-        var account = AppAccounts.Find(accountKey);
+        model.Accounts = AppAccounts.All;
+
+        var account = AppAccounts.Find(model.AccountKey);
         if (account == null)
         {
             TempData["Error"] = "Geçersiz hesap seçimi.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(Index), new { returnUrl = model.ReturnUrl });
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return View(nameof(Index), model);
+        }
+
+        var expectedPin = pinOptions.Value.GetPinFor(account.Key);
+        if (!string.Equals(model.Pin, expectedPin, StringComparison.Ordinal))
+        {
+            ModelState.AddModelError(nameof(model.Pin), "Girilen PIN hatalı.");
+            return View(nameof(Index), model);
         }
 
         HttpContext.SignInAccount(account.Key);
 
-        if (!string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl))
+        if (!string.IsNullOrWhiteSpace(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
         {
-            return Redirect(returnUrl);
+            return Redirect(model.ReturnUrl);
         }
 
         return RedirectToAction("Index", "Home");

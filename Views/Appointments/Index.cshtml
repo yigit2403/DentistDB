@@ -7,8 +7,8 @@
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Takvim Yonetimi</div>
-        <h2 class="page-title">Randevu akisini filtreleyin ve duzenleyin.</h2>
+        <div class="eyebrow">Takvim Yönetimi</div>
+        <h2 class="page-title">Randevu akışını filtreleyin ve düzenleyin.</h2>
     </div>
     <a asp-action="Create" class="btn btn-primary">Yeni Randevu</a>
 </div>
@@ -16,7 +16,7 @@
 <div class="card mb-4">
     <div class="card-body">
         <div class="filter-strip">
-            <a asp-action="Index" class="btn btn-sm @(string.IsNullOrEmpty(statusFilter) ? "btn-primary" : "btn-outline-secondary")">Tumu</a>
+            <a asp-action="Index" class="btn btn-sm @(string.IsNullOrEmpty(statusFilter) ? "btn-primary" : "btn-outline-secondary")">Tümü</a>
             @foreach (var status in statuses)
             {
                 <a asp-action="Index" asp-route-status="@status" class="btn btn-sm @(statusFilter == status.ToString() ? "btn-primary" : "btn-outline-secondary")">@status.GetDisplayName()</a>
@@ -27,7 +27,7 @@
 
 @if (!Model.Any())
 {
-    <div class="alert alert-info">Randevu kaydi bulunamadi.</div>
+    <div class="alert alert-info">Randevu kaydı bulunamadı.</div>
 }
 else
 {
@@ -41,7 +41,7 @@ else
                         <th>Neden</th>
                         <th>Durum</th>
                         <th>Not</th>
-                        <th class="text-end">Islem</th>
+                        <th class="text-end">İşlem</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -56,12 +56,12 @@ else
                             <td><span class="badge-soft @(appt.Status == AppointmentStatus.Completed ? "success" : appt.Status == AppointmentStatus.Cancelled ? "neutral" : appt.Status == AppointmentStatus.NoShow ? "warning" : "info")">@appt.Status.GetDisplayName()</span></td>
                             <td class="text-muted small">@(string.IsNullOrWhiteSpace(appt.Notes) ? "-" : appt.Notes)</td>
                             <td class="text-end">
-                                <a asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-primary">Duzenle</a>
+                                <a asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
                                 @if (appt.Status == AppointmentStatus.Scheduled)
                                 {
                                     <form asp-action="Cancel" asp-route-id="@appt.Id" method="post" class="d-inline" onsubmit="return confirm('Bu randevuyu iptal etmek istiyor musunuz?')">
                                         @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-outline-danger">Iptal Et</button>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger">İptal Et</button>
                                     </form>
                                 }
                             </td>

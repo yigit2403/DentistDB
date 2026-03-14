@@ -19,26 +19,26 @@
     <div class="app-shell">
         <aside class="app-sidebar @(isSignedIn ? string.Empty : "d-none")">
             <a class="brand-mark" asp-controller="Home" asp-action="Index">
-                <span class="brand-kicker">Klinik Yonetimi</span>
+                <span class="brand-kicker">Klinik Yönetimi</span>
                 <strong>DentistDB</strong>
-                <small>Dis klinigi operasyon paneli</small>
+                <small>Diş kliniği operasyon paneli</small>
             </a>
 
             <nav class="nav-cluster">
-                <div class="nav-caption">Genel Bakis</div>
+                <div class="nav-caption">Genel Bakış</div>
                 <a class="nav-pill @(currentController == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">Kontrol Paneli</a>
 
-                <div class="nav-caption">Hasta Yonetimi</div>
-                <a class="nav-pill @(currentController == "Patients" && currentAction == "Index" ? "active" : "")" asp-controller="Patients" asp-action="Index">Tum Hastalar</a>
+                <div class="nav-caption">Hasta Yönetimi</div>
+                <a class="nav-pill @(currentController == "Patients" && currentAction == "Index" ? "active" : "")" asp-controller="Patients" asp-action="Index">Tüm Hastalar</a>
                 <a class="nav-pill @(currentController == "Patients" && currentAction == "Create" ? "active" : "")" asp-controller="Patients" asp-action="Create">Yeni Hasta</a>
 
                 <div class="nav-caption">Takvim</div>
                 <a class="nav-pill @(currentController == "Appointments" && currentAction == "Index" ? "active" : "")" asp-controller="Appointments" asp-action="Index">Randevular</a>
-                <a class="nav-pill @(currentController == "Appointments" && currentAction == "Create" ? "active" : "")" asp-controller="Appointments" asp-action="Create">Randevu Olustur</a>
+                <a class="nav-pill @(currentController == "Appointments" && currentAction == "Create" ? "active" : "")" asp-controller="Appointments" asp-action="Create">Randevu Oluştur</a>
 
                 <div class="nav-caption">Finans</div>
                 <a class="nav-pill @(currentController == "Billing" && currentAction == "Index" ? "active" : "")" asp-controller="Billing" asp-action="Index">Faturalar</a>
-                <a class="nav-pill @(currentController == "Billing" && currentAction == "Create" ? "active" : "")" asp-controller="Billing" asp-action="Create">Fatura Olustur</a>
+                <a class="nav-pill @(currentController == "Billing" && currentAction == "Create" ? "active" : "")" asp-controller="Billing" asp-action="Create">Fatura Oluştur</a>
             </nav>
         </aside>
 
@@ -53,11 +53,11 @@
                     {
                         <div class="topbar-user">
                             <strong>@currentAccount!.Name</strong>
-                            <span>@(canViewFinancials ? "Admin" : "Worker")</span>
+                            <span>@(canViewFinancials ? "Yönetici" : "Çalışan")</span>
                         </div>
                         <form asp-controller="Access" asp-action="Logout" method="post" class="m-0">
                             @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-outline-light">Hesap Degistir</button>
+                            <button type="submit" class="btn btn-outline-light">Hesap Değiştir</button>
                         </form>
                     }
                 </div>

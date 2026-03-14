@@ -1,9 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using DentistDB.Data;
+using DentistDB.Models;
 using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<AccessPinOptions>(
+    builder.Configuration.GetSection(AccessPinOptions.SectionName));
 
 // Database – SQLite in development, MySQL in production
 if (builder.Environment.IsDevelopment())

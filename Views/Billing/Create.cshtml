@@ -5,8 +5,8 @@
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Fatura Olustur</div>
-        <h2 class="page-title">Yeni tahsilat kaydi acin.</h2>
+        <div class="eyebrow">Fatura Oluştur</div>
+        <h2 class="page-title">Yeni tahsilat kaydı açın.</h2>
     </div>
 </div>
 
@@ -20,7 +20,7 @@
                 <div class="col-md-6">
                     <label asp-for="PatientId" class="form-label"></label>
                     <select asp-for="PatientId" asp-items="Model.Patients" class="form-select">
-                        <option value="">Hasta secin</option>
+                        <option value="">Hasta seçin</option>
                     </select>
                     <span asp-validation-for="PatientId" class="text-danger small"></span>
                 </div>
@@ -51,8 +51,8 @@
             </div>
 
             <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">Faturayi Olustur</button>
-                <a asp-action="Index" class="btn btn-outline-secondary">Vazgec</a>
+                <button type="submit" class="btn btn-primary">Faturayı Oluştur</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
             </div>
         </form>
     </div>

@@ -6,27 +6,27 @@
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Hasta Dosyasi</div>
+        <div class="eyebrow">Hasta Dosyası</div>
         <h2 class="page-title">@Model.FullName</h2>
         <p class="page-subtitle">
-            Kayit tarihi @Model.CreatedAt.ToString("MMMM yyyy")
-            <span class="badge-soft @(Model.IsArchived ? "neutral" : "success") ms-2">@(Model.IsArchived ? "Arsivde" : "Aktif")</span>
+            Kayıt tarihi @Model.CreatedAt.ToString("MMMM yyyy")
+            <span class="badge-soft @(Model.IsArchived ? "neutral" : "success") ms-2">@(Model.IsArchived ? "Arşivde" : "Aktif")</span>
         </p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Duzenle</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Düzenle</a>
         @if (!Model.IsArchived)
         {
-            <form asp-action="Archive" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Bu hastayi arsive tasimak istiyor musunuz?')">
+            <form asp-action="Archive" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Bu hastayı arşive taşımak istiyor musunuz?')">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-outline-secondary">Arsivle</button>
+                <button type="submit" class="btn btn-outline-secondary">Arşivle</button>
             </form>
         }
         else
         {
             <form asp-action="Restore" asp-route-id="@Model.Id" method="post">
                 @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-success">Geri Yukle</button>
+                <button type="submit" class="btn btn-success">Geri Yükle</button>
             </form>
         }
     </div>
@@ -35,21 +35,21 @@
 @if (!string.IsNullOrEmpty(Model.MedicalAlerts))
 {
     <div class="alert alert-danger">
-        <strong>Tibbi Uyarilar:</strong> @Model.MedicalAlerts
+        <strong>Tıbbi Uyarılar:</strong> @Model.MedicalAlerts
     </div>
 }
 
 <div class="row g-4 mb-4">
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header"><h3 class="section-title">Iletisim Bilgileri</h3></div>
+            <div class="card-header"><h3 class="section-title">İletişim Bilgileri</h3></div>
             <div class="card-body">
                 <dl class="row mb-0">
                     <dt class="col-sm-4">Telefon</dt>
                     <dd class="col-sm-8">@(Model.Phone ?? "-")</dd>
                     <dt class="col-sm-4">E-posta</dt>
                     <dd class="col-sm-8">@(Model.Email ?? "-")</dd>
-                    <dt class="col-sm-4">Dogum Tarihi</dt>
+                    <dt class="col-sm-4">Doğum Tarihi</dt>
                     <dd class="col-sm-8">@(Model.BirthDate?.ToString("D") ?? "-")</dd>
                     <dt class="col-sm-4">Adres</dt>
                     <dd class="col-sm-8">@(Model.Address ?? "-")</dd>
@@ -61,7 +61,7 @@
         <div class="card h-100">
             <div class="card-header"><h3 class="section-title">Klinik Notlar</h3></div>
             <div class="card-body">
-                <p class="mb-0">@(string.IsNullOrWhiteSpace(Model.Notes) ? "Bu hasta icin not eklenmemis." : Model.Notes)</p>
+                <p class="mb-0">@(string.IsNullOrWhiteSpace(Model.Notes) ? "Bu hasta için not eklenmemiş." : Model.Notes)</p>
             </div>
         </div>
     </div>
@@ -86,7 +86,7 @@
                             <th>Tarih</th>
                             <th>Neden</th>
                             <th>Durum</th>
-                            <th class="text-end">Islem</th>
+                            <th class="text-end">İşlem</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -97,7 +97,7 @@
                                 <td>@appt.Purpose</td>
                                 <td><span class="badge-soft @(appt.Status == AppointmentStatus.Completed ? "success" : appt.Status == AppointmentStatus.Cancelled ? "neutral" : appt.Status == AppointmentStatus.NoShow ? "warning" : "info")">@appt.Status.GetDisplayName()</span></td>
                                 <td class="text-end">
-                                    <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-secondary">Duzenle</a>
+                                    <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-secondary">Düzenle</a>
                                 </td>
                             </tr>
                         }
@@ -110,13 +110,13 @@
 
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="section-title">Tedavi Kayitlari</h3>
-        <a asp-controller="TreatmentRecords" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Yeni Kayit</a>
+        <h3 class="section-title">Tedavi Kayıtları</h3>
+        <a asp-controller="TreatmentRecords" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Yeni Kayıt</a>
     </div>
     <div class="card-body p-0">
         @if (!Model.TreatmentRecords.Any())
         {
-            <p class="empty-state mb-0">Tedavi kaydi bulunmuyor.</p>
+            <p class="empty-state mb-0">Tedavi kaydı bulunmuyor.</p>
         }
         else
         {
@@ -125,9 +125,9 @@
                     <thead class="table-light">
                         <tr>
                             <th>Tarih</th>
-                            <th>Tani</th>
-                            <th>Islemler</th>
-                            <th class="text-end">Islem</th>
+                            <th>Tanı</th>
+                            <th>İşlemler</th>
+                            <th class="text-end">İşlem</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -138,8 +138,8 @@
                                 <td>@(string.IsNullOrWhiteSpace(rec.Diagnosis) ? "-" : rec.Diagnosis)</td>
                                 <td>@(string.IsNullOrWhiteSpace(rec.Procedures) ? "-" : rec.Procedures)</td>
                                 <td class="text-end">
-                                    <a asp-controller="TreatmentRecords" asp-action="Edit" asp-route-id="@rec.Id" class="btn btn-sm btn-outline-secondary">Duzenle</a>
-                                    <form asp-controller="TreatmentRecords" asp-action="Delete" asp-route-id="@rec.Id" method="post" class="d-inline" onsubmit="return confirm('Bu tedavi kaydini silmek istiyor musunuz?')">
+                                    <a asp-controller="TreatmentRecords" asp-action="Edit" asp-route-id="@rec.Id" class="btn btn-sm btn-outline-secondary">Düzenle</a>
+                                    <form asp-controller="TreatmentRecords" asp-action="Delete" asp-route-id="@rec.Id" method="post" class="d-inline" onsubmit="return confirm('Bu tedavi kaydını silmek istiyor musunuz?')">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
                                     </form>
@@ -155,13 +155,13 @@
 
 <div class="card mb-4">
     <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="section-title">Goruntuler ve Taramalar</h3>
-        <a asp-controller="Scans" asp-action="Upload" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Tarama Yukle</a>
+        <h3 class="section-title">Görüntüler ve Taramalar</h3>
+        <a asp-controller="Scans" asp-action="Upload" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Tarama Yükle</a>
     </div>
     <div class="card-body p-0">
         @if (!Model.Scans.Any())
         {
-            <p class="empty-state mb-0">Yuklenmis tarama bulunmuyor.</p>
+            <p class="empty-state mb-0">Yüklenmiş tarama bulunmuyor.</p>
         }
         else
         {
@@ -171,9 +171,9 @@
                         <tr>
                             <th>Tarih</th>
                             <th>Dosya</th>
-                            <th>Tur</th>
+                            <th>Tür</th>
                             <th>Boyut</th>
-                            <th class="text-end">Islem</th>
+                            <th class="text-end">İşlem</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -185,8 +185,8 @@
                                 <td><span class="badge-soft info">@scan.ScanType.GetDisplayName()</span></td>
                                 <td>@((scan.FileSize / 1024.0).ToString("F1")) KB</td>
                                 <td class="text-end">
-                                    <a asp-controller="Scans" asp-action="View" asp-route-id="@scan.Id" class="btn btn-sm btn-outline-primary">Incele</a>
-                                    <form asp-controller="Scans" asp-action="Delete" asp-route-id="@scan.Id" method="post" class="d-inline" onsubmit="return confirm('Bu taramayi silmek istiyor musunuz?')">
+                                    <a asp-controller="Scans" asp-action="View" asp-route-id="@scan.Id" class="btn btn-sm btn-outline-primary">İncele</a>
+                                    <form asp-controller="Scans" asp-action="Delete" asp-route-id="@scan.Id" method="post" class="d-inline" onsubmit="return confirm('Bu taramayı silmek istiyor musunuz?')">
                                         @Html.AntiForgeryToken()
                                         <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
                                     </form>
@@ -208,7 +208,7 @@
     <div class="card-body p-0">
         @if (!Model.Invoices.Any())
         {
-            <p class="empty-state mb-0">Fatura kaydi bulunmuyor.</p>
+            <p class="empty-state mb-0">Fatura kaydı bulunmuyor.</p>
         }
         else
         {
@@ -220,11 +220,11 @@
                             @if (canViewFinancials)
                             {
                                 <th>Toplam</th>
-                                <th>Odenen</th>
+                                <th>Ödenen</th>
                                 <th>Kalan</th>
                             }
                             <th>Durum</th>
-                            <th class="text-end">Islem</th>
+                            <th class="text-end">İşlem</th>
                         </tr>
                     </thead>
                     <tbody>

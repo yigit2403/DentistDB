@@ -8,8 +8,8 @@
 <div class="page-header">
     <div>
         <div class="eyebrow">Hasta Listesi</div>
-        <h2 class="page-title">Tum hasta kartlarini hizlica yonetin.</h2>
-        <p class="page-subtitle">Arama, arsiv filtreleme ve detaylara gecis tek ekranda.</p>
+        <h2 class="page-title">Tüm hasta kartlarını hızlıca yönetin.</h2>
+        <p class="page-subtitle">Arama, arşiv filtreleme ve detaylara geçiş tek ekranda.</p>
     </div>
     <a asp-action="Create" class="btn btn-primary">Yeni Hasta</a>
 </div>
@@ -24,7 +24,7 @@
             <div class="col-lg-3">
                 <div class="form-check pt-4">
                     <input type="checkbox" name="showArchived" value="true" class="form-check-input" id="chkArchived" @(showArchived ? "checked" : "") onchange="this.form.submit()" />
-                    <label class="form-check-label" for="chkArchived">Arsivlenenleri goster</label>
+                    <label class="form-check-label" for="chkArchived">Arşivlenenleri göster</label>
                 </div>
             </div>
             <div class="col-lg-2 d-flex gap-2">
@@ -40,7 +40,7 @@
 
 @if (!Model.Any())
 {
-    <div class="alert alert-info">Aramaniza uygun hasta bulunamadi.</div>
+    <div class="alert alert-info">Aramanıza uygun hasta bulunamadı.</div>
 }
 else
 {
@@ -52,10 +52,10 @@ else
                         <th>Hasta</th>
                         <th>Telefon</th>
                         <th>E-posta</th>
-                        <th>Dogum Tarihi</th>
-                        <th>Uyarilar</th>
+                        <th>Doğum Tarihi</th>
+                        <th>Uyarılar</th>
                         <th>Durum</th>
-                        <th class="text-end">Islem</th>
+                        <th class="text-end">İşlem</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -71,7 +71,7 @@ else
                             <td>
                                 @if (!string.IsNullOrEmpty(patient.MedicalAlerts))
                                 {
-                                    <span class="badge-soft danger">Tibbi Uyari</span>
+                                    <span class="badge-soft danger">Tıbbi Uyarı</span>
                                 }
                                 else
                                 {
@@ -80,11 +80,11 @@ else
                             </td>
                             <td>
                                 <span class="badge-soft @(patient.IsArchived ? "neutral" : "success")">
-                                    @(patient.IsArchived ? "Arsivde" : "Aktif")
+                                    @(patient.IsArchived ? "Arşivde" : "Aktif")
                                 </span>
                             </td>
                             <td class="text-end">
-                                <a asp-action="Edit" asp-route-id="@patient.Id" class="btn btn-sm btn-outline-primary">Duzenle</a>
+                                <a asp-action="Edit" asp-route-id="@patient.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
                             </td>
                         </tr>
                     }
