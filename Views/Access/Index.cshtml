@@ -1,0 +1,38 @@
+@model IReadOnlyList<DentistDB.Models.AppAccount>
+@{
+    ViewData["Title"] = "Hesap Secimi";
+    var returnUrl = ViewBag.ReturnUrl as string;
+}
+
+<section class="hero-panel glass-card">
+    <div class="page-header mb-0">
+        <div>
+            <div class="eyebrow">Hizli Giris</div>
+            <h2 class="page-title">Calisacaginiz hesabi secin.</h2>
+            <p class="page-subtitle">Bu uygulamada klasik giris ekrani yok. Admin tum finansal detaylari gorur, worker ise fatura ekleyebilir ama bakiye ve odeme detaylarini goremez.</p>
+        </div>
+    </div>
+</section>
+
+<div class="account-grid">
+    @foreach (var account in Model)
+    {
+        var isAdmin = account.Role == AppAccountRole.Admin;
+        <div class="account-card glass-card">
+            <div class="eyebrow">@(isAdmin ? "Tam Yetki" : "Sinirli Finans Erisimi")</div>
+            <h3 class="section-title mt-2">@account.Name</h3>
+            <p class="page-subtitle">
+                @(isAdmin
+                    ? "Hasta, randevu ve tum fatura/odeme detaylarina erisir."
+                    : "Hasta ve operasyon ekranlarini kullanir, fatura olusturur ama parasal detaylari gormez.")
+            </p>
+
+            <form asp-action="Select" method="post" class="mt-3">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="accountKey" value="@account.Key" />
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                <button type="submit" class="btn @(isAdmin ? "btn-primary" : "btn-outline-primary") w-100">Bu Hesapla Devam Et</button>
+            </form>
+        </div>
+    }
+</div>
