@@ -4,6 +4,7 @@ using DentistDB.Data;
 using DentistDB.Filters;
 using DentistDB.Models;
 using DentistDB.ViewModels;
+using Microsoft.Extensions.Options;
 
 namespace DentistDB.Controllers;
 
@@ -12,18 +13,18 @@ public class ScansController : Controller
 {
     private readonly ApplicationDbContext _db;
     private readonly IWebHostEnvironment _env;
-    private readonly IConfiguration _config;
+    private readonly string _scanStoragePath;
 
     private static readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".pdf" };
     private static readonly string[] AllowedContentTypes = {
         "image/jpeg", "image/png", "application/pdf"
     };
 
-    public ScansController(ApplicationDbContext db, IWebHostEnvironment env, IConfiguration config)
+    public ScansController(ApplicationDbContext db, IWebHostEnvironment env, IOptions<StorageOptions> storageOptions)
     {
         _db = db;
         _env = env;
-        _config = config;
+        _scanStoragePath = DeploymentPaths.ResolveScanStoragePath(storageOptions.Value.ScanStoragePath, env);
     }
 
     // GET: /Scans/Upload?patientId=5
@@ -69,11 +70,10 @@ public class ScansController : Controller
         }
 
         // Store the file
-        var uploadFolder = Path.Combine(_env.WebRootPath, "uploads", "scans");
-        Directory.CreateDirectory(uploadFolder);
+        Directory.CreateDirectory(_scanStoragePath);
 
         var storedFileName = $"{Guid.NewGuid()}{ext}";
-        var filePath = Path.Combine(uploadFolder, storedFileName);
+        var filePath = Path.Combine(_scanStoragePath, storedFileName);
 
         await using (var stream = new FileStream(filePath, FileMode.Create))
         {
@@ -84,7 +84,7 @@ public class ScansController : Controller
         {
             PatientId = vm.PatientId,
             FileName = vm.File.FileName,
-            StoredPath = Path.Combine("uploads", "scans", storedFileName),
+            StoredPath = storedFileName,
             ContentType = vm.File.ContentType,
             FileSize = vm.File.Length,
             ScanType = vm.ScanType,
@@ -108,6 +108,22 @@ public class ScansController : Controller
         return View(scan);
     }
 
+    // GET: /Scans/Content/5
+    public async Task<IActionResult> ContentFile(int id, bool download = false)
+    {
+        var scan = await _db.Scans.FindAsync(id);
+        if (scan == null) return NotFound();
+
+        var filePath = DeploymentPaths.ResolveStoredScanPath(_env, _scanStoragePath, scan.StoredPath);
+        if (!System.IO.File.Exists(filePath))
+        {
+            return NotFound();
+        }
+
+        var downloadName = download ? scan.FileName : null;
+        return PhysicalFile(filePath, scan.ContentType, downloadName, enableRangeProcessing: true);
+    }
+
     // POST: /Scans/Delete/5
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Delete(int id)
@@ -118,7 +134,7 @@ public class ScansController : Controller
         var patientId = scan.PatientId;
 
         // Delete physical file
-        var filePath = Path.Combine(_env.WebRootPath, scan.StoredPath);
+        var filePath = DeploymentPaths.ResolveStoredScanPath(_env, _scanStoragePath, scan.StoredPath);
         if (System.IO.File.Exists(filePath))
             System.IO.File.Delete(filePath);
 

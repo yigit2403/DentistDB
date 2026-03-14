@@ -1,27 +1,35 @@
+using Microsoft.AspNetCore.Localization;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using DentistDB.Data;
 using DentistDB.Models;
-using Microsoft.AspNetCore.Localization;
 using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.Configure<AccessPinOptions>(
-    builder.Configuration.GetSection(AccessPinOptions.SectionName));
+builder.Host.UseWindowsService();
 
-// Database – SQLite in development, MySQL in production
-if (builder.Environment.IsDevelopment())
-{
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlite("Data Source=DentistDB_dev.db"));
-}
-else
-{
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection")
-        ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseMySql(connectionString, new MySqlServerVersion(new Version(8, 0, 21))));
-}
+builder.Services
+    .AddOptions<AccessPinOptions>()
+    .Bind(builder.Configuration.GetSection(AccessPinOptions.SectionName))
+    .Validate(
+        options => builder.Environment.IsDevelopment() || options.UsesSecurePins(),
+        "Configure non-default access pins for production.")
+    .ValidateOnStart();
+
+builder.Services
+    .AddOptions<StorageOptions>()
+    .Bind(builder.Configuration.GetSection(StorageOptions.SectionName));
+
+var sqliteConnectionString = DeploymentPaths.ResolveSqliteConnectionString(builder.Configuration, builder.Environment);
+var scanStoragePath = DeploymentPaths.ResolveScanStoragePath(builder.Configuration, builder.Environment);
+var dataProtectionKeysPath = DeploymentPaths.ResolveDataProtectionKeysPath(builder.Configuration, builder.Environment);
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlite(sqliteConnectionString));
+builder.Services
+    .AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath));
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddLocalization();
@@ -35,12 +43,12 @@ builder.Services.AddSession(options =>
 builder.Services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(options =>
 {
     var provider = options.ModelBindingMessageProvider;
-    provider.SetValueIsInvalidAccessor(_ => "Geçersiz bir değer girdiniz.");
-    provider.SetValueMustBeANumberAccessor(_ => "Bu alan sayısal olmalıdır.");
+    provider.SetValueIsInvalidAccessor(_ => "GeÃ§ersiz bir deÄŸer girdiniz.");
+    provider.SetValueMustBeANumberAccessor(_ => "Bu alan sayÄ±sal olmalÄ±dÄ±r.");
     provider.SetMissingBindRequiredValueAccessor(_ => "Bu alan zorunludur.");
-    provider.SetAttemptedValueIsInvalidAccessor((value, fieldName) => $"{fieldName} alanına girilen '{value}' değeri geçerli değildir.");
+    provider.SetAttemptedValueIsInvalidAccessor((value, fieldName) => $"{fieldName} alanÄ±na girilen '{value}' deÄŸeri geÃ§erli deÄŸildir.");
     provider.SetMissingKeyOrValueAccessor(() => "Bu alan zorunludur.");
-    provider.SetUnknownValueIsInvalidAccessor(_ => "Geçersiz bir seçim yaptınız.");
+    provider.SetUnknownValueIsInvalidAccessor(_ => "GeÃ§ersiz bir seÃ§im yaptÄ±nÄ±z.");
 });
 
 var app = builder.Build();
@@ -53,22 +61,12 @@ app.UseRequestLocalization(new RequestLocalizationOptions
     SupportedUICultures = supportedCultures
 });
 
-// Seed data
 using (var scope = app.Services.CreateScope())
 {
     try
     {
         var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        if (app.Environment.IsDevelopment())
-        {
-            // SQLite: use EnsureCreated (bypasses MySQL-specific migrations)
-            db.Database.EnsureCreated();
-        }
-        else
-        {
-            // MySQL production: apply EF migrations
-            db.Database.Migrate();
-        }
+        db.Database.EnsureCreated();
         await DatabaseSchemaInitializer.EnsureAsync(db);
         await SeedData.InitializeAsync(scope.ServiceProvider);
     }
@@ -79,9 +77,7 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-// Ensure scan upload directory exists
-var scanPath = Path.Combine(builder.Environment.WebRootPath, "uploads", "scans");
-Directory.CreateDirectory(scanPath);
+Directory.CreateDirectory(scanStoragePath);
 
 if (!app.Environment.IsDevelopment())
 {
@@ -100,4 +96,3 @@ app.MapControllerRoute(
     pattern: "{controller=Access}/{action=Index}/{id?}");
 
 app.Run();
-

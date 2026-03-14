@@ -1,20 +1,21 @@
 @model DentistDB.Models.Scan
 @{
-    ViewData["Title"] = "Tarama İncele";
-    var fileUrl = "~/" + Model.StoredPath.Replace("\\", "/");
+    ViewData["Title"] = "Tarama Ä°ncele";
+    var fileUrl = Url.Action("ContentFile", "Scans", new { id = Model.Id });
+    var downloadUrl = Url.Action("ContentFile", "Scans", new { id = Model.Id, download = true });
     var isPdf = Model.ContentType == "application/pdf";
     var isImage = Model.ContentType.StartsWith("image/");
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Tarama Görüntüleyici</div>
+        <div class="eyebrow">Tarama GÃ¶rÃ¼ntÃ¼leyici</div>
         <h2 class="page-title">@Model.FileName</h2>
         <p class="page-subtitle">@Model.Patient?.FullName - @Model.ScanDate.ToString("D") - <span class="badge-soft info">@Model.ScanType.GetDisplayName()</span></p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a href="@Url.Content(fileUrl)" download="@Model.FileName" class="btn btn-outline-primary">İndir</a>
-        <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" class="btn btn-outline-secondary">Hasta Dosyasına Dön</a>
+        <a href="@downloadUrl" class="btn btn-outline-primary">Ä°ndir</a>
+        <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" class="btn btn-outline-secondary">Hasta DosyasÄ±na DÃ¶n</a>
     </div>
 </div>
 
@@ -29,22 +30,22 @@
     <div class="card-body text-center p-3">
         @if (isImage)
         {
-            <img src="@Url.Content(fileUrl)" alt="@Model.FileName" class="img-fluid rounded" style="max-height: 80vh;" />
+            <img src="@fileUrl" alt="@Model.FileName" class="img-fluid rounded" style="max-height: 80vh;" />
         }
         else if (isPdf)
         {
-            <iframe src="@Url.Content(fileUrl)" style="width:100%; height:80vh; border:none;"></iframe>
+            <iframe src="@fileUrl" style="width:100%; height:80vh; border:none;"></iframe>
         }
         else
         {
-            <p class="empty-state mb-0">Önizleme kullanılamıyor. Dosyayı indirerek inceleyebilirsiniz.</p>
+            <p class="empty-state mb-0">Ã–nizleme kullanÄ±lamÄ±yor. DosyayÄ± indirerek inceleyebilirsiniz.</p>
         }
     </div>
 </div>
 
 <div class="mt-4">
-    <form asp-controller="Scans" asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Bu taramayı kalıcı olarak silmek istiyor musunuz?')">
+    <form asp-controller="Scans" asp-action="Delete" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Bu taramayÄ± kalÄ±cÄ± olarak silmek istiyor musunuz?')">
         @Html.AntiForgeryToken()
-        <button type="submit" class="btn btn-outline-danger">Taramayı Sil</button>
+        <button type="submit" class="btn btn-outline-danger">TaramayÄ± Sil</button>
     </form>
 </div>
