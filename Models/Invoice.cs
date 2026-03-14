@@ -5,10 +5,15 @@ namespace DentistDB.Models;
 
 public enum InvoiceStatus
 {
+    [Display(Name = "Taslak")]
     Draft,
+    [Display(Name = "Kesildi")]
     Issued,
+    [Display(Name = "Kısmen Ödendi")]
     PartiallyPaid,
+    [Display(Name = "Ödendi")]
     Paid,
+    [Display(Name = "İptal Edildi")]
     Cancelled
 }
 
@@ -17,28 +22,30 @@ public class Invoice
     public int Id { get; set; }
 
     [Required]
-    [Display(Name = "Patient")]
+    [Display(Name = "Hasta")]
     public int PatientId { get; set; }
 
     [ForeignKey(nameof(PatientId))]
     public Patient? Patient { get; set; }
 
-    [Display(Name = "Invoice Date")]
+    [Display(Name = "Fatura Tarihi")]
     [DataType(DataType.Date)]
     public DateOnly InvoiceDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
-    [Display(Name = "Due Date")]
+    [Display(Name = "Son Ödeme Tarihi")]
     [DataType(DataType.Date)]
     public DateOnly? DueDate { get; set; }
 
     [Column(TypeName = "decimal(10,2)")]
-    [Display(Name = "Total Amount")]
+    [Display(Name = "Toplam Tutar")]
     [Range(0, 999999.99)]
     public decimal TotalAmount { get; set; }
 
+    [Display(Name = "Durum")]
     public InvoiceStatus Status { get; set; } = InvoiceStatus.Issued;
 
     [MaxLength(500)]
+    [Display(Name = "Notlar")]
     public string? Notes { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

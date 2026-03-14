@@ -1,34 +1,37 @@
 @model IEnumerable<DentistDB.Models.Patient>
 @{
-    ViewData["Title"] = "Patients";
+    ViewData["Title"] = "Hastalar";
     var showArchived = (bool)(ViewBag.ShowArchived ?? false);
     var search = ViewBag.Search as string;
 }
 
-<div class="page-header d-flex justify-content-between align-items-center">
-    <h2>👤 Patients</h2>
-    <a asp-action="Create" class="btn btn-primary">+ New Patient</a>
+<div class="page-header">
+    <div>
+        <div class="eyebrow">Hasta Listesi</div>
+        <h2 class="page-title">Tum hasta kartlarini hizlica yonetin.</h2>
+        <p class="page-subtitle">Arama, arsiv filtreleme ve detaylara gecis tek ekranda.</p>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">Yeni Hasta</a>
 </div>
 
-<div class="card mb-3">
+<div class="card mb-4">
     <div class="card-body">
-        <form method="get" class="row g-2 align-items-end">
-            <div class="col-md-6">
-                <input type="text" name="search" value="@search" class="form-control"
-                       placeholder="Search by name, phone, or email..." />
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-lg-7">
+                <label class="form-label">Arama</label>
+                <input type="text" name="search" value="@search" class="form-control" placeholder="Ad, telefon veya e-posta ile ara" />
             </div>
-            <div class="col-md-auto">
-                <div class="form-check">
-                    <input type="checkbox" name="showArchived" value="true" class="form-check-input"
-                           id="chkArchived" @(showArchived ? "checked" : "") onchange="this.form.submit()" />
-                    <label class="form-check-label" for="chkArchived">Show Archived</label>
+            <div class="col-lg-3">
+                <div class="form-check pt-4">
+                    <input type="checkbox" name="showArchived" value="true" class="form-check-input" id="chkArchived" @(showArchived ? "checked" : "") onchange="this.form.submit()" />
+                    <label class="form-check-label" for="chkArchived">Arsivlenenleri goster</label>
                 </div>
             </div>
-            <div class="col-md-auto">
-                <button type="submit" class="btn btn-outline-secondary">Search</button>
+            <div class="col-lg-2 d-flex gap-2">
+                <button type="submit" class="btn btn-primary flex-fill">Ara</button>
                 @if (!string.IsNullOrEmpty(search))
                 {
-                    <a asp-action="Index" class="btn btn-link">Clear</a>
+                    <a asp-action="Index" class="btn btn-outline-secondary">Temizle</a>
                 }
             </div>
         </form>
@@ -37,7 +40,7 @@
 
 @if (!Model.Any())
 {
-    <div class="alert alert-info">No patients found.</div>
+    <div class="alert alert-info">Aramaniza uygun hasta bulunamadi.</div>
 }
 else
 {
@@ -46,13 +49,13 @@ else
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>Name</th>
-                        <th>Phone</th>
-                        <th>Email</th>
-                        <th>Date of Birth</th>
-                        <th>Alerts</th>
-                        <th>Status</th>
-                        <th></th>
+                        <th>Hasta</th>
+                        <th>Telefon</th>
+                        <th>E-posta</th>
+                        <th>Dogum Tarihi</th>
+                        <th>Uyarilar</th>
+                        <th>Durum</th>
+                        <th class="text-end">Islem</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -60,31 +63,28 @@ else
                     {
                         <tr>
                             <td>
-                                <a asp-action="Details" asp-route-id="@patient.Id" class="text-decoration-none fw-semibold">
-                                    @patient.FullName
-                                </a>
+                                <a asp-action="Details" asp-route-id="@patient.Id" class="text-decoration-none fw-semibold">@patient.FullName</a>
                             </td>
-                            <td>@patient.Phone</td>
-                            <td>@patient.Email</td>
-                            <td>@patient.BirthDate?.ToString("yyyy-MM-dd")</td>
+                            <td>@(string.IsNullOrWhiteSpace(patient.Phone) ? "-" : patient.Phone)</td>
+                            <td>@(string.IsNullOrWhiteSpace(patient.Email) ? "-" : patient.Email)</td>
+                            <td>@(patient.BirthDate?.ToString("d") ?? "-")</td>
                             <td>
                                 @if (!string.IsNullOrEmpty(patient.MedicalAlerts))
                                 {
-                                    <span class="badge bg-danger" title="@patient.MedicalAlerts">⚠ Alerts</span>
-                                }
-                            </td>
-                            <td>
-                                @if (patient.IsArchived)
-                                {
-                                    <span class="badge bg-secondary">Archived</span>
+                                    <span class="badge-soft danger">Tibbi Uyari</span>
                                 }
                                 else
                                 {
-                                    <span class="badge bg-success">Active</span>
+                                    <span class="text-muted">-</span>
                                 }
                             </td>
                             <td>
-                                <a asp-action="Edit" asp-route-id="@patient.Id" class="btn btn-sm btn-outline-primary">Edit</a>
+                                <span class="badge-soft @(patient.IsArchived ? "neutral" : "success")">
+                                    @(patient.IsArchived ? "Arsivde" : "Aktif")
+                                </span>
+                            </td>
+                            <td class="text-end">
+                                <a asp-action="Edit" asp-route-id="@patient.Id" class="btn btn-sm btn-outline-primary">Duzenle</a>
                             </td>
                         </tr>
                     }

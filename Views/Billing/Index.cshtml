@@ -1,23 +1,25 @@
 @model IEnumerable<DentistDB.Models.Invoice>
 @{
-    ViewData["Title"] = "Billing";
+    ViewData["Title"] = "Faturalar";
     var statusFilter = ViewBag.StatusFilter as string;
-    var statuses = ViewBag.Statuses as string[];
+    var statuses = ViewBag.Statuses as InvoiceStatus[] ?? Array.Empty<InvoiceStatus>();
 }
 
-<div class="page-header d-flex justify-content-between align-items-center">
-    <h2>💳 Invoices</h2>
-    <a asp-action="Create" class="btn btn-primary">+ New Invoice</a>
+<div class="page-header">
+    <div>
+        <div class="eyebrow">Finans Takibi</div>
+        <h2 class="page-title">Faturalari, vadeleri ve tahsilat durumlarini izleyin.</h2>
+    </div>
+    <a asp-action="Create" class="btn btn-primary">Yeni Fatura</a>
 </div>
 
-<div class="card mb-3">
-    <div class="card-body py-2">
-        <div class="d-flex gap-2 flex-wrap">
-            <a asp-action="Index" class="btn btn-sm @(string.IsNullOrEmpty(statusFilter) ? "btn-dark" : "btn-outline-secondary")">All</a>
-            @foreach (var s in (statuses ?? Array.Empty<string>()))
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="filter-strip">
+            <a asp-action="Index" class="btn btn-sm @(string.IsNullOrEmpty(statusFilter) ? "btn-primary" : "btn-outline-secondary")">Tumu</a>
+            @foreach (var status in statuses)
             {
-                <a asp-action="Index" asp-route-status="@s"
-                   class="btn btn-sm @(statusFilter == s ? "btn-dark" : "btn-outline-secondary")">@s</a>
+                <a asp-action="Index" asp-route-status="@status" class="btn btn-sm @(statusFilter == status.ToString() ? "btn-primary" : "btn-outline-secondary")">@status.GetDisplayName()</a>
             }
         </div>
     </div>
@@ -25,7 +27,7 @@
 
 @if (!Model.Any())
 {
-    <div class="alert alert-info">No invoices found.</div>
+    <div class="alert alert-info">Fatura bulunamadi.</div>
 }
 else
 {
@@ -34,43 +36,31 @@ else
             <table class="table table-hover mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>#</th>
-                        <th>Patient</th>
-                        <th>Date</th>
-                        <th>Due</th>
-                        <th>Total</th>
-                        <th>Balance</th>
-                        <th>Status</th>
-                        <th></th>
+                        <th>No</th>
+                        <th>Hasta</th>
+                        <th>Fatura Tarihi</th>
+                        <th>Vade</th>
+                        <th>Toplam</th>
+                        <th>Kalan</th>
+                        <th>Durum</th>
+                        <th class="text-end">Islem</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var inv in Model)
                     {
                         <tr>
-                            <td>@inv.Id</td>
-                            <td>
-                                <a asp-controller="Patients" asp-action="Details" asp-route-id="@inv.PatientId"
-                                   class="text-decoration-none">@inv.Patient?.FullName</a>
-                            </td>
-                            <td>@inv.InvoiceDate.ToString("MMM d, yyyy")</td>
-                            <td class="@(inv.DueDate < DateOnly.FromDateTime(DateTime.Today) && inv.Status != InvoiceStatus.Paid ? "text-danger" : "")">
-                                @inv.DueDate?.ToString("MMM d, yyyy")
+                            <td>#@inv.Id</td>
+                            <td><a asp-controller="Patients" asp-action="Details" asp-route-id="@inv.PatientId" class="text-decoration-none">@inv.Patient?.FullName</a></td>
+                            <td>@inv.InvoiceDate.ToString("d")</td>
+                            <td class="@(inv.DueDate < DateOnly.FromDateTime(DateTime.Today) && inv.Status != InvoiceStatus.Paid ? "text-danger fw-semibold" : string.Empty)">
+                                @(inv.DueDate?.ToString("d") ?? "-")
                             </td>
                             <td>@inv.TotalAmount.ToString("C")</td>
-                            <td class="@(inv.Balance > 0 ? "text-danger fw-bold" : "text-success")">
-                                @inv.Balance.ToString("C")
-                            </td>
-                            <td>
-                                <span class="badge @(inv.Status == InvoiceStatus.Paid ? "bg-success" :
-                                                     inv.Status == InvoiceStatus.Cancelled ? "bg-secondary" :
-                                                     inv.Status == InvoiceStatus.PartiallyPaid ? "bg-warning text-dark" :
-                                                     inv.Status == InvoiceStatus.Draft ? "bg-light text-dark" : "bg-primary")">
-                                    @inv.Status
-                                </span>
-                            </td>
-                            <td>
-                                <a asp-action="Details" asp-route-id="@inv.Id" class="btn btn-sm btn-outline-secondary">View</a>
+                            <td class="@(inv.Balance > 0 ? "text-danger fw-semibold" : "text-success fw-semibold")">@inv.Balance.ToString("C")</td>
+                            <td><span class="badge-soft @(inv.Status == InvoiceStatus.Paid ? "success" : inv.Status == InvoiceStatus.Cancelled ? "neutral" : inv.Status == InvoiceStatus.PartiallyPaid ? "warning" : "info")">@inv.Status.GetDisplayName()</span></td>
+                            <td class="text-end">
+                                <a asp-action="Details" asp-route-id="@inv.Id" class="btn btn-sm btn-outline-secondary">Detay</a>
                             </td>
                         </tr>
                     }

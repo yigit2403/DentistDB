@@ -1,79 +1,56 @@
-﻿@model DentistDB.ViewModels.DashboardViewModel
+@model DentistDB.ViewModels.DashboardViewModel
 @{
-    ViewData["Title"] = "Dashboard";
+    ViewData["Title"] = "Kontrol Paneli";
 }
 
-<div class="page-header d-flex justify-content-between align-items-center">
-    <h2>📊 Dashboard</h2>
-    <small class="text-muted">@DateTime.Today.ToString("dddd, MMMM d, yyyy")</small>
-</div>
+<section class="hero-panel glass-card">
+    <div class="page-header mb-0">
+        <div>
+            <div class="eyebrow">Gunluk Operasyon Ozeti</div>
+            <h2 class="page-title">Klinigin bugunku akisini tek bakista yonetin.</h2>
+            <p class="page-subtitle">@DateTime.Today.ToString("D") tarihli plan, tahsilat ve hasta hareketleri burada toplanir.</p>
+        </div>
+        <div class="d-flex gap-2 flex-wrap">
+            <a asp-controller="Appointments" asp-action="Create" class="btn btn-light">Randevu Ekle</a>
+            <a asp-controller="Patients" asp-action="Create" class="btn btn-outline-light">Yeni Hasta</a>
+        </div>
+    </div>
+</section>
 
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="card text-bg-primary">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="fs-4 fw-bold">@Model.TotalPatients</div>
-                        <div>Active Patients</div>
-                    </div>
-                    <div class="fs-1 opacity-50">👤</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-bg-success">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="fs-4 fw-bold">@Model.TodaysAppointments.Count</div>
-                        <div>Today's Appointments</div>
-                    </div>
-                    <div class="fs-1 opacity-50">📅</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-bg-info">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="fs-4 fw-bold">@Model.AppointmentsThisMonth</div>
-                        <div>This Month</div>
-                    </div>
-                    <div class="fs-1 opacity-50">📆</div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="card text-bg-warning">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <div class="fs-4 fw-bold">@Model.UnpaidInvoices.Count</div>
-                        <div>Unpaid Invoices</div>
-                    </div>
-                    <div class="fs-1 opacity-50">💳</div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+<section class="metric-grid mb-4">
+    <article class="stats-card glass-card">
+        <div class="label">Aktif Hasta</div>
+        <div class="value">@Model.TotalPatients</div>
+        <div class="page-subtitle">Guncel hasta havuzu</div>
+    </article>
+    <article class="stats-card glass-card">
+        <div class="label">Bugunku Randevu</div>
+        <div class="value">@Model.TodaysAppointments.Count</div>
+        <div class="page-subtitle">Bugun beklenen ziyaret</div>
+    </article>
+    <article class="stats-card glass-card">
+        <div class="label">Aylik Randevu</div>
+        <div class="value">@Model.AppointmentsThisMonth</div>
+        <div class="page-subtitle">Bu ay icindeki toplam plan</div>
+    </article>
+    <article class="stats-card glass-card">
+        <div class="label">Acik Fatura</div>
+        <div class="value">@Model.UnpaidInvoices.Count</div>
+        <div class="page-subtitle">Takip edilmesi gereken tahsilat</div>
+    </article>
+</section>
 
 <div class="row g-4">
-    <div class="col-md-6">
+    <div class="col-lg-6">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>📅 Today's Appointments</strong>
-                <a asp-controller="Appointments" asp-action="Create" class="btn btn-sm btn-outline-primary">+ New</a>
+                <h3 class="section-title">Bugunku Randevular</h3>
+                <a asp-controller="Appointments" asp-action="Create" class="btn btn-sm btn-outline-primary">Yeni</a>
             </div>
             <div class="card-body p-0">
                 @if (!Model.TodaysAppointments.Any())
                 {
-                    <p class="text-muted p-3 mb-0">No appointments scheduled for today.</p>
+                    <p class="empty-state mb-0">Bugun icin planli randevu bulunmuyor.</p>
                 }
                 else
                 {
@@ -82,12 +59,11 @@
                         {
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    <strong>@appt.AppointmentDate.ToString("h:mm tt")</strong>
-                                    <span class="ms-2">@appt.Patient?.FullName</span>
+                                    <div class="fw-semibold">@appt.AppointmentDate.ToString("t")</div>
+                                    <div>@appt.Patient?.FullName</div>
                                     <div class="text-muted small">@appt.Purpose</div>
                                 </div>
-                                <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@appt.Id"
-                                   class="btn btn-sm btn-outline-secondary">Edit</a>
+                                <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-secondary">Duzenle</a>
                             </li>
                         }
                     </ul>
@@ -96,28 +72,26 @@
         </div>
     </div>
 
-    <div class="col-md-6">
+    <div class="col-lg-6">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>🔜 Upcoming (next 7 days)</strong>
-                <a asp-controller="Appointments" asp-action="Index" class="btn btn-sm btn-outline-secondary">View all</a>
+                <h3 class="section-title">Siradaki 7 Gun</h3>
+                <a asp-controller="Appointments" asp-action="Index" class="btn btn-sm btn-outline-secondary">Tumunu Gor</a>
             </div>
             <div class="card-body p-0">
                 @if (!Model.UpcomingAppointments.Any())
                 {
-                    <p class="text-muted p-3 mb-0">No upcoming appointments.</p>
+                    <p class="empty-state mb-0">Yaklasan randevu bulunmuyor.</p>
                 }
                 else
                 {
                     <ul class="list-group list-group-flush">
                         @foreach (var appt in Model.UpcomingAppointments)
                         {
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>@appt.AppointmentDate.ToString("MMM d, h:mm tt")</strong>
-                                    <span class="ms-2">@appt.Patient?.FullName</span>
-                                    <div class="text-muted small">@appt.Purpose</div>
-                                </div>
+                            <li class="list-group-item">
+                                <div class="fw-semibold">@appt.AppointmentDate.ToString("dd MMMM, HH:mm")</div>
+                                <div>@appt.Patient?.FullName</div>
+                                <div class="text-muted small">@appt.Purpose</div>
                             </li>
                         }
                     </ul>
@@ -126,16 +100,16 @@
         </div>
     </div>
 
-    <div class="col-md-6">
+    <div class="col-lg-6">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>👤 Recent Patients</strong>
-                <a asp-controller="Patients" asp-action="Index" class="btn btn-sm btn-outline-secondary">View all</a>
+                <h3 class="section-title">Son Eklenen Hastalar</h3>
+                <a asp-controller="Patients" asp-action="Index" class="btn btn-sm btn-outline-secondary">Listeye Git</a>
             </div>
             <div class="card-body p-0">
                 @if (!Model.RecentPatients.Any())
                 {
-                    <p class="text-muted p-3 mb-0">No patients yet.</p>
+                    <p class="empty-state mb-0">Henuz hasta kaydi bulunmuyor.</p>
                 }
                 else
                 {
@@ -144,15 +118,14 @@
                         {
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    <a asp-controller="Patients" asp-action="Details" asp-route-id="@patient.Id"
-                                       class="text-decoration-none">@patient.FullName</a>
+                                    <a asp-controller="Patients" asp-action="Details" asp-route-id="@patient.Id" class="text-decoration-none fw-semibold">@patient.FullName</a>
                                     @if (!string.IsNullOrEmpty(patient.MedicalAlerts))
                                     {
-                                        <span class="badge bg-danger ms-1" title="@patient.MedicalAlerts">⚠</span>
+                                        <span class="badge-soft danger ms-2">Tibbi Uyari</span>
                                     }
                                     <div class="text-muted small">@patient.Phone</div>
                                 </div>
-                                <span class="text-muted small">@patient.CreatedAt.ToString("MMM d")</span>
+                                <span class="text-muted small">@patient.CreatedAt.ToString("dd MMM")</span>
                             </li>
                         }
                     </ul>
@@ -161,16 +134,16 @@
         </div>
     </div>
 
-    <div class="col-md-6">
+    <div class="col-lg-6">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <strong>💳 Unpaid Invoices</strong>
-                <a asp-controller="Billing" asp-action="Index" class="btn btn-sm btn-outline-secondary">View all</a>
+                <h3 class="section-title">Tahsilat Bekleyen Faturalar</h3>
+                <a asp-controller="Billing" asp-action="Index" class="btn btn-sm btn-outline-secondary">Tumunu Gor</a>
             </div>
             <div class="card-body p-0">
                 @if (!Model.UnpaidInvoices.Any())
                 {
-                    <p class="text-muted p-3 mb-0">No outstanding invoices. 🎉</p>
+                    <p class="empty-state mb-0">Bekleyen fatura bulunmuyor.</p>
                 }
                 else
                 {
@@ -179,11 +152,10 @@
                         {
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>
-                                    <a asp-controller="Billing" asp-action="Details" asp-route-id="@inv.Id"
-                                       class="text-decoration-none">@inv.Patient?.FullName</a>
-                                    <div class="text-muted small">Due: @inv.DueDate?.ToString("MMM d, yyyy")</div>
+                                    <a asp-controller="Billing" asp-action="Details" asp-route-id="@inv.Id" class="text-decoration-none fw-semibold">@inv.Patient?.FullName</a>
+                                    <div class="text-muted small">Vade: @inv.DueDate?.ToString("D")</div>
                                 </div>
-                                <span class="fw-bold text-danger">@inv.Balance.ToString("C")</span>
+                                <span class="badge-soft danger">@inv.Balance.ToString("C")</span>
                             </li>
                         }
                     </ul>

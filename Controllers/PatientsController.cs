@@ -76,7 +76,7 @@ public class PatientsController : Controller
 
         _db.Patients.Add(patient);
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Patient created successfully.";
+        TempData["Success"] = "Hasta kaydi basariyla olusturuldu.";
         return RedirectToAction(nameof(Details), new { id = patient.Id });
     }
 
@@ -122,7 +122,7 @@ public class PatientsController : Controller
         patient.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Patient updated successfully.";
+        TempData["Success"] = "Hasta bilgileri basariyla guncellendi.";
         return RedirectToAction(nameof(Details), new { id = patient.Id });
     }
 
@@ -136,7 +136,7 @@ public class PatientsController : Controller
         patient.IsArchived = true;
         patient.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
-        TempData["Success"] = $"{patient.FullName} has been archived.";
+        TempData["Success"] = $"{patient.FullName} arsive tasindi.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -150,7 +150,7 @@ public class PatientsController : Controller
         patient.IsArchived = false;
         patient.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
-        TempData["Success"] = $"{patient.FullName} has been restored.";
+        TempData["Success"] = $"{patient.FullName} kaydi tekrar aktif edildi.";
         return RedirectToAction(nameof(Details), new { id = patient.Id });
     }
 }

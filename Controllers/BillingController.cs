@@ -30,7 +30,7 @@ public class BillingController : Controller
             query = query.Where(i => i.Status == parsedStatus);
 
         ViewBag.StatusFilter = status;
-        ViewBag.Statuses = Enum.GetNames<InvoiceStatus>();
+        ViewBag.Statuses = Enum.GetValues<InvoiceStatus>();
         return View(await query.OrderByDescending(i => i.InvoiceDate).ToListAsync());
     }
 
@@ -83,7 +83,7 @@ public class BillingController : Controller
 
         _db.Invoices.Add(invoice);
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Invoice created.";
+        TempData["Success"] = "Fatura olusturuldu.";
         return RedirectToAction(nameof(Details), new { id = invoice.Id });
     }
 
@@ -130,7 +130,7 @@ public class BillingController : Controller
         invoice.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Invoice updated.";
+        TempData["Success"] = "Fatura guncellendi.";
         return RedirectToAction(nameof(Details), new { id = invoice.Id });
     }
 
@@ -194,7 +194,7 @@ public class BillingController : Controller
         invoice.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Payment recorded.";
+        TempData["Success"] = "Odeme kaydi olusturuldu.";
         return RedirectToAction(nameof(Details), new { id = vm.InvoiceId });
     }
 

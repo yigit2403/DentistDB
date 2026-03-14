@@ -53,7 +53,7 @@ public class ScansController : Controller
 
         if (vm.File == null || vm.File.Length == 0)
         {
-            ModelState.AddModelError(nameof(vm.File), "Please select a file to upload.");
+            ModelState.AddModelError(nameof(vm.File), "Lutfen yuklemek icin bir dosya secin.");
             var pat = await _db.Patients.FindAsync(vm.PatientId);
             ViewBag.PatientName = pat?.FullName;
             return View(vm);
@@ -62,7 +62,7 @@ public class ScansController : Controller
         var ext = Path.GetExtension(vm.File.FileName).ToLowerInvariant();
         if (!AllowedExtensions.Contains(ext) || !AllowedContentTypes.Contains(vm.File.ContentType))
         {
-            ModelState.AddModelError(nameof(vm.File), "Only JPG, PNG, and PDF files are allowed.");
+            ModelState.AddModelError(nameof(vm.File), "Yalnizca JPG, PNG ve PDF dosyalari kabul edilir.");
             var pat = await _db.Patients.FindAsync(vm.PatientId);
             ViewBag.PatientName = pat?.FullName;
             return View(vm);
@@ -96,7 +96,7 @@ public class ScansController : Controller
 
         _db.Scans.Add(scan);
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Scan uploaded successfully.";
+        TempData["Success"] = "Tarama basariyla yuklendi.";
         return RedirectToAction("Details", "Patients", new { id = scan.PatientId });
     }
 
@@ -124,7 +124,7 @@ public class ScansController : Controller
 
         _db.Scans.Remove(scan);
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Scan deleted.";
+        TempData["Success"] = "Tarama silindi.";
         return RedirectToAction("Details", "Patients", new { id = patientId });
     }
 }

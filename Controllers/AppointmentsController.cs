@@ -30,7 +30,7 @@ public class AppointmentsController : Controller
             query = query.Where(a => a.PatientId == patientId);
 
         ViewBag.StatusFilter = status;
-        ViewBag.Statuses = Enum.GetNames<AppointmentStatus>();
+        ViewBag.Statuses = Enum.GetValues<AppointmentStatus>();
         return View(await query.OrderByDescending(a => a.AppointmentDate).ToListAsync());
     }
 
@@ -69,7 +69,7 @@ public class AppointmentsController : Controller
 
         _db.Appointments.Add(appointment);
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Appointment created successfully.";
+        TempData["Success"] = "Randevu basariyla olusturuldu.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -114,7 +114,7 @@ public class AppointmentsController : Controller
         appointment.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Appointment updated successfully.";
+        TempData["Success"] = "Randevu bilgileri guncellendi.";
         return RedirectToAction(nameof(Index));
     }
 
@@ -128,7 +128,7 @@ public class AppointmentsController : Controller
         appointment.Status = AppointmentStatus.Cancelled;
         appointment.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Appointment cancelled.";
+        TempData["Success"] = "Randevu iptal edildi.";
         return RedirectToAction(nameof(Index));
     }
 

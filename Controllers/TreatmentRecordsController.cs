@@ -54,7 +54,7 @@ public class TreatmentRecordsController : Controller
 
         _db.TreatmentRecords.Add(record);
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Treatment record saved.";
+        TempData["Success"] = "Tedavi kaydi kaydedildi.";
         return RedirectToAction("Details", "Patients", new { id = record.PatientId });
     }
 
@@ -101,7 +101,7 @@ public class TreatmentRecordsController : Controller
         record.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Treatment record updated.";
+        TempData["Success"] = "Tedavi kaydi guncellendi.";
         return RedirectToAction("Details", "Patients", new { id = record.PatientId });
     }
 
@@ -115,7 +115,7 @@ public class TreatmentRecordsController : Controller
         var patientId = record.PatientId;
         _db.TreatmentRecords.Remove(record);
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Treatment record deleted.";
+        TempData["Success"] = "Tedavi kaydi silindi.";
         return RedirectToAction("Details", "Patients", new { id = patientId });
     }
 
