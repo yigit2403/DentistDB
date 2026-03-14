@@ -3,6 +3,7 @@
     ViewData["Title"] = "Faturalar";
     var statusFilter = ViewBag.StatusFilter as string;
     var statuses = ViewBag.Statuses as InvoiceStatus[] ?? Array.Empty<InvoiceStatus>();
+    var canViewFinancials = Context.CanViewFinancials();
 }
 
 <div class="page-header">
@@ -40,8 +41,11 @@ else
                         <th>Hasta</th>
                         <th>Fatura Tarihi</th>
                         <th>Vade</th>
-                        <th>Toplam</th>
-                        <th>Kalan</th>
+                        @if (canViewFinancials)
+                        {
+                            <th>Toplam</th>
+                            <th>Kalan</th>
+                        }
                         <th>Durum</th>
                         <th class="text-end">Islem</th>
                     </tr>
@@ -56,8 +60,11 @@ else
                             <td class="@(inv.DueDate < DateOnly.FromDateTime(DateTime.Today) && inv.Status != InvoiceStatus.Paid ? "text-danger fw-semibold" : string.Empty)">
                                 @(inv.DueDate?.ToString("d") ?? "-")
                             </td>
-                            <td>@inv.TotalAmount.ToString("C")</td>
-                            <td class="@(inv.Balance > 0 ? "text-danger fw-semibold" : "text-success fw-semibold")">@inv.Balance.ToString("C")</td>
+                            @if (canViewFinancials)
+                            {
+                                <td>@inv.TotalAmount.ToString("C")</td>
+                                <td class="@(inv.Balance > 0 ? "text-danger fw-semibold" : "text-success fw-semibold")">@inv.Balance.ToString("C")</td>
+                            }
                             <td><span class="badge-soft @(inv.Status == InvoiceStatus.Paid ? "success" : inv.Status == InvoiceStatus.Cancelled ? "neutral" : inv.Status == InvoiceStatus.PartiallyPaid ? "warning" : "info")">@inv.Status.GetDisplayName()</span></td>
                             <td class="text-end">
                                 <a asp-action="Details" asp-route-id="@inv.Id" class="btn btn-sm btn-outline-secondary">Detay</a>

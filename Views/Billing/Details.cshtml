@@ -1,6 +1,7 @@
 @model DentistDB.Models.Invoice
 @{
     ViewData["Title"] = $"Fatura #{Model.Id}";
+    var canViewFinancials = Context.CanViewFinancials();
 }
 
 <div class="page-header">
@@ -13,28 +14,38 @@
         </p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Duzenle</a>
-        @if (Model.Status != InvoiceStatus.Paid && Model.Status != InvoiceStatus.Cancelled)
+        @if (canViewFinancials)
         {
-            <a asp-action="AddPayment" asp-route-invoiceId="@Model.Id" class="btn btn-success">Odeme Ekle</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Duzenle</a>
+            @if (Model.Status != InvoiceStatus.Paid && Model.Status != InvoiceStatus.Cancelled)
+            {
+                <a asp-action="AddPayment" asp-route-invoiceId="@Model.Id" class="btn btn-success">Odeme Ekle</a>
+            }
         }
     </div>
 </div>
 
-<section class="summary-grid mb-4">
-    <article class="stats-card glass-card text-center">
-        <div class="label">Toplam Tutar</div>
-        <div class="value">@Model.TotalAmount.ToString("C")</div>
-    </article>
-    <article class="stats-card glass-card text-center">
-        <div class="label">Odenen</div>
-        <div class="value text-success">@Model.TotalPaid.ToString("C")</div>
-    </article>
-    <article class="stats-card glass-card text-center">
-        <div class="label">Kalan Bakiye</div>
-        <div class="value @(Model.Balance > 0 ? "text-danger" : "text-success")">@Model.Balance.ToString("C")</div>
-    </article>
-</section>
+@if (canViewFinancials)
+{
+    <section class="summary-grid mb-4">
+        <article class="stats-card glass-card text-center">
+            <div class="label">Toplam Tutar</div>
+            <div class="value">@Model.TotalAmount.ToString("C")</div>
+        </article>
+        <article class="stats-card glass-card text-center">
+            <div class="label">Odenen</div>
+            <div class="value text-success">@Model.TotalPaid.ToString("C")</div>
+        </article>
+        <article class="stats-card glass-card text-center">
+            <div class="label">Kalan Bakiye</div>
+            <div class="value @(Model.Balance > 0 ? "text-danger" : "text-success")">@Model.Balance.ToString("C")</div>
+        </article>
+    </section>
+}
+else
+{
+    <div class="alert alert-info mb-4">Worker hesabi fatura tutarlarini, odemeleri ve bakiyeleri goremez.</div>
+}
 
 <div class="row g-4">
     <div class="col-lg-6">
@@ -53,36 +64,39 @@
         </div>
     </div>
 
-    <div class="col-lg-6">
-        <div class="card h-100">
-            <div class="card-header"><h3 class="section-title">Odeme Gecmisi</h3></div>
-            <div class="card-body p-0">
-                @if (!Model.Payments.Any())
-                {
-                    <p class="empty-state mb-0">Bu fatura icin kayitli odeme yok.</p>
-                }
-                else
-                {
-                    <ul class="list-group list-group-flush">
-                        @foreach (var pay in Model.Payments)
-                        {
-                            <li class="list-group-item">
-                                <div class="d-flex justify-content-between gap-3">
-                                    <div>
-                                        <div class="fw-semibold">@pay.Amount.ToString("C")</div>
-                                        <div class="text-muted small">@pay.PaymentDate.ToString("D")</div>
-                                        @if (!string.IsNullOrWhiteSpace(pay.Notes))
-                                        {
-                                            <div class="text-muted small">@pay.Notes</div>
-                                        }
+    @if (canViewFinancials)
+    {
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header"><h3 class="section-title">Odeme Gecmisi</h3></div>
+                <div class="card-body p-0">
+                    @if (!Model.Payments.Any())
+                    {
+                        <p class="empty-state mb-0">Bu fatura icin kayitli odeme yok.</p>
+                    }
+                    else
+                    {
+                        <ul class="list-group list-group-flush">
+                            @foreach (var pay in Model.Payments)
+                            {
+                                <li class="list-group-item">
+                                    <div class="d-flex justify-content-between gap-3">
+                                        <div>
+                                            <div class="fw-semibold">@pay.Amount.ToString("C")</div>
+                                            <div class="text-muted small">@pay.PaymentDate.ToString("D")</div>
+                                            @if (!string.IsNullOrWhiteSpace(pay.Notes))
+                                            {
+                                                <div class="text-muted small">@pay.Notes</div>
+                                            }
+                                        </div>
+                                        <span class="badge-soft info">@pay.PaymentMethod.GetDisplayName()</span>
                                     </div>
-                                    <span class="badge-soft info">@pay.PaymentMethod.GetDisplayName()</span>
-                                </div>
-                            </li>
-                        }
-                    </ul>
-                }
+                                </li>
+                            }
+                        </ul>
+                    }
+                </div>
             </div>
         </div>
-    </div>
+    }
 </div>
