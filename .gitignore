@@ -22,3 +22,8 @@ logs/
 
 ## User secrets
 appsettings.*.local.json
+
+## SQLite development database
+*.db
+*.db-shm
+*.db-wal
