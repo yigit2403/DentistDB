@@ -641,41 +641,23 @@ dl dt {
   padding: 1.25rem;
 }
 
-.tooth-arch {
-  display: grid;
-  grid-template-columns: 72px 1fr 72px;
-  align-items: center;
-  gap: 0.75rem;
-  min-height: 250px;
-  padding: 1rem 0.4rem;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.03);
+.tooth-selector__diagram {
+  padding: 1rem 0.75rem;
+  border-radius: 28px;
+  background: linear-gradient(180deg, #f8fbff, #e8eef5);
 }
 
-.tooth-arch--lower {
-  min-height: 250px;
+.tooth-selector__chart {
+  position: relative;
+  width: min(100%, 450px);
+  aspect-ratio: 450 / 750;
+  margin: 0 auto;
 }
 
-.tooth-column {
-  display: flex;
-  flex-direction: column;
-  gap: 0.45rem;
-}
-
-.tooth-column--left {
-  align-items: flex-end;
-}
-
-.tooth-arch__center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
+.tooth-selector__art {
+  width: 100%;
   height: 100%;
-  border: 2px dashed rgba(120, 166, 242, 0.16);
-  border-radius: 999px;
-  color: var(--muted);
-  font-weight: 600;
+  display: block;
 }
 
 .tooth-check {
@@ -696,15 +678,76 @@ dl dt {
   font-size: 0.82rem;
   font-weight: 700;
   cursor: pointer;
-  border: 2px solid transparent;
-  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease;
+  border: 2px solid #aab4c1;
+  box-shadow: 0 3px 8px rgba(58, 70, 84, 0.18), inset 0 2px 5px rgba(255, 255, 255, 0.9);
+  transform: translateX(var(--tooth-shift, 0));
+  transition: transform 0.15s ease, border-color 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tooth-node--absolute {
+  position: absolute;
+  transform: translate(-50%, -50%);
 }
 
 .tooth-check:checked + .tooth-node {
   background: #54b0ff;
   color: #04111f;
   border-color: #c6e8ff;
-  transform: scale(1.05);
+  box-shadow: 0 4px 10px rgba(31, 110, 177, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%) scale(1.06);
+}
+
+.tooth-selector__actions {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.patient-photo-preview,
+.patient-photo-placeholder {
+  width: 120px;
+  height: 120px;
+  border-radius: 24px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.04);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.patient-photo-preview__img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 24px;
+}
+
+.patient-photo-preview__img--large {
+  width: 180px;
+  height: 180px;
+  border-radius: 28px;
+}
+
+.patient-photo-placeholder {
+  width: 180px;
+  height: 180px;
+  color: var(--muted);
+  margin: 0 auto;
+}
+
+.payment-plan-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.card-subtle {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 @media (max-width: 991.98px) {
@@ -768,5 +811,9 @@ dl dt {
   .tooth-node {
     width: 38px;
     height: 38px;
+  }
+
+  .tooth-selector__chart {
+    max-width: 340px;
   }
 }

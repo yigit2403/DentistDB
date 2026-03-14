@@ -19,14 +19,47 @@ public class PreviousOperationsController : Controller
         _db = db;
     }
 
-    public async Task<IActionResult> Index(int patientId)
+    public async Task<IActionResult> Index(int? patientId, string? search)
     {
-        var patient = await _db.Patients
-            .Include(p => p.PreviousOperations.OrderByDescending(o => o.Date))
-            .FirstOrDefaultAsync(p => p.Id == patientId);
+        Patient? patient = null;
+        if (patientId.HasValue)
+        {
+            patient = await _db.Patients.FirstOrDefaultAsync(p => p.Id == patientId.Value);
+            if (patient == null) return NotFound();
+        }
 
-        if (patient == null) return NotFound();
-        return View(patient);
+        var query = _db.PreviousOperations
+            .Include(o => o.Patient)
+            .AsQueryable();
+
+        if (patientId.HasValue)
+        {
+            query = query.Where(o => o.PatientId == patientId.Value);
+        }
+
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            query = query.Where(o =>
+                o.Title.Contains(search) ||
+                (o.Diagnosis != null && o.Diagnosis.Contains(search)) ||
+                (o.Procedures != null && o.Procedures.Contains(search)) ||
+                (o.Prescriptions != null && o.Prescriptions.Contains(search)) ||
+                (o.Notes != null && o.Notes.Contains(search)) ||
+                (o.Patient != null && o.Patient.FullName.Contains(search)));
+        }
+
+        var vm = new PreviousOperationsIndexViewModel
+        {
+            Patient = patient,
+            PatientId = patientId,
+            Search = search,
+            Operations = await query
+                .OrderByDescending(o => o.Date)
+                .ThenByDescending(o => o.UpdatedAt)
+                .ToListAsync()
+        };
+
+        return View(vm);
     }
 
     public async Task<IActionResult> Create(int? patientId)

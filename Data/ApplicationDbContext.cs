@@ -10,7 +10,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Patient> Patients => Set<Patient>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
-    public DbSet<TreatmentRecord> TreatmentRecords => Set<TreatmentRecord>();
     public DbSet<PreviousOperation> PreviousOperations => Set<PreviousOperation>();
     public DbSet<Scan> Scans => Set<Scan>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
@@ -31,14 +30,6 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
             e.HasOne(a => a.Patient)
              .WithMany(p => p.Appointments)
              .HasForeignKey(a => a.PatientId)
-             .OnDelete(DeleteBehavior.Cascade);
-        });
-
-        builder.Entity<TreatmentRecord>(e =>
-        {
-            e.HasOne(t => t.Patient)
-             .WithMany(p => p.TreatmentRecords)
-             .HasForeignKey(t => t.PatientId)
              .OnDelete(DeleteBehavior.Cascade);
         });
 
@@ -69,6 +60,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
         builder.Entity<Payment>(e =>
         {
+            e.HasIndex(p => new { p.InvoiceId, p.PaymentDate, p.IsPlanned });
             e.HasOne(p => p.Invoice)
              .WithMany(i => i.Payments)
              .HasForeignKey(p => p.InvoiceId)

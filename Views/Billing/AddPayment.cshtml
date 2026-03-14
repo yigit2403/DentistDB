@@ -1,13 +1,13 @@
 @model DentistDB.ViewModels.PaymentFormViewModel
 @{
-    ViewData["Title"] = "Ödeme Ekle";
+    ViewData["Title"] = "Odeme Ekle";
     var invoice = ViewBag.Invoice as DentistDB.Models.Invoice;
 }
 
 <div class="page-header">
     <div>
         <div class="eyebrow">Tahsilat</div>
-        <h2 class="page-title">Fatura için ödeme kaydı ekleyin.</h2>
+        <h2 class="page-title">Fatura icin odeme kaydi ekleyin.</h2>
         @if (invoice != null)
         {
             <p class="page-subtitle">Fatura #@invoice.Id - @invoice.Patient?.FullName - Kalan bakiye: <strong class="text-danger">@invoice.Balance.ToString("C")</strong></p>
@@ -23,6 +23,16 @@
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
             <div class="row g-3">
+                @if (Model.PlannedPayments.Any())
+                {
+                    <div class="col-md-12">
+                        <label asp-for="PlannedPaymentId" class="form-label"></label>
+                        <select asp-for="PlannedPaymentId" asp-items="Model.PlannedPayments" class="form-select">
+                            <option value="">Plan disi manuel odeme</option>
+                        </select>
+                        <span asp-validation-for="PlannedPaymentId" class="text-danger small"></span>
+                    </div>
+                }
                 <div class="col-md-3">
                     <label asp-for="PaymentDate" class="form-label"></label>
                     <input asp-for="PaymentDate" class="form-control" type="date" />
@@ -30,7 +40,7 @@
                 <div class="col-md-3">
                     <label asp-for="Amount" class="form-label"></label>
                     <div class="input-group">
-                        <span class="input-group-text">₺</span>
+                        <span class="input-group-text">TL</span>
                         <input asp-for="Amount" class="form-control" type="number" step="0.01" min="0.01" />
                     </div>
                     <span asp-validation-for="Amount" class="text-danger small"></span>
@@ -46,8 +56,8 @@
             </div>
 
             <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-success">Ödemeyi Kaydet</button>
-                <a asp-action="Details" asp-route-id="@Model.InvoiceId" class="btn btn-outline-secondary">Vazgeç</a>
+                <button type="submit" class="btn btn-success">Odemeyi Kaydet</button>
+                <a asp-action="Details" asp-route-id="@Model.InvoiceId" class="btn btn-outline-secondary">Vazgec</a>
             </div>
         </form>
     </div>

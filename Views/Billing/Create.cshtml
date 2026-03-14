@@ -5,8 +5,8 @@
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Fatura Oluştur</div>
-        <h2 class="page-title">Yeni tahsilat kaydı açın.</h2>
+        <div class="eyebrow">Fatura Olustur</div>
+        <h2 class="page-title">Yeni tahsilat kaydi acin.</h2>
     </div>
 </div>
 
@@ -20,7 +20,7 @@
                 <div class="col-md-6">
                     <label asp-for="PatientId" class="form-label"></label>
                     <select asp-for="PatientId" asp-items="Model.Patients" class="form-select">
-                        <option value="">Hasta seçin</option>
+                        <option value="">Hasta secin</option>
                     </select>
                     <span asp-validation-for="PatientId" class="text-danger small"></span>
                 </div>
@@ -35,7 +35,7 @@
                 <div class="col-md-4">
                     <label asp-for="TotalAmount" class="form-label"></label>
                     <div class="input-group">
-                        <span class="input-group-text">₺</span>
+                        <span class="input-group-text">TL</span>
                         <input asp-for="TotalAmount" class="form-control" type="number" step="0.01" min="0" />
                     </div>
                     <span asp-validation-for="TotalAmount" class="text-danger small"></span>
@@ -48,11 +48,32 @@
                     <label asp-for="Notes" class="form-label"></label>
                     <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
                 </div>
+                <div class="col-md-12">
+                    <div class="form-check">
+                        <input asp-for="EnablePaymentPlan" class="form-check-input" type="checkbox" />
+                        <label asp-for="EnablePaymentPlan" class="form-check-label"></label>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="FirstPaymentDate" class="form-label"></label>
+                    <input asp-for="FirstPaymentDate" class="form-control" type="date" />
+                    <span asp-validation-for="FirstPaymentDate" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="InstallmentCount" class="form-label"></label>
+                    <input asp-for="InstallmentCount" class="form-control" type="number" min="1" max="48" />
+                    <span asp-validation-for="InstallmentCount" class="text-danger small"></span>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="InstallmentIntervalMonths" class="form-label"></label>
+                    <input asp-for="InstallmentIntervalMonths" class="form-control" type="number" min="1" max="12" />
+                    <span asp-validation-for="InstallmentIntervalMonths" class="text-danger small"></span>
+                </div>
             </div>
 
             <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">Faturayı Oluştur</button>
-                <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+                <button type="submit" class="btn btn-primary">Faturayi Olustur</button>
+                <a asp-action="Index" class="btn btn-outline-secondary">Vazgec</a>
             </div>
         </form>
     </div>

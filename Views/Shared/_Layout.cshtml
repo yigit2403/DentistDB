@@ -31,6 +31,7 @@
                 <div class="nav-caption">Hasta Yönetimi</div>
                 <a class="nav-pill @(currentController == "Patients" && currentAction == "Index" ? "active" : "")" asp-controller="Patients" asp-action="Index">Tüm Hastalar</a>
                 <a class="nav-pill @(currentController == "Patients" && currentAction == "Create" ? "active" : "")" asp-controller="Patients" asp-action="Create">Yeni Hasta</a>
+                <a class="nav-pill @(currentController == "PreviousOperations" ? "active" : "")" asp-controller="PreviousOperations" asp-action="Index">Onceki Islemler</a>
 
                 <div class="nav-caption">Takvim</div>
                 <a class="nav-pill @(currentController == "Appointments" && currentAction == "Index" ? "active" : "")" asp-controller="Appointments" asp-action="Index">Randevular</a>

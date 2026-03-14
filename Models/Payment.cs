@@ -46,5 +46,18 @@ public class Payment
     [Display(Name = "Notlar")]
     public string? Notes { get; set; }
 
+    [Display(Name = "Planlı Ödeme")]
+    public bool IsPlanned { get; set; }
+
+    [Display(Name = "Tahsil Edildi")]
+    public bool IsSettled { get; set; }
+
+    [Display(Name = "Tahsil Tarihi")]
+    [DataType(DataType.Date)]
+    public DateOnly? SettledDate { get; set; }
+
+    [Display(Name = "Taksit No")]
+    public int? InstallmentNumber { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

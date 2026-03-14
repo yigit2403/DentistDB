@@ -9,7 +9,7 @@
 <div class="page-header">
     <div>
         <div class="eyebrow">Finans Takibi</div>
-        <h2 class="page-title">Faturaları, vadeleri ve tahsilat durumlarını izleyin.</h2>
+        <h2 class="page-title">Faturalari, vadeleri ve tahsilat durumlarini izleyin.</h2>
     </div>
     <a asp-action="Create" class="btn btn-primary">Yeni Fatura</a>
 </div>
@@ -17,7 +17,7 @@
 <div class="card mb-4">
     <div class="card-body">
         <div class="filter-strip">
-            <a asp-action="Index" class="btn btn-sm @(string.IsNullOrEmpty(statusFilter) ? "btn-primary" : "btn-outline-secondary")">Tümü</a>
+            <a asp-action="Index" class="btn btn-sm @(string.IsNullOrEmpty(statusFilter) ? "btn-primary" : "btn-outline-secondary")">Tumu</a>
             @foreach (var status in statuses)
             {
                 <a asp-action="Index" asp-route-status="@status" class="btn btn-sm @(statusFilter == status.ToString() ? "btn-primary" : "btn-outline-secondary")">@status.GetDisplayName()</a>
@@ -28,7 +28,7 @@
 
 @if (!Model.Any())
 {
-    <div class="alert alert-info">Fatura bulunamadı.</div>
+    <div class="alert alert-info">Fatura bulunamadi.</div>
 }
 else
 {
@@ -45,9 +45,10 @@ else
                         {
                             <th>Toplam</th>
                             <th>Kalan</th>
+                            <th>Planli Tahsilat</th>
                         }
                         <th>Durum</th>
-                        <th class="text-end">İşlem</th>
+                        <th class="text-end">Islem</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -64,6 +65,7 @@ else
                             {
                                 <td>@inv.TotalAmount.ToString("C")</td>
                                 <td class="@(inv.Balance > 0 ? "text-danger fw-semibold" : "text-success fw-semibold")">@inv.Balance.ToString("C")</td>
+                                <td>@inv.PlannedPayments.Count(p => !p.IsSettled)</td>
                             }
                             <td><span class="badge-soft @(inv.Status == InvoiceStatus.Paid ? "success" : inv.Status == InvoiceStatus.Cancelled ? "neutral" : inv.Status == InvoiceStatus.PartiallyPaid ? "warning" : "info")">@inv.Status.GetDisplayName()</span></td>
                             <td class="text-end">

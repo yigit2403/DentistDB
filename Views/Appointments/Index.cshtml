@@ -1,53 +1,61 @@
-@model IEnumerable<DentistDB.Models.Appointment>
+@model DentistDB.ViewModels.AppointmentIndexViewModel
 @{
     ViewData["Title"] = "Randevular";
-    var statusFilter = ViewBag.StatusFilter as string;
-    var statuses = ViewBag.Statuses as AppointmentStatus[] ?? Array.Empty<AppointmentStatus>();
-    var groupedAppointments = Model
-        .GroupBy(appt => appt.AppointmentDate.Date)
-        .OrderBy(group => group.Key)
-        .ToList();
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Ajanda Görünümü</div>
-        <h2 class="page-title">Randevuları gün gün takip edin.</h2>
+        <div class="eyebrow">Ajanda Gorunumu</div>
+        <h2 class="page-title">Randevulari farkli zaman olceklerinde takip edin.</h2>
+        <p class="page-subtitle">@Model.PeriodLabel</p>
     </div>
     <a asp-action="Create" class="btn btn-primary">Yeni Randevu</a>
 </div>
 
 <div class="card mb-4">
     <div class="card-body">
-        <div class="filter-strip">
-            <a asp-action="Index" class="btn btn-sm @(string.IsNullOrEmpty(statusFilter) ? "btn-primary" : "btn-outline-secondary")">Tümü</a>
-            @foreach (var status in statuses)
-            {
-                <a asp-action="Index" asp-route-status="@status" class="btn btn-sm @(statusFilter == status.ToString() ? "btn-primary" : "btn-outline-secondary")">@status.GetDisplayName()</a>
-            }
+        <div class="d-flex flex-wrap justify-content-between gap-3">
+            <div class="filter-strip">
+                <a asp-action="Index" asp-route-view="@Model.CalendarView" asp-route-date="@Model.ReferenceDate.ToString("yyyy-MM-dd")" class="btn btn-sm @(string.IsNullOrEmpty(Model.StatusFilter) ? "btn-primary" : "btn-outline-secondary")">Tumu</a>
+                @foreach (var status in Model.Statuses)
+                {
+                    <a asp-action="Index" asp-route-status="@status" asp-route-view="@Model.CalendarView" asp-route-date="@Model.ReferenceDate.ToString("yyyy-MM-dd")" class="btn btn-sm @(Model.StatusFilter == status.ToString() ? "btn-primary" : "btn-outline-secondary")">@status.GetDisplayName()</a>
+                }
+            </div>
+            <div class="filter-strip">
+                @foreach (var view in Enum.GetValues<AppointmentCalendarView>())
+                {
+                    <a asp-action="Index" asp-route-view="@view" asp-route-status="@Model.StatusFilter" asp-route-date="@Model.ReferenceDate.ToString("yyyy-MM-dd")" class="btn btn-sm @(Model.CalendarView == view ? "btn-primary" : "btn-outline-secondary")">@view</a>
+                }
+            </div>
+        </div>
+        <div class="filter-strip mt-3">
+            <a asp-action="Index" asp-route-view="@Model.CalendarView" asp-route-status="@Model.StatusFilter" asp-route-date="@Model.PreviousDate.ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-secondary">Onceki</a>
+            <a asp-action="Index" asp-route-view="@Model.CalendarView" asp-route-status="@Model.StatusFilter" asp-route-date="@DateTime.Today.ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-secondary">Bugun</a>
+            <a asp-action="Index" asp-route-view="@Model.CalendarView" asp-route-status="@Model.StatusFilter" asp-route-date="@Model.NextDate.ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-secondary">Sonraki</a>
         </div>
     </div>
 </div>
 
-@if (!groupedAppointments.Any())
+@if (!Model.Buckets.Any(bucket => bucket.Appointments.Any()))
 {
-    <div class="alert alert-info">Randevu kaydı bulunamadı.</div>
+    <div class="alert alert-info">Bu gorunum icin randevu kaydi bulunamadi.</div>
 }
 else
 {
     <div class="agenda-grid">
-        @foreach (var day in groupedAppointments)
+        @foreach (var bucket in Model.Buckets.Where(bucket => bucket.Appointments.Any()))
         {
             <section class="agenda-day glass-card">
                 <header class="agenda-day__header">
                     <div>
-                        <div class="agenda-day__title">@day.Key.ToString("dddd, dd MMMM")</div>
-                        <div class="agenda-day__count">@day.Count() kayıt</div>
+                        <div class="agenda-day__title">@bucket.Label</div>
+                        <div class="agenda-day__count">@bucket.Appointments.Count kayit</div>
                     </div>
                 </header>
 
                 <div class="agenda-day__timeline">
-                    @foreach (var appt in day.OrderBy(item => item.AppointmentDate))
+                    @foreach (var appt in bucket.Appointments.OrderBy(item => item.AppointmentDate))
                     {
                         <article class="agenda-entry">
                             <div class="agenda-entry__time">
@@ -66,12 +74,12 @@ else
                                     </div>
                                     <div class="d-flex gap-2 align-self-start">
                                         <a asp-controller="Patients" asp-action="Details" asp-route-id="@appt.PatientId" class="btn btn-sm btn-outline-secondary">Hasta</a>
-                                        <a asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
+                                        <a asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-primary">Duzenle</a>
                                         @if (appt.Status == AppointmentStatus.Scheduled)
                                         {
                                             <form asp-action="Cancel" asp-route-id="@appt.Id" method="post" class="d-inline" onsubmit="return confirm('Bu randevuyu iptal etmek istiyor musunuz?')">
                                                 @Html.AntiForgeryToken()
-                                                <button type="submit" class="btn btn-sm btn-outline-danger">İptal Et</button>
+                                                <button type="submit" class="btn btn-sm btn-outline-danger">Iptal Et</button>
                                             </form>
                                         }
                                     </div>

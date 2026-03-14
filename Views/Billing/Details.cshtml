@@ -6,7 +6,7 @@
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Fatura Detayı</div>
+        <div class="eyebrow">Fatura Detayi</div>
         <h2 class="page-title">Fatura #@Model.Id</h2>
         <p class="page-subtitle">
             <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" class="text-decoration-none">@Model.Patient?.FullName</a>
@@ -16,10 +16,10 @@
     <div class="d-flex gap-2 flex-wrap">
         @if (canViewFinancials)
         {
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Düzenle</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Duzenle</a>
             @if (Model.Status != InvoiceStatus.Paid && Model.Status != InvoiceStatus.Cancelled)
             {
-                <a asp-action="AddPayment" asp-route-invoiceId="@Model.Id" class="btn btn-success">Ödeme Ekle</a>
+                <a asp-action="AddPayment" asp-route-invoiceId="@Model.Id" class="btn btn-success">Odeme Ekle</a>
             }
         }
     </div>
@@ -33,7 +33,7 @@
             <div class="value">@Model.TotalAmount.ToString("C")</div>
         </article>
         <article class="stats-card glass-card text-center">
-            <div class="label">Ödenen</div>
+            <div class="label">Odenen</div>
             <div class="value text-success">@Model.TotalPaid.ToString("C")</div>
         </article>
         <article class="stats-card glass-card text-center">
@@ -44,7 +44,7 @@
 }
 else
 {
-    <div class="alert alert-info mb-4">Çalışan hesabı fatura tutarlarını, ödemeleri ve bakiyeleri göremez.</div>
+    <div class="alert alert-info mb-4">Calisan hesabi tutarlari, odemeleri ve bakiyeleri goremez.</div>
 }
 
 <div class="row g-4">
@@ -55,7 +55,7 @@ else
                 <dl class="row mb-0">
                     <dt class="col-sm-5">Fatura Tarihi</dt>
                     <dd class="col-sm-7">@Model.InvoiceDate.ToString("D")</dd>
-                    <dt class="col-sm-5">Son Ödeme Tarihi</dt>
+                    <dt class="col-sm-5">Son Odeme Tarihi</dt>
                     <dd class="col-sm-7">@(Model.DueDate?.ToString("D") ?? "-")</dd>
                     <dt class="col-sm-5">Notlar</dt>
                     <dd class="col-sm-7">@(string.IsNullOrWhiteSpace(Model.Notes) ? "-" : Model.Notes)</dd>
@@ -68,22 +68,22 @@ else
     {
         <div class="col-lg-6">
             <div class="card h-100">
-                <div class="card-header"><h3 class="section-title">Ödeme Geçmişi</h3></div>
+                <div class="card-header"><h3 class="section-title">Odeme Gecmisi</h3></div>
                 <div class="card-body p-0">
-                    @if (!Model.Payments.Any())
+                    @if (!Model.Payments.Any(p => !p.IsPlanned || p.IsSettled))
                     {
-                        <p class="empty-state mb-0">Bu fatura için kayıtlı ödeme yok.</p>
+                        <p class="empty-state mb-0">Bu fatura icin kayitli odeme yok.</p>
                     }
                     else
                     {
                         <ul class="list-group list-group-flush">
-                            @foreach (var pay in Model.Payments)
+                            @foreach (var pay in Model.Payments.Where(p => !p.IsPlanned || p.IsSettled).OrderByDescending(p => p.SettledDate ?? p.PaymentDate))
                             {
                                 <li class="list-group-item">
                                     <div class="d-flex justify-content-between gap-3">
                                         <div>
                                             <div class="fw-semibold">@pay.Amount.ToString("C")</div>
-                                            <div class="text-muted small">@pay.PaymentDate.ToString("D")</div>
+                                            <div class="text-muted small">@((pay.SettledDate ?? pay.PaymentDate).ToString("D"))</div>
                                             @if (!string.IsNullOrWhiteSpace(pay.Notes))
                                             {
                                                 <div class="text-muted small">@pay.Notes</div>
@@ -94,6 +94,46 @@ else
                                 </li>
                             }
                         </ul>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header"><h3 class="section-title">Odeme Plani</h3></div>
+                <div class="card-body p-0">
+                    @if (!Model.PlannedPayments.Any())
+                    {
+                        <p class="empty-state mb-0">Bu fatura icin tanimli odeme plani yok.</p>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Taksit</th>
+                                        <th>Planlanan Tarih</th>
+                                        <th>Tutar</th>
+                                        <th>Durum</th>
+                                        <th>Tahsil Tarihi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model.PlannedPayments)
+                                    {
+                                        <tr>
+                                            <td>@(item.InstallmentNumber ?? 0)</td>
+                                            <td>@item.PaymentDate.ToString("D")</td>
+                                            <td>@item.Amount.ToString("C")</td>
+                                            <td><span class="badge-soft @(item.IsSettled ? "success" : "warning")">@(item.IsSettled ? "Tahsil edildi" : "Bekliyor")</span></td>
+                                            <td>@(item.SettledDate?.ToString("D") ?? "-")</td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     }
                 </div>
             </div>

@@ -19,9 +19,10 @@ public class AppointmentsController : Controller
         _db = db;
     }
 
-    public async Task<IActionResult> Index(string? status, int? patientId)
+    public async Task<IActionResult> Index(string? status, int? patientId, AppointmentCalendarView view = AppointmentCalendarView.Daily, DateTime? date = null)
     {
         var query = _db.Appointments.Include(a => a.Patient).AsQueryable();
+        var referenceDate = (date ?? DateTime.Today).Date;
 
         if (Enum.TryParse<AppointmentStatus>(status, out var parsedStatus))
             query = query.Where(a => a.Status == parsedStatus);
@@ -29,9 +30,35 @@ public class AppointmentsController : Controller
         if (patientId.HasValue)
             query = query.Where(a => a.PatientId == patientId);
 
-        ViewBag.StatusFilter = status;
-        ViewBag.Statuses = Enum.GetValues<AppointmentStatus>();
-        return View(await query.OrderBy(a => a.AppointmentDate).ToListAsync());
+        var (periodStart, periodEnd, previousDate, nextDate, buckets, periodLabel) = BuildCalendarFrame(view, referenceDate);
+        var appointments = await query
+            .Where(a => a.AppointmentDate >= periodStart && a.AppointmentDate < periodEnd)
+            .OrderBy(a => a.AppointmentDate)
+            .ToListAsync();
+
+        foreach (var appointment in appointments)
+        {
+            var bucket = buckets.FirstOrDefault(item =>
+                appointment.AppointmentDate >= item.Start &&
+                appointment.AppointmentDate < GetBucketEnd(item, view));
+
+            bucket?.Appointments.Add(appointment);
+        }
+
+        var vm = new AppointmentIndexViewModel
+        {
+            StatusFilter = status,
+            PatientId = patientId,
+            CalendarView = view,
+            ReferenceDate = referenceDate,
+            Buckets = buckets,
+            Statuses = Enum.GetValues<AppointmentStatus>(),
+            PeriodLabel = periodLabel,
+            PreviousDate = previousDate,
+            NextDate = nextDate
+        };
+
+        return View(vm);
     }
 
     public async Task<IActionResult> Create(int? patientId)
@@ -61,7 +88,8 @@ public class AppointmentsController : Controller
             AppointmentDate = vm.AppointmentDate,
             Purpose = vm.Purpose?.Trim() ?? string.Empty,
             Status = vm.Status,
-            Notes = TreatmentRecordTeethSerializer.Merge(vm.Notes, vm.SelectedTeeth),
+            Notes = vm.Notes,
+            SelectedTeethData = TeethSelectionSerializer.Serialize(vm.SelectedTeeth),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -84,8 +112,8 @@ public class AppointmentsController : Controller
             AppointmentDate = appointment.AppointmentDate,
             Purpose = appointment.Purpose,
             Status = appointment.Status,
-            Notes = TreatmentRecordTeethSerializer.StripMetadata(appointment.Notes),
-            SelectedTeeth = TreatmentRecordTeethSerializer.ParseSelectedTeeth(appointment.Notes)
+            Notes = appointment.Notes,
+            SelectedTeeth = TeethSelectionSerializer.Parse(appointment.SelectedTeethData)
         };
 
         await PopulateFormOptionsAsync(vm);
@@ -109,7 +137,8 @@ public class AppointmentsController : Controller
         appointment.AppointmentDate = vm.AppointmentDate;
         appointment.Purpose = vm.Purpose?.Trim() ?? string.Empty;
         appointment.Status = vm.Status;
-        appointment.Notes = TreatmentRecordTeethSerializer.Merge(vm.Notes, vm.SelectedTeeth);
+        appointment.Notes = vm.Notes;
+        appointment.SelectedTeethData = TeethSelectionSerializer.Serialize(vm.SelectedTeeth);
         appointment.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync();
@@ -143,5 +172,85 @@ public class AppointmentsController : Controller
             .OrderBy(p => p.FullName)
             .Select(p => new SelectListItem { Value = p.Id.ToString(), Text = p.FullName })
             .ToListAsync();
+    }
+
+    private static (DateTime Start, DateTime End, DateTime PreviousDate, DateTime NextDate, List<AppointmentBucketViewModel> Buckets, string Label) BuildCalendarFrame(AppointmentCalendarView view, DateTime referenceDate)
+    {
+        return view switch
+        {
+            AppointmentCalendarView.Weekly => BuildWeeklyFrame(referenceDate),
+            AppointmentCalendarView.Monthly => BuildMonthlyFrame(referenceDate),
+            AppointmentCalendarView.Yearly => BuildYearlyFrame(referenceDate),
+            _ => BuildDailyFrame(referenceDate)
+        };
+    }
+
+    private static (DateTime, DateTime, DateTime, DateTime, List<AppointmentBucketViewModel>, string) BuildDailyFrame(DateTime referenceDate)
+    {
+        var start = referenceDate.Date;
+        var end = start.AddDays(1);
+        return (start, end, start.AddDays(-1), start.AddDays(1), new List<AppointmentBucketViewModel>
+        {
+            new()
+            {
+                Start = start,
+                Label = start.ToString("dddd, dd MMMM yyyy")
+            }
+        }, start.ToString("D"));
+    }
+
+    private static (DateTime, DateTime, DateTime, DateTime, List<AppointmentBucketViewModel>, string) BuildWeeklyFrame(DateTime referenceDate)
+    {
+        var diff = ((int)referenceDate.DayOfWeek + 6) % 7;
+        var start = referenceDate.AddDays(-diff).Date;
+        var end = start.AddDays(7);
+        var buckets = Enumerable.Range(0, 7)
+            .Select(offset => new AppointmentBucketViewModel
+            {
+                Start = start.AddDays(offset),
+                Label = start.AddDays(offset).ToString("dddd, dd MMMM")
+            })
+            .ToList();
+
+        return (start, end, start.AddDays(-7), start.AddDays(7), buckets, $"{start:dd MMM} - {end.AddDays(-1):dd MMM yyyy}");
+    }
+
+    private static (DateTime, DateTime, DateTime, DateTime, List<AppointmentBucketViewModel>, string) BuildMonthlyFrame(DateTime referenceDate)
+    {
+        var start = new DateTime(referenceDate.Year, referenceDate.Month, 1);
+        var end = start.AddMonths(1);
+        var buckets = Enumerable.Range(0, DateTime.DaysInMonth(start.Year, start.Month))
+            .Select(offset => new AppointmentBucketViewModel
+            {
+                Start = start.AddDays(offset),
+                Label = start.AddDays(offset).ToString("dd MMMM dddd")
+            })
+            .ToList();
+
+        return (start, end, start.AddMonths(-1), start.AddMonths(1), buckets, start.ToString("MMMM yyyy"));
+    }
+
+    private static (DateTime, DateTime, DateTime, DateTime, List<AppointmentBucketViewModel>, string) BuildYearlyFrame(DateTime referenceDate)
+    {
+        var start = new DateTime(referenceDate.Year, 1, 1);
+        var end = start.AddYears(1);
+        var buckets = Enumerable.Range(1, 12)
+            .Select(month => new AppointmentBucketViewModel
+            {
+                Start = new DateTime(referenceDate.Year, month, 1),
+                Label = new DateTime(referenceDate.Year, month, 1).ToString("MMMM yyyy")
+            })
+            .ToList();
+
+        return (start, end, start.AddYears(-1), start.AddYears(1), buckets, referenceDate.Year.ToString());
+    }
+
+    private static DateTime GetBucketEnd(AppointmentBucketViewModel bucket, AppointmentCalendarView view)
+    {
+        return view switch
+        {
+            AppointmentCalendarView.Yearly => bucket.Start.AddMonths(1),
+            _ => bucket.Start.AddDays(1)
+        };
     }
 }
