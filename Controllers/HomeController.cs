@@ -25,6 +25,18 @@ public class HomeController : Controller
         var startOfMonth = new DateTime(today.Year, today.Month, 1);
         var endOfMonth = startOfMonth.AddMonths(1);
         var todayDateOnly = DateOnly.FromDateTime(today);
+        var pendingInstallments = await _db.Payments
+            .Where(p => p.IsPlanned && !p.IsSettled)
+            .Select(p => new
+            {
+                p.Amount,
+                p.PaymentDate
+            })
+            .ToListAsync();
+
+        var overdueInstallments = pendingInstallments
+            .Where(p => p.PaymentDate < todayDateOnly)
+            .ToList();
 
         var vm = new DashboardViewModel
         {
@@ -75,19 +87,10 @@ public class HomeController : Controller
             AppointmentsThisMonth = await _db.Appointments
                 .CountAsync(a => a.AppointmentDate >= startOfMonth && a.AppointmentDate < endOfMonth),
 
-            PendingInstallmentCount = await _db.Payments
-                .CountAsync(p => p.IsPlanned && !p.IsSettled),
-
-            PendingInstallmentAmount = await _db.Payments
-                .Where(p => p.IsPlanned && !p.IsSettled)
-                .SumAsync(p => (decimal?)p.Amount) ?? 0m,
-
-            OverdueInstallmentCount = await _db.Payments
-                .CountAsync(p => p.IsPlanned && !p.IsSettled && p.PaymentDate < todayDateOnly),
-
-            OverdueInstallmentAmount = await _db.Payments
-                .Where(p => p.IsPlanned && !p.IsSettled && p.PaymentDate < todayDateOnly)
-                .SumAsync(p => (decimal?)p.Amount) ?? 0m
+            PendingInstallmentCount = pendingInstallments.Count,
+            PendingInstallmentAmount = pendingInstallments.Sum(p => p.Amount),
+            OverdueInstallmentCount = overdueInstallments.Count,
+            OverdueInstallmentAmount = overdueInstallments.Sum(p => p.Amount)
         };
 
         return View(vm);
