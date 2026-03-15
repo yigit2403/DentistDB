@@ -15,9 +15,24 @@ public class ScansController : Controller
     private readonly IWebHostEnvironment _env;
     private readonly string _scanStoragePath;
 
-    private static readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".pdf" };
-    private static readonly string[] AllowedContentTypes = {
-        "image/jpeg", "image/png", "application/pdf"
+    private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".pdf",
+        ".dcm",
+        ".dicom"
+    };
+
+    private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "image/jpeg",
+        "image/png",
+        "application/pdf",
+        "application/dicom",
+        "application/dicom+json",
+        "application/octet-stream"
     };
 
     public ScansController(ApplicationDbContext db, IWebHostEnvironment env, IOptions<StorageOptions> storageOptions)
@@ -60,10 +75,11 @@ public class ScansController : Controller
             return View(vm);
         }
 
-        var ext = Path.GetExtension(vm.File.FileName).ToLowerInvariant();
-        if (!AllowedExtensions.Contains(ext) || !AllowedContentTypes.Contains(vm.File.ContentType))
+        var ext = Path.GetExtension(vm.File.FileName);
+        var contentType = vm.File.ContentType;
+        if (!IsAllowedUpload(ext, contentType))
         {
-            ModelState.AddModelError(nameof(vm.File), "Yalnizca JPG, PNG ve PDF dosyalari kabul edilir.");
+            ModelState.AddModelError(nameof(vm.File), "Yalnizca JPG, PNG, PDF ve DICOM dosyalari kabul edilir.");
             var pat = await _db.Patients.FindAsync(vm.PatientId);
             ViewBag.PatientName = pat?.FullName;
             return View(vm);
@@ -85,7 +101,7 @@ public class ScansController : Controller
             PatientId = vm.PatientId,
             FileName = vm.File.FileName,
             StoredPath = storedFileName,
-            ContentType = vm.File.ContentType,
+            ContentType = GetStoredContentType(ext, contentType),
             FileSize = vm.File.Length,
             ScanType = vm.ScanType,
             ScanDate = vm.ScanDate,
@@ -142,5 +158,33 @@ public class ScansController : Controller
         await _db.SaveChangesAsync();
         TempData["Success"] = "Tarama silindi.";
         return RedirectToAction("Details", "Patients", new { id = patientId });
+    }
+
+    private static bool IsAllowedUpload(string? extension, string? contentType)
+    {
+        if (string.IsNullOrWhiteSpace(extension) || !AllowedExtensions.Contains(extension))
+        {
+            return false;
+        }
+
+        if (string.IsNullOrWhiteSpace(contentType))
+        {
+            return true;
+        }
+
+        return AllowedContentTypes.Contains(contentType);
+    }
+
+    private static string GetStoredContentType(string extension, string? contentType)
+    {
+        if (extension.Equals(".dcm", StringComparison.OrdinalIgnoreCase) ||
+            extension.Equals(".dicom", StringComparison.OrdinalIgnoreCase))
+        {
+            return "application/dicom";
+        }
+
+        return string.IsNullOrWhiteSpace(contentType)
+            ? "application/octet-stream"
+            : contentType;
     }
 }

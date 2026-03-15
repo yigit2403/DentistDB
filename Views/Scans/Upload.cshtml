@@ -25,8 +25,8 @@
             <div class="row g-3">
                 <div class="col-md-12">
                     <label asp-for="File" class="form-label"></label>
-                    <input asp-for="File" class="form-control" type="file" accept=".jpg,.jpeg,.png,.pdf" />
-                    <div class="form-text">Kabul edilen formatlar: JPG, PNG, PDF. Maksimum boyut: 20 MB.</div>
+                    <input asp-for="File" class="form-control" type="file" accept=".jpg,.jpeg,.png,.pdf,.dcm,.dicom,application/dicom" />
+                    <div class="form-text">Kabul edilen formatlar: JPG, PNG, PDF, DICOM (.dcm, .dicom). Maksimum boyut: 20 MB.</div>
                     <span asp-validation-for="File" class="text-danger small"></span>
                 </div>
                 <div class="col-md-4">

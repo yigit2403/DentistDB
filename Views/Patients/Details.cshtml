@@ -87,155 +87,174 @@
     </div>
 </div>
 
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="section-title">Randevular</h3>
-        <a asp-controller="Appointments" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Yeni Randevu</a>
-    </div>
-    <div class="card-body p-0">
-        @if (!Model.Appointments.Any())
-        {
-            <p class="empty-state mb-0">Bu hastaya ait randevu bulunmuyor.</p>
-        }
-        else
-        {
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Tarih</th>
-                            <th>Konu</th>
-                            <th>Durum</th>
-                            <th class="text-end">Islem</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var appt in Model.Appointments)
-                        {
-                            var selectedTeeth = TeethSelectionSerializer.Parse(appt.SelectedTeethData);
-                            <tr>
-                                <td>@appt.AppointmentDate.ToString("f")</td>
-                                <td>
-                                    @(string.IsNullOrWhiteSpace(appt.Purpose) ? "Belirtilmedi" : appt.Purpose)
-                                    @if (selectedTeeth.Any())
-                                    {
-                                        <div class="operation-teeth mt-2">
-                                            @foreach (var tooth in selectedTeeth)
-                                            {
-                                                <span class="badge-soft info">@tooth</span>
-                                            }
-                                        </div>
-                                    }
-                                    @if (!string.IsNullOrWhiteSpace(appt.Notes))
-                                    {
-                                        <div class="text-muted small mt-1">@appt.Notes</div>
-                                    }
-                                </td>
-                                <td><span class="badge-soft @(appt.Status == AppointmentStatus.Completed ? "success" : appt.Status == AppointmentStatus.Cancelled ? "neutral" : appt.Status == AppointmentStatus.NoShow ? "warning" : "info")">@appt.Status.GetDisplayName()</span></td>
-                                <td class="text-end">
-                                    <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-secondary">Duzenle</a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </div>
-</div>
-
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="section-title">Goruntuler ve Taramalar</h3>
-        <a asp-controller="Scans" asp-action="Upload" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Tarama Yukle</a>
-    </div>
-    <div class="card-body p-0">
-        @if (!Model.Scans.Any())
-        {
-            <p class="empty-state mb-0">Yuklenmis tarama bulunmuyor.</p>
-        }
-        else
-        {
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Tarih</th>
-                            <th>Dosya</th>
-                            <th>Tur</th>
-                            <th>Boyut</th>
-                            <th class="text-end">Islem</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var scan in Model.Scans)
-                        {
-                            <tr>
-                                <td>@scan.ScanDate.ToString("d")</td>
-                                <td>@scan.FileName</td>
-                                <td><span class="badge-soft info">@scan.ScanType.GetDisplayName()</span></td>
-                                <td>@((scan.FileSize / 1024.0).ToString("F1")) KB</td>
-                                <td class="text-end">
-                                    <a asp-controller="Scans" asp-action="View" asp-route-id="@scan.Id" class="btn btn-sm btn-outline-primary">Incele</a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
-    </div>
-</div>
-
 <div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="section-title">Faturalar</h3>
-        <a asp-controller="Billing" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Yeni Fatura</a>
+    <div class="card-header pb-0">
+        <ul class="nav nav-tabs card-header-tabs" id="patientDetailsTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="appointments-tab" data-bs-toggle="tab" data-bs-target="#appointments-pane" type="button" role="tab" aria-controls="appointments-pane" aria-selected="true">Randevular</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="scans-tab" data-bs-toggle="tab" data-bs-target="#scans-pane" type="button" role="tab" aria-controls="scans-pane" aria-selected="false">Tibbi Goruntuler</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="billing-tab" data-bs-toggle="tab" data-bs-target="#billing-pane" type="button" role="tab" aria-controls="billing-pane" aria-selected="false">Faturalar</button>
+            </li>
+        </ul>
     </div>
     <div class="card-body p-0">
-        @if (!Model.Invoices.Any())
-        {
-            <p class="empty-state mb-0">Fatura kaydi bulunmuyor.</p>
-        }
-        else
-        {
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Tarih</th>
-                            @if (canViewFinancials)
-                            {
-                                <th>Toplam</th>
-                                <th>Odenen</th>
-                                <th>Kalan</th>
-                                <th>Plan</th>
-                            }
-                            <th>Durum</th>
-                            <th class="text-end">Islem</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var inv in Model.Invoices)
-                        {
-                            <tr>
-                                <td>@inv.InvoiceDate.ToString("d")</td>
-                                @if (canViewFinancials)
+        <div class="tab-content" id="patientDetailsTabContent">
+            <div class="tab-pane fade show active" id="appointments-pane" role="tabpanel" aria-labelledby="appointments-tab" tabindex="0">
+                <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                    <h3 class="section-title mb-0">Randevular</h3>
+                    <a asp-controller="Appointments" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Yeni Randevu</a>
+                </div>
+                @if (!Model.Appointments.Any())
+                {
+                    <p class="empty-state mb-0">Bu hastaya ait randevu bulunmuyor.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Konu</th>
+                                    <th>Durum</th>
+                                    <th class="text-end">Islem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var appt in Model.Appointments)
                                 {
-                                    <td>@inv.TotalAmount.ToString("C")</td>
-                                    <td>@inv.TotalPaid.ToString("C")</td>
-                                    <td>@inv.Balance.ToString("C")</td>
-                                    <td>@inv.PlannedPayments.Count(p => !p.IsSettled)</td>
+                                    var selectedTeeth = TeethSelectionSerializer.Parse(appt.SelectedTeethData);
+                                    <tr>
+                                        <td>@appt.AppointmentDate.ToString("f")</td>
+                                        <td>
+                                            @(string.IsNullOrWhiteSpace(appt.Purpose) ? "Belirtilmedi" : appt.Purpose)
+                                            @if (selectedTeeth.Any())
+                                            {
+                                                <div class="operation-teeth mt-2">
+                                                    @foreach (var tooth in selectedTeeth)
+                                                    {
+                                                        <span class="badge-soft info">@tooth</span>
+                                                    }
+                                                </div>
+                                            }
+                                            @if (!string.IsNullOrWhiteSpace(appt.Notes))
+                                            {
+                                                <div class="text-muted small mt-1">@appt.Notes</div>
+                                            }
+                                        </td>
+                                        <td><span class="badge-soft @(appt.Status == AppointmentStatus.Completed ? "success" : appt.Status == AppointmentStatus.Cancelled ? "neutral" : appt.Status == AppointmentStatus.NoShow ? "warning" : "info")">@appt.Status.GetDisplayName()</span></td>
+                                        <td class="text-end">
+                                            <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-secondary">Duzenle</a>
+                                        </td>
+                                    </tr>
                                 }
-                                <td><span class="badge-soft @(inv.Status == InvoiceStatus.Paid ? "success" : inv.Status == InvoiceStatus.Cancelled ? "neutral" : inv.Status == InvoiceStatus.PartiallyPaid ? "warning" : "info")">@inv.Status.GetDisplayName()</span></td>
-                                <td class="text-end">
-                                    <a asp-controller="Billing" asp-action="Details" asp-route-id="@inv.Id" class="btn btn-sm btn-outline-secondary">Detay</a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
+                            </tbody>
+                        </table>
+                    </div>
+                }
             </div>
-        }
+
+            <div class="tab-pane fade" id="scans-pane" role="tabpanel" aria-labelledby="scans-tab" tabindex="0">
+                <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                    <div>
+                        <h3 class="section-title mb-1">Tibbi Goruntuler ve Taramalar</h3>
+                        <div class="small text-muted">JPG, PNG, PDF ve DICOM dosyalari hasta dosyasinda saklanir.</div>
+                    </div>
+                    <a asp-controller="Scans" asp-action="Upload" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Tarama Yukle</a>
+                </div>
+                @if (!Model.Scans.Any())
+                {
+                    <p class="empty-state mb-0">Yuklenmis tibbi goruntu bulunmuyor.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tarih</th>
+                                    <th>Dosya</th>
+                                    <th>Tur</th>
+                                    <th>Format</th>
+                                    <th>Boyut</th>
+                                    <th class="text-end">Islem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var scan in Model.Scans)
+                                {
+                                    var extension = System.IO.Path.GetExtension(scan.FileName).TrimStart('.').ToUpperInvariant();
+                                    <tr>
+                                        <td>@scan.ScanDate.ToString("d")</td>
+                                        <td>@scan.FileName</td>
+                                        <td><span class="badge-soft info">@scan.ScanType.GetDisplayName()</span></td>
+                                        <td>@(string.IsNullOrWhiteSpace(extension) ? "-" : extension)</td>
+                                        <td>@((scan.FileSize / 1024.0).ToString("F1")) KB</td>
+                                        <td class="text-end">
+                                            <a asp-controller="Scans" asp-action="View" asp-route-id="@scan.Id" class="btn btn-sm btn-outline-primary">Incele</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+
+            <div class="tab-pane fade" id="billing-pane" role="tabpanel" aria-labelledby="billing-tab" tabindex="0">
+                <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
+                    <h3 class="section-title mb-0">Faturalar</h3>
+                    <a asp-controller="Billing" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Yeni Fatura</a>
+                </div>
+                @if (!Model.Invoices.Any())
+                {
+                    <p class="empty-state mb-0">Fatura kaydi bulunmuyor.</p>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Tarih</th>
+                                    @if (canViewFinancials)
+                                    {
+                                        <th>Toplam</th>
+                                        <th>Odenen</th>
+                                        <th>Kalan</th>
+                                        <th>Plan</th>
+                                    }
+                                    <th>Durum</th>
+                                    <th class="text-end">Islem</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var inv in Model.Invoices)
+                                {
+                                    <tr>
+                                        <td>@inv.InvoiceDate.ToString("d")</td>
+                                        @if (canViewFinancials)
+                                        {
+                                            <td>@inv.TotalAmount.ToString("C")</td>
+                                            <td>@inv.TotalPaid.ToString("C")</td>
+                                            <td>@inv.Balance.ToString("C")</td>
+                                            <td>@inv.PlannedPayments.Count(p => !p.IsSettled)</td>
+                                        }
+                                        <td><span class="badge-soft @(inv.Status == InvoiceStatus.Paid ? "success" : inv.Status == InvoiceStatus.Cancelled ? "neutral" : inv.Status == InvoiceStatus.PartiallyPaid ? "warning" : "info")">@inv.Status.GetDisplayName()</span></td>
+                                        <td class="text-end">
+                                            <a asp-controller="Billing" asp-action="Details" asp-route-id="@inv.Id" class="btn btn-sm btn-outline-secondary">Detay</a>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
     </div>
 </div>
