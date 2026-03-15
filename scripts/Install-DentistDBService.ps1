@@ -8,6 +8,7 @@ param(
     [string]$ServiceName = "DentistDB",
     [string]$DataRoot = "C:\ProgramData\DentistDB",
     [string]$CertificatePath = "C:\ProgramData\DentistDB\certs\dentistdb.pfx",
+    [string]$CertificateKeyPath = "",
     [string]$CertificatePassword = ""
 )
 
@@ -29,10 +30,17 @@ New-Item -ItemType Directory -Force -Path (Join-Path $DataRoot "keys") | Out-Nul
 [Environment]::SetEnvironmentVariable("Storage__ScanStoragePath", "$DataRoot\scans", "Machine")
 [Environment]::SetEnvironmentVariable("Storage__DataProtectionKeysPath", "$DataRoot\keys", "Machine")
 
-if ($CertificatePassword) {
-    [Environment]::SetEnvironmentVariable("Kestrel__Endpoints__HttpsPrivate__Certificate__Path", $CertificatePath, "Machine")
-    [Environment]::SetEnvironmentVariable("Kestrel__Endpoints__HttpsPrivate__Certificate__Password", $CertificatePassword, "Machine")
+if ($CertificatePath) {
     [Environment]::SetEnvironmentVariable("Kestrel__Endpoints__HttpsPrivate__Url", $PrivateUrl, "Machine")
+    [Environment]::SetEnvironmentVariable("Kestrel__Endpoints__HttpsPrivate__Certificate__Path", $CertificatePath, "Machine")
+
+    if ($CertificateKeyPath) {
+        [Environment]::SetEnvironmentVariable("Kestrel__Endpoints__HttpsPrivate__Certificate__KeyPath", $CertificateKeyPath, "Machine")
+        [Environment]::SetEnvironmentVariable("Kestrel__Endpoints__HttpsPrivate__Certificate__Password", $null, "Machine")
+    }
+    elseif ($CertificatePassword) {
+        [Environment]::SetEnvironmentVariable("Kestrel__Endpoints__HttpsPrivate__Certificate__Password", $CertificatePassword, "Machine")
+    }
 }
 
 if (Get-Service -Name $ServiceName -ErrorAction SilentlyContinue) {
