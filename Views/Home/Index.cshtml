@@ -39,6 +39,16 @@
         <div class="value">@Model.UnpaidInvoices.Count</div>
         <div class="page-subtitle">Takip edilmesi gereken tahsilat</div>
     </article>
+    <article class="stats-card glass-card">
+        <div class="label">Bekleyen Taksit</div>
+        <div class="value">@Model.PendingInstallmentCount</div>
+        <div class="page-subtitle">@Model.PendingInstallmentAmount.ToString("C") tutarinda planli tahsilat</div>
+    </article>
+    <article class="stats-card glass-card">
+        <div class="label">Geciken Taksit</div>
+        <div class="value">@Model.OverdueInstallmentCount</div>
+        <div class="page-subtitle">@Model.OverdueInstallmentAmount.ToString("C") tahsil edilmeyi bekliyor</div>
+    </article>
 </section>
 
 <div class="row g-4">
@@ -104,18 +114,18 @@
     <div class="col-lg-6">
         <div class="card">
             <div class="card-header d-flex justify-content-between align-items-center">
-                <h3 class="section-title">Yaklasan Odeme Planlari</h3>
+                <h3 class="section-title">Yaklasan Taksitler</h3>
                 <a asp-controller="Billing" asp-action="Index" class="btn btn-sm btn-outline-secondary">Finans</a>
             </div>
             <div class="card-body p-0">
-                @if (!Model.UpcomingPaymentPlanItems.Any())
+                @if (!Model.UpcomingInstallments.Any())
                 {
-                    <p class="empty-state mb-0">Yaklasan planli odeme bulunmuyor.</p>
+                    <p class="empty-state mb-0">Yaklasan taksit bulunmuyor.</p>
                 }
                 else
                 {
                     <ul class="list-group list-group-flush">
-                        @foreach (var item in Model.UpcomingPaymentPlanItems)
+                        @foreach (var item in Model.UpcomingInstallments)
                         {
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div>

@@ -831,7 +831,7 @@ dl dt {
   margin: 0 auto;
 }
 
-.payment-plan-list {
+.installment-list {
   display: flex;
   flex-wrap: wrap;
   gap: 0.6rem;

@@ -24,6 +24,7 @@ public class HomeController : Controller
         var nextWeek = today.AddDays(7);
         var startOfMonth = new DateTime(today.Year, today.Month, 1);
         var endOfMonth = startOfMonth.AddMonths(1);
+        var todayDateOnly = DateOnly.FromDateTime(today);
 
         var vm = new DashboardViewModel
         {
@@ -41,10 +42,10 @@ public class HomeController : Controller
                 .OrderBy(a => a.AppointmentDate)
                 .ToListAsync(),
 
-            UpcomingPaymentPlanItems = await _db.Payments
+            UpcomingInstallments = await _db.Payments
                 .Include(p => p.Invoice!)
                 .ThenInclude(i => i.Patient)
-                .Where(p => p.IsPlanned && !p.IsSettled && p.PaymentDate >= DateOnly.FromDateTime(today))
+                .Where(p => p.IsPlanned && !p.IsSettled && p.PaymentDate >= todayDateOnly)
                 .OrderBy(p => p.PaymentDate)
                 .Take(8)
                 .ToListAsync(),
@@ -72,7 +73,21 @@ public class HomeController : Controller
             TotalPatients = await _db.Patients.CountAsync(p => !p.IsArchived),
 
             AppointmentsThisMonth = await _db.Appointments
-                .CountAsync(a => a.AppointmentDate >= startOfMonth && a.AppointmentDate < endOfMonth)
+                .CountAsync(a => a.AppointmentDate >= startOfMonth && a.AppointmentDate < endOfMonth),
+
+            PendingInstallmentCount = await _db.Payments
+                .CountAsync(p => p.IsPlanned && !p.IsSettled),
+
+            PendingInstallmentAmount = await _db.Payments
+                .Where(p => p.IsPlanned && !p.IsSettled)
+                .SumAsync(p => (decimal?)p.Amount) ?? 0m,
+
+            OverdueInstallmentCount = await _db.Payments
+                .CountAsync(p => p.IsPlanned && !p.IsSettled && p.PaymentDate < todayDateOnly),
+
+            OverdueInstallmentAmount = await _db.Payments
+                .Where(p => p.IsPlanned && !p.IsSettled && p.PaymentDate < todayDateOnly)
+                .SumAsync(p => (decimal?)p.Amount) ?? 0m
         };
 
         return View(vm);

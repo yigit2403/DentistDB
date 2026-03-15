@@ -46,7 +46,7 @@ public class Payment
     [Display(Name = "Notlar")]
     public string? Notes { get; set; }
 
-    [Display(Name = "Planlı Ödeme")]
+    [Display(Name = "Taksit Kaydı")]
     public bool IsPlanned { get; set; }
 
     [Display(Name = "Tahsil Edildi")]

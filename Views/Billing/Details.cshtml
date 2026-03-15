@@ -101,11 +101,11 @@ else
 
         <div class="col-12">
             <div class="card">
-                <div class="card-header"><h3 class="section-title">Odeme Plani</h3></div>
+                <div class="card-header"><h3 class="section-title">Taksitler</h3></div>
                 <div class="card-body p-0">
-                    @if (!Model.PlannedPayments.Any())
+                    @if (!Model.Installments.Any())
                     {
-                        <p class="empty-state mb-0">Bu fatura icin tanimli odeme plani yok.</p>
+                        <p class="empty-state mb-0">Bu fatura icin tanimli taksit yok.</p>
                     }
                     else
                     {
@@ -121,7 +121,7 @@ else
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach (var item in Model.PlannedPayments)
+                                    @foreach (var item in Model.Installments)
                                     {
                                         <tr>
                                             <td>@(item.InstallmentNumber ?? 0)</td>

@@ -51,7 +51,7 @@ public class BillingController : Controller
             PatientId = patientId ?? 0,
             InvoiceDate = DateOnly.FromDateTime(DateTime.Today),
             DueDate = DateOnly.FromDateTime(DateTime.Today.AddDays(30)),
-            FirstPaymentDate = DateOnly.FromDateTime(DateTime.Today.AddDays(30)),
+            FirstInstallmentDate = DateOnly.FromDateTime(DateTime.Today.AddDays(30)),
             Patients = await GetPatientSelectList()
         };
         return View(vm);
@@ -60,7 +60,7 @@ public class BillingController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(InvoiceFormViewModel vm)
     {
-        ValidatePaymentPlan(vm);
+        ValidateInstallments(vm);
         if (!ModelState.IsValid)
         {
             vm.Patients = await GetPatientSelectList();
@@ -81,7 +81,7 @@ public class BillingController : Controller
 
         _db.Invoices.Add(invoice);
         await _db.SaveChangesAsync();
-        await ReplacePaymentPlanAsync(invoice, vm);
+        await ReplaceInstallmentsAsync(invoice, vm);
         TempData["Success"] = "Fatura oluşturuldu.";
         return RedirectToAction(nameof(Details), new { id = invoice.Id });
     }
@@ -103,13 +103,13 @@ public class BillingController : Controller
             TotalAmount = invoice.TotalAmount,
             Status = invoice.Status,
             Notes = invoice.Notes,
-            EnablePaymentPlan = invoice.Payments.Any(p => p.IsPlanned),
-            FirstPaymentDate = invoice.Payments.Where(p => p.IsPlanned).OrderBy(p => p.PaymentDate).Select(p => (DateOnly?)p.PaymentDate).FirstOrDefault(),
+            EnableInstallments = invoice.Payments.Any(p => p.IsPlanned),
+            FirstInstallmentDate = invoice.Payments.Where(p => p.IsPlanned).OrderBy(p => p.PaymentDate).Select(p => (DateOnly?)p.PaymentDate).FirstOrDefault(),
             InstallmentCount = invoice.Payments.Count(p => p.IsPlanned),
-            ExistingPlannedPayments = invoice.Payments
+            ExistingInstallments = invoice.Payments
                 .Where(p => p.IsPlanned)
                 .OrderBy(p => p.PaymentDate)
-                .Select(p => new PlannedPaymentViewModel
+                .Select(p => new InstallmentViewModel
                 {
                     Id = p.Id,
                     PaymentDate = p.PaymentDate,
@@ -128,7 +128,7 @@ public class BillingController : Controller
     public async Task<IActionResult> Edit(int id, InvoiceFormViewModel vm)
     {
         if (id != vm.Id) return BadRequest();
-        ValidatePaymentPlan(vm);
+        ValidateInstallments(vm);
         if (!ModelState.IsValid)
         {
             vm.Patients = await GetPatientSelectList();
@@ -146,7 +146,7 @@ public class BillingController : Controller
         invoice.Notes = vm.Notes;
         invoice.UpdatedAt = DateTime.UtcNow;
 
-        await ReplacePaymentPlanAsync(invoice, vm);
+        await ReplaceInstallmentsAsync(invoice, vm);
         await _db.SaveChangesAsync();
         TempData["Success"] = "Fatura güncellendi.";
         return RedirectToAction(nameof(Details), new { id = invoice.Id });
@@ -168,7 +168,7 @@ public class BillingController : Controller
             PaymentDate = DateOnly.FromDateTime(DateTime.Today),
             Amount = invoice.Balance
         };
-        await PopulatePlannedPaymentsAsync(vm);
+        await PopulateInstallmentsAsync(vm);
         ViewBag.Invoice = invoice;
         return View(vm);
     }
@@ -183,7 +183,7 @@ public class BillingController : Controller
                 .Include(i => i.Patient)
                 .Include(i => i.Payments)
                 .FirstOrDefaultAsync(i => i.Id == vm.InvoiceId);
-            await PopulatePlannedPaymentsAsync(vm);
+            await PopulateInstallmentsAsync(vm);
             ViewBag.Invoice = inv;
             return View(vm);
         }
@@ -194,22 +194,22 @@ public class BillingController : Controller
 
         if (invoice == null) return NotFound();
 
-        if (vm.PlannedPaymentId.HasValue)
+        if (vm.InstallmentId.HasValue)
         {
-            var plannedPayment = invoice.Payments.FirstOrDefault(p => p.Id == vm.PlannedPaymentId.Value && p.IsPlanned);
-            if (plannedPayment == null)
+            var installment = invoice.Payments.FirstOrDefault(p => p.Id == vm.InstallmentId.Value && p.IsPlanned);
+            if (installment == null)
             {
-                ModelState.AddModelError(nameof(PaymentFormViewModel.PlannedPaymentId), "Seçilen ödeme planı kaydı bulunamadı.");
-                await PopulatePlannedPaymentsAsync(vm);
+                ModelState.AddModelError(nameof(PaymentFormViewModel.InstallmentId), "Seçilen taksit kaydı bulunamadı.");
+                await PopulateInstallmentsAsync(vm);
                 ViewBag.Invoice = invoice;
                 return View(vm);
             }
 
-            plannedPayment.Amount = vm.Amount;
-            plannedPayment.PaymentMethod = vm.PaymentMethod;
-            plannedPayment.Notes = vm.Notes;
-            plannedPayment.IsSettled = true;
-            plannedPayment.SettledDate = vm.PaymentDate;
+            installment.Amount = vm.Amount;
+            installment.PaymentMethod = vm.PaymentMethod;
+            installment.Notes = vm.Notes;
+            installment.IsSettled = true;
+            installment.SettledDate = vm.PaymentDate;
         }
         else
         {
@@ -246,35 +246,35 @@ public class BillingController : Controller
             .ToListAsync();
     }
 
-    private void ValidatePaymentPlan(InvoiceFormViewModel vm)
+    private void ValidateInstallments(InvoiceFormViewModel vm)
     {
-        if (!vm.EnablePaymentPlan)
+        if (!vm.EnableInstallments)
         {
             return;
         }
 
-        if (!vm.FirstPaymentDate.HasValue)
+        if (!vm.FirstInstallmentDate.HasValue)
         {
-            ModelState.AddModelError(nameof(InvoiceFormViewModel.FirstPaymentDate), "İlk ödeme tarihi zorunludur.");
+            ModelState.AddModelError(nameof(InvoiceFormViewModel.FirstInstallmentDate), "İlk taksit tarihi zorunludur.");
         }
     }
 
-    private async Task ReplacePaymentPlanAsync(Invoice invoice, InvoiceFormViewModel vm)
+    private async Task ReplaceInstallmentsAsync(Invoice invoice, InvoiceFormViewModel vm)
     {
-        var existingPlan = await _db.Payments.Where(p => p.InvoiceId == invoice.Id && p.IsPlanned).ToListAsync();
+        var existingInstallments = await _db.Payments.Where(p => p.InvoiceId == invoice.Id && p.IsPlanned).ToListAsync();
         var hasSettledPayments = await _db.Payments.AnyAsync(p => p.InvoiceId == invoice.Id && ((!p.IsPlanned && p.IsSettled) || (p.IsPlanned && p.IsSettled)));
 
-        if (hasSettledPayments && existingPlan.Any())
+        if (hasSettledPayments && existingInstallments.Any())
         {
             return;
         }
 
-        if (existingPlan.Any())
+        if (existingInstallments.Any())
         {
-            _db.Payments.RemoveRange(existingPlan);
+            _db.Payments.RemoveRange(existingInstallments);
         }
 
-        if (!vm.EnablePaymentPlan || !vm.FirstPaymentDate.HasValue)
+        if (!vm.EnableInstallments || !vm.FirstInstallmentDate.HasValue)
         {
             return;
         }
@@ -293,10 +293,10 @@ public class BillingController : Controller
             _db.Payments.Add(new Payment
             {
                 InvoiceId = invoice.Id,
-                PaymentDate = vm.FirstPaymentDate.Value.AddMonths((i - 1) * vm.InstallmentIntervalMonths),
+                PaymentDate = vm.FirstInstallmentDate.Value.AddMonths((i - 1) * vm.InstallmentIntervalMonths),
                 Amount = amount,
                 PaymentMethod = PaymentMethod.Other,
-                Notes = "Otomatik oluşturulan ödeme planı taksiti",
+                Notes = "Otomatik oluşturulan taksit kaydı",
                 IsPlanned = true,
                 IsSettled = false,
                 InstallmentNumber = i,
@@ -305,9 +305,9 @@ public class BillingController : Controller
         }
     }
 
-    private async Task PopulatePlannedPaymentsAsync(PaymentFormViewModel vm)
+    private async Task PopulateInstallmentsAsync(PaymentFormViewModel vm)
     {
-        vm.PlannedPayments = await _db.Payments
+        vm.Installments = await _db.Payments
             .Where(p => p.InvoiceId == vm.InvoiceId && p.IsPlanned && !p.IsSettled)
             .OrderBy(p => p.PaymentDate)
             .Select(p => new SelectListItem

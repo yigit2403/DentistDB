@@ -32,12 +32,12 @@ public class InvoiceFormViewModel
     [Display(Name = "Notlar")]
     public string? Notes { get; set; }
 
-    [Display(Name = "Ödeme Planı Aktif")]
-    public bool EnablePaymentPlan { get; set; }
+    [Display(Name = "Taksitli Ödeme")]
+    public bool EnableInstallments { get; set; }
 
-    [Display(Name = "İlk Ödeme Tarihi")]
+    [Display(Name = "İlk Taksit Tarihi")]
     [DataType(DataType.Date)]
-    public DateOnly? FirstPaymentDate { get; set; }
+    public DateOnly? FirstInstallmentDate { get; set; }
 
     [Display(Name = "Taksit Sayısı")]
     [Range(1, 48, ErrorMessage = "Taksit sayısı 1 ile 48 arasında olmalıdır.")]
@@ -47,7 +47,7 @@ public class InvoiceFormViewModel
     [Range(1, 12, ErrorMessage = "Periyot 1 ile 12 ay arasında olmalıdır.")]
     public int InstallmentIntervalMonths { get; set; } = 1;
 
-    public IList<PlannedPaymentViewModel> ExistingPlannedPayments { get; set; } = new List<PlannedPaymentViewModel>();
+    public IList<InstallmentViewModel> ExistingInstallments { get; set; } = new List<InstallmentViewModel>();
     public IEnumerable<SelectListItem> Patients { get; set; } = Enumerable.Empty<SelectListItem>();
 }
 
@@ -75,13 +75,13 @@ public class PaymentFormViewModel
     [Display(Name = "Notlar")]
     public string? Notes { get; set; }
 
-    [Display(Name = "Planlı Taksit")]
-    public int? PlannedPaymentId { get; set; }
+    [Display(Name = "Taksit")]
+    public int? InstallmentId { get; set; }
 
-    public IList<SelectListItem> PlannedPayments { get; set; } = new List<SelectListItem>();
+    public IList<SelectListItem> Installments { get; set; } = new List<SelectListItem>();
 }
 
-public class PlannedPaymentViewModel
+public class InstallmentViewModel
 {
     public int Id { get; set; }
     public DateOnly PaymentDate { get; set; }

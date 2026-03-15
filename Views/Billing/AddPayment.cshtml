@@ -23,14 +23,14 @@
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
 
             <div class="row g-3">
-                @if (Model.PlannedPayments.Any())
+                @if (Model.Installments.Any())
                 {
                     <div class="col-md-12">
-                        <label asp-for="PlannedPaymentId" class="form-label"></label>
-                        <select asp-for="PlannedPaymentId" asp-items="Model.PlannedPayments" class="form-select">
-                            <option value="">Plan disi manuel odeme</option>
+                        <label asp-for="InstallmentId" class="form-label"></label>
+                        <select asp-for="InstallmentId" asp-items="Model.Installments" class="form-select">
+                            <option value="">Taksit disi manuel odeme</option>
                         </select>
-                        <span asp-validation-for="PlannedPaymentId" class="text-danger small"></span>
+                        <span asp-validation-for="InstallmentId" class="text-danger small"></span>
                     </div>
                 }
                 <div class="col-md-3">

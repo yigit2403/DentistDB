@@ -60,7 +60,7 @@ public class Invoice
     public decimal Balance => TotalAmount - TotalPaid;
 
     [NotMapped]
-    public IEnumerable<Payment> PlannedPayments => Payments
+    public IEnumerable<Payment> Installments => Payments
         .Where(p => p.IsPlanned)
         .OrderBy(p => p.PaymentDate)
         .ThenBy(p => p.InstallmentNumber);

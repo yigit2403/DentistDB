@@ -226,7 +226,7 @@
                                         <th>Toplam</th>
                                         <th>Odenen</th>
                                         <th>Kalan</th>
-                                        <th>Plan</th>
+                                        <th>Taksit</th>
                                     }
                                     <th>Durum</th>
                                     <th class="text-end">Islem</th>
@@ -242,7 +242,7 @@
                                             <td>@inv.TotalAmount.ToString("C")</td>
                                             <td>@inv.TotalPaid.ToString("C")</td>
                                             <td>@inv.Balance.ToString("C")</td>
-                                            <td>@inv.PlannedPayments.Count(p => !p.IsSettled)</td>
+                                            <td>@inv.Installments.Count(p => !p.IsSettled)</td>
                                         }
                                         <td><span class="badge-soft @(inv.Status == InvoiceStatus.Paid ? "success" : inv.Status == InvoiceStatus.Cancelled ? "neutral" : inv.Status == InvoiceStatus.PartiallyPaid ? "warning" : "info")">@inv.Status.GetDisplayName()</span></td>
                                         <td class="text-end">

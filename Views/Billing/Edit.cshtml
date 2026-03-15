@@ -51,14 +51,14 @@
                 </div>
                 <div class="col-md-12">
                     <div class="form-check">
-                        <input asp-for="EnablePaymentPlan" class="form-check-input" type="checkbox" />
-                        <label asp-for="EnablePaymentPlan" class="form-check-label"></label>
+                        <input asp-for="EnableInstallments" class="form-check-input" type="checkbox" />
+                        <label asp-for="EnableInstallments" class="form-check-label"></label>
                     </div>
                 </div>
                 <div class="col-md-4">
-                    <label asp-for="FirstPaymentDate" class="form-label"></label>
-                    <input asp-for="FirstPaymentDate" class="form-control" type="date" />
-                    <span asp-validation-for="FirstPaymentDate" class="text-danger small"></span>
+                    <label asp-for="FirstInstallmentDate" class="form-label"></label>
+                    <input asp-for="FirstInstallmentDate" class="form-control" type="date" />
+                    <span asp-validation-for="FirstInstallmentDate" class="text-danger small"></span>
                 </div>
                 <div class="col-md-4">
                     <label asp-for="InstallmentCount" class="form-label"></label>
@@ -68,13 +68,13 @@
                     <label asp-for="InstallmentIntervalMonths" class="form-label"></label>
                     <input asp-for="InstallmentIntervalMonths" class="form-control" type="number" min="1" max="12" />
                 </div>
-                @if (Model.ExistingPlannedPayments.Any())
+                @if (Model.ExistingInstallments.Any())
                 {
                     <div class="col-12">
                         <div class="card-subtle">
-                            <div class="small text-muted mb-2">Mevcut odeme plani</div>
-                            <div class="payment-plan-list">
-                                @foreach (var item in Model.ExistingPlannedPayments)
+                            <div class="small text-muted mb-2">Mevcut taksitler</div>
+                            <div class="installment-list">
+                                @foreach (var item in Model.ExistingInstallments)
                                 {
                                     <span class="badge-soft @(item.IsSettled ? "success" : "info")">Taksit @(item.InstallmentNumber ?? 0): @item.PaymentDate.ToString("d") - @item.Amount.ToString("C")</span>
                                 }
