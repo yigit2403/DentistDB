@@ -1,6 +1,8 @@
+@using System.Text.Json
 @model DentistDB.ViewModels.AppointmentFormViewModel
 @{
     ViewData["Title"] = "Yeni Randevu";
+    var financeJson = JsonSerializer.Serialize(Model.PatientFinances);
 }
 
 <div class="page-header">
@@ -19,13 +21,69 @@
             <div class="row g-4">
                 <div class="col-lg-7">
                     <div class="row g-3">
-                        <div class="col-md-6">
+                        <div class="col-12">
+                            <label asp-for="PatientMode" class="form-label"></label>
+                            <select asp-for="PatientMode" class="form-select" id="PatientMode">
+                                <option value="@AppointmentPatientMode.Existing">Kayıtlı hasta</option>
+                                <option value="@AppointmentPatientMode.New">Yeni hasta oluştur</option>
+                            </select>
+                        </div>
+
+                        <div class="col-12" id="existing-patient-panel">
                             <label asp-for="PatientId" class="form-label"></label>
-                            <select asp-for="PatientId" asp-items="Model.Patients" class="form-select">
+                            <select asp-for="PatientId" asp-items="Model.Patients" class="form-select" id="PatientId">
                                 <option value="">Hasta seçin</option>
                             </select>
                             <span asp-validation-for="PatientId" class="text-danger small"></span>
                         </div>
+
+                        <div class="col-12" id="new-patient-panel">
+                            <div class="card-subtle p-3">
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label asp-for="NewPatient.FullName" class="form-label"></label>
+                                        <input asp-for="NewPatient.FullName" class="form-control" />
+                                        <span asp-validation-for="NewPatient.FullName" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label asp-for="NewPatient.Phone" class="form-label"></label>
+                                        <input asp-for="NewPatient.Phone" class="form-control" />
+                                        <span asp-validation-for="NewPatient.Phone" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <label asp-for="NewPatient.Tckn" class="form-label"></label>
+                                        <input asp-for="NewPatient.Tckn" class="form-control" maxlength="11" inputmode="numeric" />
+                                        <span asp-validation-for="NewPatient.Tckn" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label asp-for="NewPatient.Email" class="form-label"></label>
+                                        <input asp-for="NewPatient.Email" class="form-control" />
+                                        <span asp-validation-for="NewPatient.Email" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label asp-for="NewPatient.BirthDate" class="form-label"></label>
+                                        <input asp-for="NewPatient.BirthDate" class="form-control" type="date" />
+                                        <span asp-validation-for="NewPatient.BirthDate" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label asp-for="NewPatient.Address" class="form-label"></label>
+                                        <input asp-for="NewPatient.Address" class="form-control" />
+                                        <span asp-validation-for="NewPatient.Address" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label asp-for="NewPatient.MedicalAlerts" class="form-label"></label>
+                                        <input asp-for="NewPatient.MedicalAlerts" class="form-control" />
+                                        <span asp-validation-for="NewPatient.MedicalAlerts" class="text-danger small"></span>
+                                    </div>
+                                    <div class="col-md-12">
+                                        <label asp-for="NewPatient.Notes" class="form-label"></label>
+                                        <textarea asp-for="NewPatient.Notes" class="form-control" rows="3"></textarea>
+                                        <span asp-validation-for="NewPatient.Notes" class="text-danger small"></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="col-md-6">
                             <label asp-for="AppointmentDate" class="form-label"></label>
                             <div class="input-group bootstrap-picker">
@@ -33,6 +91,10 @@
                                 <button class="btn btn-outline-secondary js-picker-button" type="button" data-picker-target="AppointmentDate">Takvim</button>
                             </div>
                             <span asp-validation-for="AppointmentDate" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-6">
+                            <label asp-for="Status" class="form-label"></label>
+                            <select asp-for="Status" asp-items="Html.GetEnumSelectList<AppointmentStatus>()" class="form-select"></select>
                         </div>
                         <div class="col-md-12">
                             <label asp-for="Purpose" class="form-label"></label>
@@ -51,10 +113,6 @@
                             </div>
                             <span asp-validation-for="Purpose" class="text-danger small"></span>
                         </div>
-                        <div class="col-md-4">
-                            <label asp-for="Status" class="form-label"></label>
-                            <select asp-for="Status" asp-items="Html.GetEnumSelectList<AppointmentStatus>()" class="form-select"></select>
-                        </div>
                         <div class="col-md-12">
                             <label asp-for="Notes" class="form-label"></label>
                             <textarea asp-for="Notes" class="form-control" rows="4" placeholder="Randevu notları, hazırlık talepleri veya açıklamalar"></textarea>
@@ -63,70 +121,85 @@
 
                         <div class="col-12"><hr class="my-2" /></div>
 
-                        <div class="col-md-12">
-                            <label asp-for="InvoiceId" class="form-label"></label>
-                            <select asp-for="InvoiceId" class="form-select" id="InvoiceId">
-                                <option value="">Fatura seçin (isteğe bağlı)</option>
-                                @foreach (var invoice in Model.Invoices)
-                                {
-                                    <option value="@invoice.Id" data-patient-id="@invoice.PatientId">@invoice.Label</option>
-                                }
-                            </select>
-                            <div class="form-text">İsterseniz bu randevuyu mevcut bir faturaya bağlayabilirsiniz.</div>
-                            <span asp-validation-for="InvoiceId" class="text-danger small"></span>
-                        </div>
-
-                        <div class="col-md-12">
-                            <div class="form-check">
-                                <input asp-for="CreateInvoice" class="form-check-input" type="checkbox" id="CreateInvoice" />
-                                <label asp-for="CreateInvoice" class="form-check-label"></label>
-                            </div>
-                        </div>
-
-                        <div class="col-12" id="new-invoice-panel">
+                        <div class="col-12">
                             <div class="card-subtle p-3">
                                 <div class="row g-3">
-                                    <div class="col-md-4">
-                                        <label asp-for="InvoiceDate" class="form-label"></label>
-                                        <input asp-for="InvoiceDate" class="form-control" type="date" />
+                                    <div class="col-md-6">
+                                        <label asp-for="FinanceMode" class="form-label"></label>
+                                        <select asp-for="FinanceMode" class="form-select" id="FinanceMode">
+                                            <option value="@AppointmentFinanceMode.None">Finans işlemi yapma</option>
+                                            <option value="@AppointmentFinanceMode.PayInFull">Borcu hemen tahsil et</option>
+                                            <option value="@AppointmentFinanceMode.Installments">Borcu taksitlendir</option>
+                                        </select>
                                     </div>
-                                    <div class="col-md-4">
-                                        <label asp-for="DueDate" class="form-label"></label>
-                                        <input asp-for="DueDate" class="form-control" type="date" />
-                                    </div>
-                                    <div class="col-md-4">
-                                        <label asp-for="InvoiceTotalAmount" class="form-label"></label>
-                                        <div class="input-group">
-                                            <span class="input-group-text">TL</span>
-                                            <input asp-for="InvoiceTotalAmount" class="form-control" type="number" step="0.01" min="0.01" />
+                                    <div class="col-12" id="patient-finance-summary"></div>
+                                    <div class="col-12" id="finance-panel">
+                                        <div class="row g-3">
+                                            <div class="col-md-4">
+                                                <label asp-for="ChargeAmount" class="form-label"></label>
+                                                <div class="input-group">
+                                                    <span class="input-group-text">TL</span>
+                                                    <input asp-for="ChargeAmount" class="form-control" type="number" step="0.01" min="0.01" />
+                                                </div>
+                                                <span asp-validation-for="ChargeAmount" class="text-danger small"></span>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label asp-for="InvoiceDate" class="form-label"></label>
+                                                <input asp-for="InvoiceDate" class="form-control" type="date" />
+                                            </div>
+                                            <div class="col-md-4">
+                                                <label asp-for="DueDate" class="form-label"></label>
+                                                <input asp-for="DueDate" class="form-control" type="date" />
+                                            </div>
+                                            <div class="col-md-12">
+                                                <label asp-for="InvoiceNotes" class="form-label"></label>
+                                                <textarea asp-for="InvoiceNotes" class="form-control" rows="2" placeholder="Finans notları"></textarea>
+                                                <span asp-validation-for="InvoiceNotes" class="text-danger small"></span>
+                                            </div>
+
+                                            <div class="col-12" id="pay-in-full-panel">
+                                                <div class="row g-3">
+                                                    <div class="col-md-6">
+                                                        <label asp-for="PaymentMethod" class="form-label"></label>
+                                                        <select asp-for="PaymentMethod" asp-items="Html.GetEnumSelectList<PaymentMethod>()" class="form-select"></select>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <label asp-for="PaymentNotes" class="form-label"></label>
+                                                        <input asp-for="PaymentNotes" class="form-control" />
+                                                        <span asp-validation-for="PaymentNotes" class="text-danger small"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="col-12" id="installment-panel">
+                                                <div class="row g-3">
+                                                    <div class="col-md-4">
+                                                        <label asp-for="FirstInstallmentDate" class="form-label"></label>
+                                                        <input asp-for="FirstInstallmentDate" class="form-control" type="date" />
+                                                        <span asp-validation-for="FirstInstallmentDate" class="text-danger small"></span>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label asp-for="InstallmentCount" class="form-label"></label>
+                                                        <input asp-for="InstallmentCount" class="form-control" type="number" min="1" max="48" />
+                                                        <span asp-validation-for="InstallmentCount" class="text-danger small"></span>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <label asp-for="InstallmentIntervalMonths" class="form-label"></label>
+                                                        <input asp-for="InstallmentIntervalMonths" class="form-control" type="number" min="1" max="12" />
+                                                        <span asp-validation-for="InstallmentIntervalMonths" class="text-danger small"></span>
+                                                    </div>
+                                                    <div class="col-md-12" id="installment-merge-panel">
+                                                        <label asp-for="InstallmentMergeMode" class="form-label"></label>
+                                                        <select asp-for="InstallmentMergeMode" class="form-select">
+                                                            <option value="">Yöntem seçin</option>
+                                                            <option value="@InstallmentMergeMode.SpreadOverCurrentDates">Mevcut taksit tarihlerine yay</option>
+                                                            <option value="@InstallmentMergeMode.AppendAfterCurrentSchedule">Mevcut taksitlerden sonra ekle</option>
+                                                        </select>
+                                                        <span asp-validation-for="InstallmentMergeMode" class="text-danger small"></span>
+                                                    </div>
+                                                </div>
+                                            </div>
                                         </div>
-                                        <span asp-validation-for="InvoiceTotalAmount" class="text-danger small"></span>
-                                    </div>
-                                    <div class="col-md-12">
-                                        <label asp-for="InvoiceNotes" class="form-label"></label>
-                                        <textarea asp-for="InvoiceNotes" class="form-control" rows="2" placeholder="Fatura notları"></textarea>
-                                        <span asp-validation-for="InvoiceNotes" class="text-danger small"></span>
-                                    </div>
-                                    <div class="col-md-12">
-                                        <div class="form-check">
-                                            <input asp-for="EnableInstallments" class="form-check-input" type="checkbox" id="EnableInstallments" />
-                                            <label asp-for="EnableInstallments" class="form-check-label"></label>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4 installment-field">
-                                        <label asp-for="FirstInstallmentDate" class="form-label"></label>
-                                        <input asp-for="FirstInstallmentDate" class="form-control" type="date" />
-                                        <span asp-validation-for="FirstInstallmentDate" class="text-danger small"></span>
-                                    </div>
-                                    <div class="col-md-4 installment-field">
-                                        <label asp-for="InstallmentCount" class="form-label"></label>
-                                        <input asp-for="InstallmentCount" class="form-control" type="number" min="1" max="48" />
-                                        <span asp-validation-for="InstallmentCount" class="text-danger small"></span>
-                                    </div>
-                                    <div class="col-md-4 installment-field">
-                                        <label asp-for="InstallmentIntervalMonths" class="form-label"></label>
-                                        <input asp-for="InstallmentIntervalMonths" class="form-control" type="number" min="1" max="12" />
-                                        <span asp-validation-for="InstallmentIntervalMonths" class="text-danger small"></span>
                                     </div>
                                 </div>
                             </div>
@@ -159,64 +232,73 @@
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
     <script>
         (() => {
+            const financeLookup = new Map((@Html.Raw(financeJson)).map(item => [String(item.patientId), item]));
+            const patientMode = document.getElementById('PatientMode');
             const patientSelect = document.getElementById('PatientId');
-            const invoiceSelect = document.getElementById('InvoiceId');
-            const createInvoiceCheckbox = document.getElementById('CreateInvoice');
-            const newInvoicePanel = document.getElementById('new-invoice-panel');
-            const enableInstallmentsCheckbox = document.getElementById('EnableInstallments');
-            const installmentFields = Array.from(document.querySelectorAll('.installment-field'));
+            const financeMode = document.getElementById('FinanceMode');
+            const existingPatientPanel = document.getElementById('existing-patient-panel');
+            const newPatientPanel = document.getElementById('new-patient-panel');
+            const financePanel = document.getElementById('finance-panel');
+            const payInFullPanel = document.getElementById('pay-in-full-panel');
+            const installmentPanel = document.getElementById('installment-panel');
+            const mergePanel = document.getElementById('installment-merge-panel');
+            const summaryPanel = document.getElementById('patient-finance-summary');
 
-            const filterInvoices = () => {
-                const selectedPatientId = patientSelect?.value ?? '';
-                const selectedInvoiceId = invoiceSelect?.value ?? '';
-                let keepSelection = false;
-
-                for (const option of invoiceSelect?.options ?? []) {
-                    if (!option.value) {
-                        continue;
-                    }
-
-                    const isMatch = !!selectedPatientId && option.dataset.patientId === selectedPatientId;
-                    option.hidden = !isMatch;
-                    option.disabled = !isMatch;
-
-                    if (isMatch && option.value === selectedInvoiceId) {
-                        keepSelection = true;
-                    }
+            const getSelectedFinance = () => {
+                if (!patientMode || patientMode.value !== '@AppointmentPatientMode.Existing') {
+                    return null;
                 }
 
-                if (!keepSelection && invoiceSelect) {
-                    invoiceSelect.value = '';
+                return financeLookup.get(patientSelect?.value ?? '') ?? null;
+            };
+
+            const syncPatientMode = () => {
+                const isNewPatient = patientMode?.value === '@AppointmentPatientMode.New';
+                if (existingPatientPanel) {
+                    existingPatientPanel.style.display = isNewPatient ? 'none' : '';
+                }
+                if (newPatientPanel) {
+                    newPatientPanel.style.display = isNewPatient ? '' : 'none';
                 }
             };
 
-            const syncInvoicePanel = () => {
-                const creating = !!createInvoiceCheckbox?.checked;
-                if (newInvoicePanel) {
-                    newInvoicePanel.style.display = creating ? '' : 'none';
-                }
-                if (invoiceSelect) {
-                    invoiceSelect.disabled = creating;
-                    if (creating) {
-                        invoiceSelect.value = '';
+            const syncFinancePanels = () => {
+                const mode = financeMode?.value ?? '@AppointmentFinanceMode.None';
+                const finance = getSelectedFinance();
+
+                if (summaryPanel) {
+                    if (finance) {
+                        summaryPanel.innerHTML = `<div class="alert alert-info mb-0">Mevcut finans hesabı: kalan bakiye ${finance.balance.toFixed(2)} TL, bekleyen taksit ${finance.unpaidInstallmentCount} adet.</div>`;
+                    } else {
+                        summaryPanel.innerHTML = '';
                     }
                 }
-            };
 
-            const syncInstallments = () => {
-                const enabled = !!enableInstallmentsCheckbox?.checked;
-                for (const field of installmentFields) {
-                    field.style.display = enabled ? '' : 'none';
+                if (financePanel) {
+                    financePanel.style.display = mode === '@AppointmentFinanceMode.None' ? 'none' : '';
+                }
+                if (payInFullPanel) {
+                    payInFullPanel.style.display = mode === '@AppointmentFinanceMode.PayInFull' ? '' : 'none';
+                }
+                if (installmentPanel) {
+                    installmentPanel.style.display = mode === '@AppointmentFinanceMode.Installments' ? '' : 'none';
+                }
+                if (mergePanel) {
+                    const showMerge = mode === '@AppointmentFinanceMode.Installments' && !!finance && finance.unpaidInstallmentCount > 0;
+                    mergePanel.style.display = showMerge ? '' : 'none';
                 }
             };
 
-            patientSelect?.addEventListener('change', filterInvoices);
-            createInvoiceCheckbox?.addEventListener('change', syncInvoicePanel);
-            enableInstallmentsCheckbox?.addEventListener('change', syncInstallments);
+            patientMode?.addEventListener('change', () => {
+                syncPatientMode();
+                syncFinancePanels();
+            });
 
-            filterInvoices();
-            syncInvoicePanel();
-            syncInstallments();
+            patientSelect?.addEventListener('change', syncFinancePanels);
+            financeMode?.addEventListener('change', syncFinancePanels);
+
+            syncPatientMode();
+            syncFinancePanels();
         })();
     </script>
 }

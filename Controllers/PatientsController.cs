@@ -45,8 +45,8 @@ public class PatientsController : Controller
                 .ThenInclude(a => a.Invoice)
             .Include(p => p.PreviousOperations.OrderByDescending(o => o.Date))
             .Include(p => p.Scans.OrderByDescending(s => s.ScanDate))
-            .Include(p => p.Invoices.OrderByDescending(i => i.InvoiceDate))
-                .ThenInclude(i => i.Payments)
+            .Include(p => p.Invoice)
+                .ThenInclude(i => i!.Payments)
             .FirstOrDefaultAsync(p => p.Id == id);
 
         if (patient == null) return NotFound();

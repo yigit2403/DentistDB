@@ -52,6 +52,7 @@ public static class DatabaseSchemaInitializer
         await db.Database.ExecuteSqlRawAsync("""CREATE INDEX IF NOT EXISTS "IX_PreviousOperations_InvoiceId" ON "PreviousOperations" ("InvoiceId");""");
         await db.Database.ExecuteSqlRawAsync("""CREATE INDEX IF NOT EXISTS "IX_Appointments_InvoiceId" ON "Appointments" ("InvoiceId");""");
         await db.Database.ExecuteSqlRawAsync("""CREATE INDEX IF NOT EXISTS "IX_Payments_InvoiceId_PaymentDate_IsPlanned" ON "Payments" ("InvoiceId", "PaymentDate", "IsPlanned");""");
+        await db.Database.ExecuteSqlRawAsync("""CREATE UNIQUE INDEX IF NOT EXISTS "IX_Invoices_PatientId" ON "Invoices" ("PatientId");""");
     }
 
     private static async Task EnsureColumnAsync(ApplicationDbContext db, string tableName, string columnName, string alterSql)

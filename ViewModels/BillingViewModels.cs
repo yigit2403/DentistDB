@@ -47,6 +47,7 @@ public class InvoiceFormViewModel
     [Range(1, 12, ErrorMessage = "Periyot 1 ile 12 ay arasında olmalıdır.")]
     public int InstallmentIntervalMonths { get; set; } = 1;
 
+    public bool IsExistingAccount { get; set; }
     public IList<InstallmentViewModel> ExistingInstallments { get; set; } = new List<InstallmentViewModel>();
     public IEnumerable<SelectListItem> Patients { get; set; } = Enumerable.Empty<SelectListItem>();
 }

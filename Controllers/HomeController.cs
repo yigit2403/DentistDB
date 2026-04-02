@@ -20,38 +20,15 @@ public class HomeController : Controller
     public async Task<IActionResult> Index()
     {
         var today = DateTime.Today;
-        var tomorrow = today.AddDays(1);
-        var nextWeek = today.AddDays(7);
-        var startOfMonth = new DateTime(today.Year, today.Month, 1);
-        var endOfMonth = startOfMonth.AddMonths(1);
         var todayDateOnly = DateOnly.FromDateTime(today);
-        var pendingInstallments = await _db.Payments
-            .Where(p => p.IsPlanned && !p.IsSettled)
-            .Select(p => new
-            {
-                p.Amount,
-                p.PaymentDate
-            })
-            .ToListAsync();
-
-        var overdueInstallments = pendingInstallments
-            .Where(p => p.PaymentDate < todayDateOnly)
-            .ToList();
 
         var vm = new DashboardViewModel
         {
-            TodaysAppointments = await _db.Appointments
-                .Include(a => a.Patient)
-                .Where(a => a.AppointmentDate >= today && a.AppointmentDate < tomorrow
-                         && a.Status == AppointmentStatus.Scheduled)
-                .OrderBy(a => a.AppointmentDate)
-                .ToListAsync(),
-
             UpcomingAppointments = await _db.Appointments
                 .Include(a => a.Patient)
-                .Where(a => a.AppointmentDate >= tomorrow && a.AppointmentDate < nextWeek
-                         && a.Status == AppointmentStatus.Scheduled)
+                .Where(a => a.AppointmentDate >= today && a.Status == AppointmentStatus.Scheduled)
                 .OrderBy(a => a.AppointmentDate)
+                .Take(10)
                 .ToListAsync(),
 
             UpcomingInstallments = await _db.Payments
@@ -79,18 +56,8 @@ public class HomeController : Controller
                 .Include(i => i.Patient)
                 .Include(i => i.Payments)
                 .Where(i => i.Status == InvoiceStatus.Issued || i.Status == InvoiceStatus.PartiallyPaid)
-                .OrderBy(i => i.DueDate)
-                .ToListAsync(),
-
-            TotalPatients = await _db.Patients.CountAsync(p => !p.IsArchived),
-
-            AppointmentsThisMonth = await _db.Appointments
-                .CountAsync(a => a.AppointmentDate >= startOfMonth && a.AppointmentDate < endOfMonth),
-
-            PendingInstallmentCount = pendingInstallments.Count,
-            PendingInstallmentAmount = pendingInstallments.Sum(p => p.Amount),
-            OverdueInstallmentCount = overdueInstallments.Count,
-            OverdueInstallmentAmount = overdueInstallments.Sum(p => p.Amount)
+                .OrderBy(i => i.Patient!.FullName)
+                .ToListAsync()
         };
 
         return View(vm);

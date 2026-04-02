@@ -18,7 +18,7 @@
         <a asp-controller="PreviousOperations" asp-action="Index" asp-route-patientId="@Model.Id" class="btn btn-outline-secondary">Önceki İşlemler</a>
         @if (!Model.IsArchived)
         {
-            <form asp-action="Archive" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Bu hastayi arşive taşımak istiyor musunuz?')">
+            <form asp-action="Archive" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Bu hastayı arşive taşımak istiyor musunuz?')">
                 @Html.AntiForgeryToken()
                 <button type="submit" class="btn btn-outline-secondary">Arşivle</button>
             </form>
@@ -97,7 +97,7 @@
                 <button class="nav-link" id="scans-tab" data-bs-toggle="tab" data-bs-target="#scans-pane" type="button" role="tab" aria-controls="scans-pane" aria-selected="false">Tıbbi Görüntüler</button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="billing-tab" data-bs-toggle="tab" data-bs-target="#billing-pane" type="button" role="tab" aria-controls="billing-pane" aria-selected="false">Faturalar</button>
+                <button class="nav-link" id="billing-tab" data-bs-toggle="tab" data-bs-target="#billing-pane" type="button" role="tab" aria-controls="billing-pane" aria-selected="false">Finans</button>
             </li>
         </ul>
     </div>
@@ -135,7 +135,7 @@
                                             @if (appt.InvoiceId.HasValue)
                                             {
                                                 <div class="mt-2">
-                                                    <a asp-controller="Billing" asp-action="Details" asp-route-id="@appt.InvoiceId" class="badge-soft warning text-decoration-none">Fatura #@appt.InvoiceId</a>
+                                                    <a asp-controller="Billing" asp-action="Details" asp-route-id="@appt.InvoiceId" class="badge-soft warning text-decoration-none">Finans Hesabı</a>
                                                 </div>
                                             }
                                             @if (selectedTeeth.Any())
@@ -184,7 +184,7 @@
                                 <tr>
                                     <th>Tarih</th>
                                     <th>Dosya</th>
-                                    <th>Tur</th>
+                                    <th>Tür</th>
                                     <th>Format</th>
                                     <th>Boyut</th>
                                     <th class="text-end">İşlem</th>
@@ -201,7 +201,7 @@
                                         <td>@(string.IsNullOrWhiteSpace(extension) ? "-" : extension)</td>
                                         <td>@((scan.FileSize / 1024.0).ToString("F1")) KB</td>
                                         <td class="text-end">
-                                            <a asp-controller="Scans" asp-action="View" asp-route-id="@scan.Id" class="btn btn-sm btn-outline-primary">Incele</a>
+                                            <a asp-controller="Scans" asp-action="View" asp-route-id="@scan.Id" class="btn btn-sm btn-outline-primary">İncele</a>
                                         </td>
                                     </tr>
                                 }
@@ -213,51 +213,47 @@
 
             <div class="tab-pane fade" id="billing-pane" role="tabpanel" aria-labelledby="billing-tab" tabindex="0">
                 <div class="d-flex justify-content-between align-items-center p-3 border-bottom">
-                    <h3 class="section-title mb-0">Faturalar</h3>
-                    <a asp-controller="Billing" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Yeni Fatura</a>
+                    <h3 class="section-title mb-0">Finans Hesabı</h3>
+                    <a asp-controller="Billing" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Finansı Aç</a>
                 </div>
-                @if (!Model.Invoices.Any())
+                @if (Model.Invoice == null)
                 {
-                    <p class="empty-state mb-0">Fatura kaydi bulunmuyor.</p>
+                    <p class="empty-state mb-0">Bu hasta için finans hesabı bulunmuyor.</p>
                 }
                 else
                 {
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Tarih</th>
-                                    @if (canViewFinancials)
-                                    {
-                                        <th>Toplam</th>
-                                        <th>Ödenen</th>
-                                        <th>Kalan</th>
-                                        <th>Taksit</th>
-                                    }
-                                    <th>Durum</th>
-                                    <th class="text-end">İşlem</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var inv in Model.Invoices)
-                                {
-                                    <tr>
-                                        <td>@inv.InvoiceDate.ToString("d")</td>
-                                        @if (canViewFinancials)
-                                        {
-                                            <td>@inv.TotalAmount.ToString("C")</td>
-                                            <td>@inv.TotalPaid.ToString("C")</td>
-                                            <td>@inv.Balance.ToString("C")</td>
-                                            <td>@inv.Installments.Count(p => !p.IsSettled)</td>
-                                        }
-                                        <td><span class="badge-soft @(inv.Status == InvoiceStatus.Paid ? "success" : inv.Status == InvoiceStatus.Cancelled ? "neutral" : inv.Status == InvoiceStatus.PartiallyPaid ? "warning" : "info")">@inv.Status.GetDisplayName()</span></td>
-                                        <td class="text-end">
-                                            <a asp-controller="Billing" asp-action="Details" asp-route-id="@inv.Id" class="btn btn-sm btn-outline-secondary">Detay</a>
-                                        </td>
-                                    </tr>
-                                }
-                            </tbody>
-                        </table>
+                    <div class="p-3">
+                        <div class="row g-3 align-items-center">
+                            <div class="col-md-3">
+                                <div class="small text-muted">Hesap Tarihi</div>
+                                <div class="fw-semibold">@Model.Invoice.InvoiceDate.ToString("d")</div>
+                            </div>
+                            @if (canViewFinancials)
+                            {
+                                <div class="col-md-2">
+                                    <div class="small text-muted">Toplam</div>
+                                    <div class="fw-semibold">@Model.Invoice.TotalAmount.ToString("C")</div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="small text-muted">Ödenen</div>
+                                    <div class="fw-semibold text-success">@Model.Invoice.TotalPaid.ToString("C")</div>
+                                </div>
+                                <div class="col-md-2">
+                                    <div class="small text-muted">Kalan</div>
+                                    <div class="fw-semibold @(Model.Invoice.Balance > 0 ? "text-danger" : "text-success")">@Model.Invoice.Balance.ToString("C")</div>
+                                </div>
+                                <div class="col-md-1">
+                                    <div class="small text-muted">Taksit</div>
+                                    <div class="fw-semibold">@Model.Invoice.Installments.Count(p => !p.IsSettled)</div>
+                                </div>
+                            }
+                            <div class="col-md-2 text-md-end">
+                                <span class="badge-soft @(Model.Invoice.Status == InvoiceStatus.Paid ? "success" : Model.Invoice.Status == InvoiceStatus.Cancelled ? "neutral" : Model.Invoice.Status == InvoiceStatus.PartiallyPaid ? "warning" : "info")">@Model.Invoice.Status.GetDisplayName()</span>
+                                <div class="mt-2">
+                                    <a asp-controller="Billing" asp-action="Details" asp-route-id="@Model.Invoice.Id" class="btn btn-sm btn-outline-secondary">Detay</a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 }
             </div>

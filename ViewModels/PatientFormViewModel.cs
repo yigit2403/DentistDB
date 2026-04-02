@@ -3,10 +3,8 @@ using Microsoft.AspNetCore.Http;
 
 namespace DentistDB.ViewModels;
 
-public class PatientFormViewModel
+public class PatientInputViewModel
 {
-    public int Id { get; set; }
-
     [Required, MaxLength(100)]
     [Display(Name = "Ad Soyad")]
     public string FullName { get; set; } = string.Empty;
@@ -39,6 +37,11 @@ public class PatientFormViewModel
     [MaxLength(500)]
     [Display(Name = "Tıbbi Uyarılar")]
     public string? MedicalAlerts { get; set; }
+}
+
+public class PatientFormViewModel : PatientInputViewModel
+{
+    public int Id { get; set; }
 
     [Display(Name = "Hasta Fotoğrafı")]
     public IFormFile? PhotoFile { get; set; }

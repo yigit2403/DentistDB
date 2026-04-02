@@ -7,10 +7,10 @@
 <div class="page-header">
     <div>
         <div class="eyebrow">Tahsilat</div>
-        <h2 class="page-title">Fatura için ödeme kaydı ekleyin.</h2>
+        <h2 class="page-title">Finans hesabı için ödeme kaydı ekleyin.</h2>
         @if (invoice != null)
         {
-            <p class="page-subtitle">Fatura #@invoice.Id - @invoice.Patient?.FullName - Kalan bakiye: <strong class="text-danger">@invoice.Balance.ToString("C")</strong></p>
+            <p class="page-subtitle">@invoice.Patient?.FullName - Kalan bakiye: <strong class="text-danger">@invoice.Balance.ToString("C")</strong></p>
         }
     </div>
 </div>

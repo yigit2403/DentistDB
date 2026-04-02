@@ -42,16 +42,9 @@
                             <span asp-validation-for="PriceAmount" class="text-danger small"></span>
                         </div>
                         <div class="col-md-12">
-                            <label asp-for="InvoiceId" class="form-label"></label>
-                            <select asp-for="InvoiceId" class="form-select">
-                                <option value="">Fatura seçin (isteğe bağlı)</option>
-                                @foreach (var invoice in Model.Invoices)
-                                {
-                                    <option value="@invoice.Id" data-patient-id="@invoice.PatientId">@invoice.Label</option>
-                                }
-                            </select>
-                            <div class="form-text">Sadece seçili hastaya ait faturalar listelenir.</div>
-                            <span asp-validation-for="InvoiceId" class="text-danger small"></span>
+                            <div class="alert alert-light mb-0">
+                                Finans bağlantısı hasta seçimine göre otomatik yapılır.
+                            </div>
                         </div>
                         <div class="col-md-12">
                             <label asp-for="Title" class="form-label"></label>
@@ -84,7 +77,7 @@
                     @{
                         await Html.RenderPartialAsync("_ToothSelector", new DentistDB.ViewModels.ToothSelectorViewModel
                         {
-                            Label = "Dis Secimi",
+                            Label = "Diş Seçimi",
                             InputId = "SelectedTeeth",
                             InputName = "SelectedTeeth",
                             SummaryId = "SelectedTeethSummary",
@@ -104,40 +97,4 @@
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
-    <script>
-        (() => {
-            const patientSelect = document.getElementById('PatientId');
-            const invoiceSelect = document.getElementById('InvoiceId');
-            if (!patientSelect || !invoiceSelect) {
-                return;
-            }
-
-            const filterInvoices = () => {
-                const selectedPatientId = patientSelect.value;
-                const selectedInvoiceId = invoiceSelect.value;
-                let keepSelection = false;
-
-                for (const option of invoiceSelect.options) {
-                    if (!option.value) {
-                        continue;
-                    }
-
-                    const isMatch = !!selectedPatientId && option.dataset.patientId === selectedPatientId;
-                    option.hidden = !isMatch;
-                    option.disabled = !isMatch;
-
-                    if (isMatch && option.value === selectedInvoiceId) {
-                        keepSelection = true;
-                    }
-                }
-
-                if (!keepSelection) {
-                    invoiceSelect.value = '';
-                }
-            };
-
-            patientSelect.addEventListener('change', filterInvoices);
-            filterInvoices();
-        })();
-    </script>
 }

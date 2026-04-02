@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 using DentistDB.Data;
 using DentistDB.Models;
+using DentistDB.Services;
 using System.Globalization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -27,6 +28,7 @@ var dataProtectionKeysPath = DeploymentPaths.ResolveDataProtectionKeysPath(build
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(sqliteConnectionString));
+builder.Services.AddScoped<PatientFinanceService>();
 builder.Services
     .AddDataProtection()
     .PersistKeysToFileSystem(new DirectoryInfo(dataProtectionKeysPath));
@@ -43,12 +45,12 @@ builder.Services.AddSession(options =>
 builder.Services.Configure<Microsoft.AspNetCore.Mvc.MvcOptions>(options =>
 {
     var provider = options.ModelBindingMessageProvider;
-    provider.SetValueIsInvalidAccessor(_ => "GeÃ§ersiz bir deÄŸer girdiniz.");
-    provider.SetValueMustBeANumberAccessor(_ => "Bu alan sayÄ±sal olmalÄ±dÄ±r.");
+    provider.SetValueIsInvalidAccessor(_ => "Geçersiz bir değer girdiniz.");
+    provider.SetValueMustBeANumberAccessor(_ => "Bu alan sayısal olmalıdır.");
     provider.SetMissingBindRequiredValueAccessor(_ => "Bu alan zorunludur.");
-    provider.SetAttemptedValueIsInvalidAccessor((value, fieldName) => $"{fieldName} alanÄ±na girilen '{value}' deÄŸeri geÃ§erli deÄŸildir.");
+    provider.SetAttemptedValueIsInvalidAccessor((value, fieldName) => $"{fieldName} alanına girilen '{value}' değeri geçerli değildir.");
     provider.SetMissingKeyOrValueAccessor(() => "Bu alan zorunludur.");
-    provider.SetUnknownValueIsInvalidAccessor(_ => "GeÃ§ersiz bir seÃ§im yaptÄ±nÄ±z.");
+    provider.SetUnknownValueIsInvalidAccessor(_ => "Geçersiz bir seçim yaptınız.");
 });
 
 var app = builder.Build();

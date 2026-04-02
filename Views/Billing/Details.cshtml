@@ -1,15 +1,15 @@
 @model DentistDB.Models.Invoice
 @{
-    ViewData["Title"] = $"Fatura #{Model.Id}";
+    ViewData["Title"] = $"Finans Hesabı #{Model.Id}";
     var canViewFinancials = Context.CanViewFinancials();
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Fatura Detayi</div>
-        <h2 class="page-title">Fatura #@Model.Id</h2>
+        <div class="eyebrow">Finans Hesabı Detayı</div>
+        <h2 class="page-title">@Model.Patient?.FullName</h2>
         <p class="page-subtitle">
-            <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" class="text-decoration-none">@Model.Patient?.FullName</a>
+            Hesap #@Model.Id
             <span class="badge-soft @(Model.Status == InvoiceStatus.Paid ? "success" : Model.Status == InvoiceStatus.Cancelled ? "neutral" : Model.Status == InvoiceStatus.PartiallyPaid ? "warning" : "info") ms-2">@Model.Status.GetDisplayName()</span>
         </p>
     </div>
@@ -50,10 +50,10 @@ else
 <div class="row g-4">
     <div class="col-lg-6">
         <div class="card h-100">
-            <div class="card-header"><h3 class="section-title">Fatura Bilgileri</h3></div>
+            <div class="card-header"><h3 class="section-title">Hesap Bilgileri</h3></div>
             <div class="card-body">
                 <dl class="row mb-0">
-                    <dt class="col-sm-5">Fatura Tarihi</dt>
+                    <dt class="col-sm-5">Hesap Tarihi</dt>
                     <dd class="col-sm-7">@Model.InvoiceDate.ToString("D")</dd>
                     <dt class="col-sm-5">Son Ödeme Tarihi</dt>
                     <dd class="col-sm-7">@(Model.DueDate?.ToString("D") ?? "-")</dd>
@@ -72,7 +72,7 @@ else
                 <div class="card-body p-0">
                     @if (!Model.Payments.Any(p => !p.IsPlanned || p.IsSettled))
                     {
-                        <p class="empty-state mb-0">Bu fatura için kayıtlı ödeme yok.</p>
+                        <p class="empty-state mb-0">Bu hesap için kayıtlı ödeme yok.</p>
                     }
                     else
                     {
@@ -105,7 +105,7 @@ else
                 <div class="card-body p-0">
                     @if (!Model.Installments.Any())
                     {
-                        <p class="empty-state mb-0">Bu fatura için tanımli taksit yok.</p>
+                        <p class="empty-state mb-0">Bu hesap için tanımlı taksit yok.</p>
                     }
                     else
                     {

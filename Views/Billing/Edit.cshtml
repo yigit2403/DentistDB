@@ -1,12 +1,12 @@
 @model DentistDB.ViewModels.InvoiceFormViewModel
 @{
-    ViewData["Title"] = "Fatura Düzenle";
+    ViewData["Title"] = "Finans Hesabı Düzenle";
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Fatura Güncelleme</div>
-        <h2 class="page-title">Fatura #@Model.Id bilgilerini düzenleyin.</h2>
+        <div class="eyebrow">Finans Hesabı</div>
+        <h2 class="page-title">Hesap #@Model.Id bilgilerini düzenleyin.</h2>
     </div>
 </div>
 
@@ -85,7 +85,7 @@
             </div>
 
             <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">Degisiklikleri Kaydet</button>
+                <button type="submit" class="btn btn-primary">Değişiklikleri Kaydet</button>
                 <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Vazgeç</a>
             </div>
         </form>

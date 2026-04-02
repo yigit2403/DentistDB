@@ -2,6 +2,7 @@ using DentistDB.Data;
 using DentistDB.Extensions;
 using DentistDB.Filters;
 using DentistDB.Models;
+using DentistDB.Services;
 using DentistDB.ViewModels;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -13,10 +14,12 @@ namespace DentistDB.Controllers;
 public class PreviousOperationsController : Controller
 {
     private readonly ApplicationDbContext _db;
+    private readonly PatientFinanceService _financeService;
 
-    public PreviousOperationsController(ApplicationDbContext db)
+    public PreviousOperationsController(ApplicationDbContext db, PatientFinanceService financeService)
     {
         _db = db;
+        _financeService = financeService;
     }
 
     public async Task<IActionResult> Index(int? patientId, string? search)
@@ -25,7 +28,10 @@ public class PreviousOperationsController : Controller
         if (patientId.HasValue)
         {
             patient = await _db.Patients.FirstOrDefaultAsync(p => p.Id == patientId.Value);
-            if (patient == null) return NotFound();
+            if (patient == null)
+            {
+                return NotFound();
+            }
         }
 
         var query = _db.PreviousOperations
@@ -79,7 +85,7 @@ public class PreviousOperationsController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(PreviousOperationFormViewModel vm)
     {
-        await ValidateInvoiceSelectionAsync(vm);
+        await ValidatePatientSelectionAsync(vm.PatientId);
         if (!ModelState.IsValid)
         {
             await PopulateFormAsync(vm);
@@ -91,7 +97,7 @@ public class PreviousOperationsController : Controller
             PatientId = vm.PatientId,
             Date = vm.Date,
             PriceAmount = vm.PriceAmount,
-            InvoiceId = vm.InvoiceId,
+            InvoiceId = await _financeService.GetAccountIdAsync(vm.PatientId),
             Title = vm.Title.Trim(),
             Diagnosis = vm.Diagnosis,
             Procedures = vm.Procedures,
@@ -111,7 +117,10 @@ public class PreviousOperationsController : Controller
     public async Task<IActionResult> Edit(int id)
     {
         var operation = await _db.PreviousOperations.FindAsync(id);
-        if (operation == null) return NotFound();
+        if (operation == null)
+        {
+            return NotFound();
+        }
 
         var vm = new PreviousOperationFormViewModel
         {
@@ -119,7 +128,6 @@ public class PreviousOperationsController : Controller
             PatientId = operation.PatientId,
             Date = operation.Date,
             PriceAmount = operation.PriceAmount,
-            InvoiceId = operation.InvoiceId,
             Title = operation.Title,
             Diagnosis = operation.Diagnosis,
             Procedures = operation.Procedures,
@@ -135,8 +143,12 @@ public class PreviousOperationsController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, PreviousOperationFormViewModel vm)
     {
-        if (id != vm.Id) return BadRequest();
-        await ValidateInvoiceSelectionAsync(vm);
+        if (id != vm.Id)
+        {
+            return BadRequest();
+        }
+
+        await ValidatePatientSelectionAsync(vm.PatientId);
         if (!ModelState.IsValid)
         {
             await PopulateFormAsync(vm);
@@ -144,12 +156,15 @@ public class PreviousOperationsController : Controller
         }
 
         var operation = await _db.PreviousOperations.FindAsync(id);
-        if (operation == null) return NotFound();
+        if (operation == null)
+        {
+            return NotFound();
+        }
 
         operation.PatientId = vm.PatientId;
         operation.Date = vm.Date;
         operation.PriceAmount = vm.PriceAmount;
-        operation.InvoiceId = vm.InvoiceId;
+        operation.InvoiceId = await _financeService.GetAccountIdAsync(vm.PatientId);
         operation.Title = vm.Title.Trim();
         operation.Diagnosis = vm.Diagnosis;
         operation.Procedures = vm.Procedures;
@@ -167,7 +182,10 @@ public class PreviousOperationsController : Controller
     public async Task<IActionResult> Delete(int id)
     {
         var operation = await _db.PreviousOperations.FindAsync(id);
-        if (operation == null) return NotFound();
+        if (operation == null)
+        {
+            return NotFound();
+        }
 
         var patientId = operation.PatientId;
         _db.PreviousOperations.Remove(operation);
@@ -188,35 +206,21 @@ public class PreviousOperationsController : Controller
     private async Task PopulateFormAsync(PreviousOperationFormViewModel vm)
     {
         vm.Patients = await GetPatientSelectList();
-        vm.Invoices = await _db.Invoices
-            .OrderByDescending(i => i.InvoiceDate)
-            .ThenByDescending(i => i.Id)
-            .Select(i => new PreviousOperationInvoiceOptionViewModel
-            {
-                Id = i.Id,
-                PatientId = i.PatientId,
-                Label = $"Fatura #{i.Id} - {i.InvoiceDate:dd.MM.yyyy} - {i.TotalAmount:C} - {i.Status.GetDisplayName()}"
-            })
-            .ToListAsync();
+        vm.HasPatientFinanceAccount = vm.PatientId > 0 && await _db.Invoices.AnyAsync(i => i.PatientId == vm.PatientId);
     }
 
-    private async Task ValidateInvoiceSelectionAsync(PreviousOperationFormViewModel vm)
+    private async Task ValidatePatientSelectionAsync(int patientId)
     {
-        if (!vm.InvoiceId.HasValue)
+        if (patientId <= 0)
         {
+            ModelState.AddModelError(nameof(PreviousOperationFormViewModel.PatientId), "Hasta seçimi zorunludur.");
             return;
         }
 
-        var invoice = await _db.Invoices
-            .AsNoTracking()
-            .Where(i => i.Id == vm.InvoiceId.Value)
-            .Select(i => new { i.Id, i.PatientId })
-            .FirstOrDefaultAsync();
-
-        if (invoice is null || invoice.PatientId != vm.PatientId)
+        var exists = await _db.Patients.AnyAsync(p => p.Id == patientId && !p.IsArchived);
+        if (!exists)
         {
-            vm.InvoiceId = null;
-            ModelState.AddModelError(nameof(PreviousOperationFormViewModel.InvoiceId), "Seçilen fatura seçili hastaya ait degil.");
+            ModelState.AddModelError(nameof(PreviousOperationFormViewModel.PatientId), "Seçilen hasta bulunamadı.");
         }
     }
 }

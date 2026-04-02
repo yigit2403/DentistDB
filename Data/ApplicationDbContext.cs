@@ -75,9 +75,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     private static void ConfigureInvoices(EntityTypeBuilder<Invoice> entity)
     {
+        entity.HasIndex(invoice => invoice.PatientId)
+            .IsUnique();
         entity.HasOne(invoice => invoice.Patient)
-            .WithMany(patient => patient.Invoices)
-            .HasForeignKey(invoice => invoice.PatientId)
+            .WithOne(patient => patient.Invoice)
+            .HasForeignKey<Invoice>(invoice => invoice.PatientId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 

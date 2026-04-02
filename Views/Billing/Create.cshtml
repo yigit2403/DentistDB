@@ -1,12 +1,12 @@
 @model DentistDB.ViewModels.InvoiceFormViewModel
 @{
-    ViewData["Title"] = "Yeni Fatura";
+    ViewData["Title"] = Model.IsExistingAccount ? "Finans Hesabı" : "Yeni Finans Hesabı";
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Fatura Olustur</div>
-        <h2 class="page-title">Yeni tahsilat kaydi acin.</h2>
+        <div class="eyebrow">Finans Hesabı</div>
+        <h2 class="page-title">@(Model.IsExistingAccount ? "Mevcut hesabı güncelleyin." : "Hasta için finans hesabı açın.")</h2>
     </div>
 </div>
 
@@ -14,7 +14,13 @@
     <div class="card-body p-4">
         <form asp-action="Create" method="post">
             @Html.AntiForgeryToken()
+            <input asp-for="Id" type="hidden" />
             <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+            @if (Model.IsExistingAccount)
+            {
+                <div class="alert alert-info">Bu hasta için mevcut hesap bulundu. Kaydettiğinizde yeni hesap açılmaz, mevcut hesap güncellenir.</div>
+            }
 
             <div class="row g-3">
                 <div class="col-md-6">
@@ -72,7 +78,7 @@
             </div>
 
             <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">Faturayi Olustur</button>
+                <button type="submit" class="btn btn-primary">Kaydet</button>
                 <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
             </div>
         </form>

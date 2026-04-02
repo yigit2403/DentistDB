@@ -6,7 +6,7 @@
 <div class="page-header">
     <div>
         <div class="eyebrow">Önceki İşlem Kaydı</div>
-        <h2 class="page-title">İşlem geçmişi kaydını düzenleyin.</h2>
+        <h2 class="page-title">İşlem geçmişi kaydını güncelleyin.</h2>
     </div>
 </div>
 
@@ -43,20 +43,13 @@
                             <span asp-validation-for="PriceAmount" class="text-danger small"></span>
                         </div>
                         <div class="col-md-12">
-                            <label asp-for="InvoiceId" class="form-label"></label>
-                            <select asp-for="InvoiceId" class="form-select">
-                                <option value="">Fatura seçin (isteğe bağlı)</option>
-                                @foreach (var invoice in Model.Invoices)
-                                {
-                                    <option value="@invoice.Id" data-patient-id="@invoice.PatientId">@invoice.Label</option>
-                                }
-                            </select>
-                            <div class="form-text">Sadece seçili hastaya ait faturalar listelenir.</div>
-                            <span asp-validation-for="InvoiceId" class="text-danger small"></span>
+                            <div class="alert alert-light mb-0">
+                                Finans bağlantısı hasta seçimine göre otomatik yapılır.
+                            </div>
                         </div>
                         <div class="col-md-12">
                             <label asp-for="Title" class="form-label"></label>
-                            <input asp-for="Title" class="form-control" />
+                            <input asp-for="Title" class="form-control" placeholder="Örn. Kanal tedavisi - 26 numara" />
                             <span asp-validation-for="Title" class="text-danger small"></span>
                         </div>
                         <div class="col-md-12">
@@ -85,7 +78,7 @@
                     @{
                         await Html.RenderPartialAsync("_ToothSelector", new DentistDB.ViewModels.ToothSelectorViewModel
                         {
-                            Label = "Dis Secimi",
+                            Label = "Diş Seçimi",
                             InputId = "SelectedTeeth",
                             InputName = "SelectedTeeth",
                             SummaryId = "SelectedTeethSummary",
@@ -96,8 +89,8 @@
             </div>
 
             <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">Değişiklikleri Kaydet</button>
-                <a asp-action="Index" asp-route-patientId="@Model.PatientId" class="btn btn-outline-secondary">Vazgeç</a>
+                <button type="submit" class="btn btn-primary">Kaydı Güncelle</button>
+                <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" class="btn btn-outline-secondary">Vazgeç</a>
             </div>
         </form>
     </div>
@@ -105,40 +98,4 @@
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
-    <script>
-        (() => {
-            const patientSelect = document.getElementById('PatientId');
-            const invoiceSelect = document.getElementById('InvoiceId');
-            if (!patientSelect || !invoiceSelect) {
-                return;
-            }
-
-            const filterInvoices = () => {
-                const selectedPatientId = patientSelect.value;
-                const selectedInvoiceId = invoiceSelect.value;
-                let keepSelection = false;
-
-                for (const option of invoiceSelect.options) {
-                    if (!option.value) {
-                        continue;
-                    }
-
-                    const isMatch = !!selectedPatientId && option.dataset.patientId === selectedPatientId;
-                    option.hidden = !isMatch;
-                    option.disabled = !isMatch;
-
-                    if (isMatch && option.value === selectedInvoiceId) {
-                        keepSelection = true;
-                    }
-                }
-
-                if (!keepSelection) {
-                    invoiceSelect.value = '';
-                }
-            };
-
-            patientSelect.addEventListener('change', filterInvoices);
-            filterInvoices();
-        })();
-    </script>
 }
