@@ -10,13 +10,13 @@
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Tarama Goruntuleyici</div>
+        <div class="eyebrow">Tarama Görüntüleyici</div>
         <h2 class="page-title">@Model.FileName</h2>
         <p class="page-subtitle">@Model.Patient?.FullName - @Model.ScanDate.ToString("D") - <span class="badge-soft info">@Model.ScanType.GetDisplayName()</span></p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
         <a href="@downloadUrl" class="btn btn-outline-primary">Indir</a>
-        <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" class="btn btn-outline-secondary">Hasta Dosyasina Don</a>
+        <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" class="btn btn-outline-secondary">Hasta Dosyasına Don</a>
     </div>
 </div>
 
@@ -40,9 +40,9 @@
         else if (isDicom)
         {
             <div class="py-5">
-                <h3 class="section-title mb-3">DICOM dosyasi yuklendi</h3>
-                <p class="text-muted mb-3">Tarayici icinde yerlesik bir DICOM onizleme bulunmuyor. Dosyayi indirerek klinikte kullandiginiz DICOM yaziliminda acabilirsiniz.</p>
-                <a href="@downloadUrl" class="btn btn-primary">DICOM Dosyasini Indir</a>
+                <h3 class="section-title mb-3">DICOM dosyası yüklendi</h3>
+                <p class="text-muted mb-3">Tarayici içinde yerlesik bir DICOM onizleme bulunmuyor. Dosyayi indirerek klinikte kullandiginiz DICOM yaziliminda acabilirsiniz.</p>
+                <a href="@downloadUrl" class="btn btn-primary">DICOM Dosyasını İndir</a>
             </div>
         }
         else

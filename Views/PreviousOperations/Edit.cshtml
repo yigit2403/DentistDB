@@ -20,19 +20,39 @@
             <div class="row g-4">
                 <div class="col-lg-7">
                     <div class="row g-3">
-                        <div class="col-md-8">
+                        <div class="col-md-6">
                             <label asp-for="PatientId" class="form-label"></label>
                             <select asp-for="PatientId" asp-items="Model.Patients" class="form-select">
                                 <option value="">Hasta seçin</option>
                             </select>
                             <span asp-validation-for="PatientId" class="text-danger small"></span>
                         </div>
-                        <div class="col-md-4">
+                        <div class="col-md-3">
                             <label asp-for="Date" class="form-label"></label>
                             <div class="input-group bootstrap-picker">
                                 <input asp-for="Date" class="form-control js-picker" type="date" />
                                 <button class="btn btn-outline-secondary js-picker-button" type="button" data-picker-target="Date">Takvim</button>
                             </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label asp-for="PriceAmount" class="form-label"></label>
+                            <div class="input-group">
+                                <span class="input-group-text">TL</span>
+                                <input asp-for="PriceAmount" class="form-control" type="number" step="0.01" min="0" />
+                            </div>
+                            <span asp-validation-for="PriceAmount" class="text-danger small"></span>
+                        </div>
+                        <div class="col-md-12">
+                            <label asp-for="InvoiceId" class="form-label"></label>
+                            <select asp-for="InvoiceId" class="form-select">
+                                <option value="">Fatura seçin (isteğe bağlı)</option>
+                                @foreach (var invoice in Model.Invoices)
+                                {
+                                    <option value="@invoice.Id" data-patient-id="@invoice.PatientId">@invoice.Label</option>
+                                }
+                            </select>
+                            <div class="form-text">Sadece seçili hastaya ait faturalar listelenir.</div>
+                            <span asp-validation-for="InvoiceId" class="text-danger small"></span>
                         </div>
                         <div class="col-md-12">
                             <label asp-for="Title" class="form-label"></label>
@@ -85,4 +105,40 @@
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script>
+        (() => {
+            const patientSelect = document.getElementById('PatientId');
+            const invoiceSelect = document.getElementById('InvoiceId');
+            if (!patientSelect || !invoiceSelect) {
+                return;
+            }
+
+            const filterInvoices = () => {
+                const selectedPatientId = patientSelect.value;
+                const selectedInvoiceId = invoiceSelect.value;
+                let keepSelection = false;
+
+                for (const option of invoiceSelect.options) {
+                    if (!option.value) {
+                        continue;
+                    }
+
+                    const isMatch = !!selectedPatientId && option.dataset.patientId === selectedPatientId;
+                    option.hidden = !isMatch;
+                    option.disabled = !isMatch;
+
+                    if (isMatch && option.value === selectedInvoiceId) {
+                        keepSelection = true;
+                    }
+                }
+
+                if (!keepSelection) {
+                    invoiceSelect.value = '';
+                }
+            };
+
+            patientSelect.addEventListener('change', filterInvoices);
+            filterInvoices();
+        })();
+    </script>
 }

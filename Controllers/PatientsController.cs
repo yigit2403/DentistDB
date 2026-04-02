@@ -42,6 +42,7 @@ public class PatientsController : Controller
     {
         var patient = await _db.Patients
             .Include(p => p.Appointments.OrderByDescending(a => a.AppointmentDate))
+                .ThenInclude(a => a.Invoice)
             .Include(p => p.PreviousOperations.OrderByDescending(o => o.Date))
             .Include(p => p.Scans.OrderByDescending(s => s.ScanDate))
             .Include(p => p.Invoices.OrderByDescending(i => i.InvoiceDate))

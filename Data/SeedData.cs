@@ -8,155 +8,219 @@ public static class SeedData
     {
         var db = services.GetRequiredService<ApplicationDbContext>();
 
-        // Seed patients if empty
-        if (!db.Patients.Any())
+        if (db.Patients.Any())
         {
-            var patients = new[]
-            {
-                new Patient
-                {
-                    FullName = "Alice Johnson",
-                    Tckn = "11111111110",
-                    Phone = "555-0101",
-                    Email = "alice@example.com",
-                    BirthDate = new DateOnly(1985, 4, 12),
-                    Address = "123 Maple St, Springfield",
-                    Notes = "Prefers morning appointments.",
-                    MedicalAlerts = "Penicillin allergy",
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
-                new Patient
-                {
-                    FullName = "Bob Martinez",
-                    Tckn = "22222222220",
-                    Phone = "555-0102",
-                    Email = "bob@example.com",
-                    BirthDate = new DateOnly(1978, 9, 3),
-                    Address = "456 Oak Ave, Springfield",
-                    MedicalAlerts = "Latex allergy",
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
-                new Patient
-                {
-                    FullName = "Carol White",
-                    Tckn = "33333333330",
-                    Phone = "555-0103",
-                    Email = "carol@example.com",
-                    BirthDate = new DateOnly(1992, 6, 25),
-                    Address = "789 Pine Rd, Springfield",
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                }
-            };
-            db.Patients.AddRange(patients);
-            await db.SaveChangesAsync();
+            return;
+        }
 
-            // Seed appointments
-            var today = DateTime.Today;
-            var appointments = new[]
-            {
-                new Appointment
-                {
-                    PatientId = patients[0].Id,
-                    AppointmentDate = today.AddHours(9),
-                    Purpose = "Routine checkup",
-                    Status = AppointmentStatus.Scheduled,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
-                new Appointment
-                {
-                    PatientId = patients[1].Id,
-                    AppointmentDate = today.AddHours(11),
-                    Purpose = "Tooth extraction",
-                    Status = AppointmentStatus.Scheduled,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
-                new Appointment
-                {
-                    PatientId = patients[2].Id,
-                    AppointmentDate = today.AddDays(2).AddHours(10),
-                    Purpose = "Teeth cleaning",
-                    Status = AppointmentStatus.Scheduled,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
-                new Appointment
-                {
-                    PatientId = patients[0].Id,
-                    AppointmentDate = today.AddDays(-7).AddHours(9),
-                    Purpose = "Filling",
-                    Status = AppointmentStatus.Completed,
-                    Notes = "Upper left molar filled.",
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                }
-            };
-            db.Appointments.AddRange(appointments);
+        var now = DateTime.UtcNow;
+        var today = DateTime.Today;
 
-            var previousOperations = new[]
+        var patients = new[]
+        {
+            new Patient
             {
-                new PreviousOperation
-                {
-                    PatientId = patients[0].Id,
-                    Date = DateOnly.FromDateTime(today.AddDays(-7)),
-                    Title = "Kompozit dolgu",
-                    Diagnosis = "Üst sol molarda çürük",
-                    Procedures = "Kompozit dolgu uygulandı",
-                    Prescriptions = "İbuprofen 400 mg gerektiğinde",
-                    Notes = "Hasta işlemi sorunsuz tolere etti.",
-                    SelectedTeethData = "26",
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                }
-            };
-            db.PreviousOperations.AddRange(previousOperations);
-
-            // Seed invoices
-            var invoices = new[]
+                FullName = "Ayşe Yılmaz",
+                Tckn = "11111111110",
+                Phone = "0532 111 11 10",
+                Email = "ayse.yilmaz@example.com",
+                BirthDate = new DateOnly(1988, 5, 14),
+                Address = "Kadıköy, İstanbul",
+                Notes = "Sabah saatlerini tercih ediyor.",
+                MedicalAlerts = "Penisilin alerjisi",
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new Patient
             {
-                new Invoice
-                {
-                    PatientId = patients[0].Id,
-                    InvoiceDate = DateOnly.FromDateTime(today.AddDays(-7)),
-                    DueDate = DateOnly.FromDateTime(today.AddDays(23)),
-                    TotalAmount = 250.00m,
-                    Status = InvoiceStatus.Issued,
-                    Notes = "Composite filling procedure",
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                },
-                new Invoice
-                {
-                    PatientId = patients[1].Id,
-                    InvoiceDate = DateOnly.FromDateTime(today.AddDays(-14)),
-                    DueDate = DateOnly.FromDateTime(today.AddDays(-1)),
-                    TotalAmount = 180.00m,
-                    Status = InvoiceStatus.Paid,
-                    Notes = "Routine checkup + X-ray",
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                }
-            };
-            db.Invoices.AddRange(invoices);
-            await db.SaveChangesAsync();
+                FullName = "Mehmet Kaya",
+                Tckn = "22222222220",
+                Phone = "0532 222 22 20",
+                Email = "mehmet.kaya@example.com",
+                BirthDate = new DateOnly(1979, 11, 3),
+                Address = "Çankaya, Ankara",
+                Notes = "Kontrollerini aksatmaz.",
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new Patient
+            {
+                FullName = "Elif Demir",
+                Tckn = "33333333330",
+                Phone = "0532 333 33 30",
+                Email = "elif.demir@example.com",
+                BirthDate = new DateOnly(1994, 2, 21),
+                Address = "Bornova, İzmir",
+                MedicalAlerts = "Lateks hassasiyeti",
+                CreatedAt = now,
+                UpdatedAt = now
+            }
+        };
 
-            // Seed payment for paid invoice
-            db.Payments.Add(new Payment
+        db.Patients.AddRange(patients);
+        await db.SaveChangesAsync();
+
+        var invoices = new[]
+        {
+            new Invoice
+            {
+                PatientId = patients[0].Id,
+                InvoiceDate = DateOnly.FromDateTime(today.AddDays(-7)),
+                DueDate = DateOnly.FromDateTime(today.AddDays(23)),
+                TotalAmount = 480.00m,
+                Status = InvoiceStatus.PartiallyPaid,
+                Notes = "Kanal tedavisi ve kompozit dolgu",
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new Invoice
+            {
+                PatientId = patients[1].Id,
+                InvoiceDate = DateOnly.FromDateTime(today.AddDays(-14)),
+                DueDate = DateOnly.FromDateTime(today.AddDays(-1)),
+                TotalAmount = 350.00m,
+                Status = InvoiceStatus.Paid,
+                Notes = "Detartraj ve panoramik film",
+                CreatedAt = now,
+                UpdatedAt = now
+            }
+        };
+
+        db.Invoices.AddRange(invoices);
+        await db.SaveChangesAsync();
+
+        var appointments = new[]
+        {
+            new Appointment
+            {
+                PatientId = patients[0].Id,
+                InvoiceId = invoices[0].Id,
+                AppointmentDate = today.AddHours(9),
+                Purpose = "Kontrol ve pansuman",
+                Status = AppointmentStatus.Scheduled,
+                Notes = "İşlem sonrası kontrol randevusu",
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new Appointment
+            {
+                PatientId = patients[1].Id,
+                InvoiceId = invoices[1].Id,
+                AppointmentDate = today.AddHours(11),
+                Purpose = "Diş taşı temizliği",
+                Status = AppointmentStatus.Scheduled,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new Appointment
+            {
+                PatientId = patients[2].Id,
+                AppointmentDate = today.AddDays(2).AddHours(10),
+                Purpose = "Dolgu kontrolü",
+                Status = AppointmentStatus.Scheduled,
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new Appointment
+            {
+                PatientId = patients[0].Id,
+                InvoiceId = invoices[0].Id,
+                AppointmentDate = today.AddDays(-7).AddHours(9),
+                Purpose = "Kanal tedavisi",
+                Status = AppointmentStatus.Completed,
+                Notes = "26 numaralı dişte kanal tedavisi tamamlandı.",
+                SelectedTeethData = "26",
+                CreatedAt = now,
+                UpdatedAt = now
+            }
+        };
+
+        db.Appointments.AddRange(appointments);
+
+        var previousOperations = new[]
+        {
+            new PreviousOperation
+            {
+                PatientId = patients[0].Id,
+                InvoiceId = invoices[0].Id,
+                Date = DateOnly.FromDateTime(today.AddDays(-7)),
+                PriceAmount = 480.00m,
+                Title = "Kanal tedavisi ve dolgu",
+                Diagnosis = "26 numaralı dişte derin çürük",
+                Procedures = "Kanal tedavisi yapıldı, kompozit dolgu uygulandı",
+                Prescriptions = "İbuprofen 400 mg gerektiğinde kullanılacak",
+                Notes = "Hasta işlemi sorunsuz tolere etti.",
+                SelectedTeethData = "26",
+                CreatedAt = now,
+                UpdatedAt = now
+            },
+            new PreviousOperation
+            {
+                PatientId = patients[1].Id,
+                InvoiceId = invoices[1].Id,
+                Date = DateOnly.FromDateTime(today.AddDays(-14)),
+                PriceAmount = 350.00m,
+                Title = "Detartraj ve panoramik değerlendirme",
+                Diagnosis = "Yaygın diş taşı birikimi",
+                Procedures = "Detertraj yapıldı, panoramik film değerlendirildi",
+                Notes = "Ağız hijyeni önerileri paylaşıldı.",
+                CreatedAt = now,
+                UpdatedAt = now
+            }
+        };
+
+        db.PreviousOperations.AddRange(previousOperations);
+
+        db.Payments.AddRange(
+            new Payment
+            {
+                InvoiceId = invoices[0].Id,
+                PaymentDate = DateOnly.FromDateTime(today.AddDays(-5)),
+                Amount = 120.00m,
+                PaymentMethod = PaymentMethod.CreditCard,
+                Notes = "Peşinat",
+                IsPlanned = false,
+                IsSettled = true,
+                SettledDate = DateOnly.FromDateTime(today.AddDays(-5)),
+                CreatedAt = now
+            },
+            new Payment
+            {
+                InvoiceId = invoices[0].Id,
+                PaymentDate = DateOnly.FromDateTime(today.AddDays(30)),
+                Amount = 180.00m,
+                PaymentMethod = PaymentMethod.Other,
+                Notes = "1. taksit",
+                IsPlanned = true,
+                IsSettled = false,
+                InstallmentNumber = 1,
+                CreatedAt = now
+            },
+            new Payment
+            {
+                InvoiceId = invoices[0].Id,
+                PaymentDate = DateOnly.FromDateTime(today.AddDays(60)),
+                Amount = 180.00m,
+                PaymentMethod = PaymentMethod.Other,
+                Notes = "2. taksit",
+                IsPlanned = true,
+                IsSettled = false,
+                InstallmentNumber = 2,
+                CreatedAt = now
+            },
+            new Payment
             {
                 InvoiceId = invoices[1].Id,
                 PaymentDate = DateOnly.FromDateTime(today.AddDays(-10)),
-                Amount = 180.00m,
+                Amount = 350.00m,
                 PaymentMethod = PaymentMethod.Cash,
+                Notes = "Tam ödeme",
                 IsPlanned = false,
                 IsSettled = true,
                 SettledDate = DateOnly.FromDateTime(today.AddDays(-10)),
-                CreatedAt = DateTime.UtcNow
+                CreatedAt = now
             });
-            await db.SaveChangesAsync();
-        }
+
+        await db.SaveChangesAsync();
     }
 }

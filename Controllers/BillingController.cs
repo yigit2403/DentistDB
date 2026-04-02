@@ -153,7 +153,7 @@ public class BillingController : Controller
     }
 
     [AdminOnly]
-    public async Task<IActionResult> AddPayment(int invoiceId)
+    public async Task<IActionResult> AddPayment(int invoiceId, int? installmentId)
     {
         var invoice = await _db.Invoices
             .Include(i => i.Patient)
@@ -168,6 +168,19 @@ public class BillingController : Controller
             PaymentDate = DateOnly.FromDateTime(DateTime.Today),
             Amount = invoice.Balance
         };
+
+        if (installmentId.HasValue)
+        {
+            var installment = invoice.Payments.FirstOrDefault(p => p.Id == installmentId.Value && p.IsPlanned && !p.IsSettled);
+            if (installment == null)
+            {
+                return NotFound();
+            }
+
+            vm.InstallmentId = installment.Id;
+            vm.Amount = installment.Amount;
+        }
+
         await PopulateInstallmentsAsync(vm);
         ViewBag.Invoice = invoice;
         return View(vm);

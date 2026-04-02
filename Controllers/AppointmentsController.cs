@@ -1,11 +1,11 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using DentistDB.Data;
 using DentistDB.Extensions;
 using DentistDB.Filters;
 using DentistDB.Models;
 using DentistDB.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 
 namespace DentistDB.Controllers;
 
@@ -25,10 +25,14 @@ public class AppointmentsController : Controller
         var referenceDate = (date ?? DateTime.Today).Date;
 
         if (Enum.TryParse<AppointmentStatus>(status, out var parsedStatus))
+        {
             query = query.Where(a => a.Status == parsedStatus);
+        }
 
         if (patientId.HasValue)
+        {
             query = query.Where(a => a.PatientId == patientId);
+        }
 
         var (periodStart, periodEnd, previousDate, nextDate, buckets, periodLabel) = BuildCalendarFrame(view, referenceDate);
         var appointments = await query
@@ -63,10 +67,14 @@ public class AppointmentsController : Controller
 
     public async Task<IActionResult> Create(int? patientId)
     {
+        var today = DateTime.Today;
         var vm = new AppointmentFormViewModel
         {
             PatientId = patientId ?? 0,
-            AppointmentDate = DateTime.Today.AddHours(9)
+            AppointmentDate = today.AddHours(9),
+            InvoiceDate = DateOnly.FromDateTime(today),
+            DueDate = DateOnly.FromDateTime(today.AddDays(30)),
+            FirstInstallmentDate = DateOnly.FromDateTime(today.AddDays(30))
         };
 
         await PopulateFormOptionsAsync(vm);
@@ -76,15 +84,19 @@ public class AppointmentsController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(AppointmentFormViewModel vm)
     {
+        await ValidateBillingAsync(vm);
         if (!ModelState.IsValid)
         {
             await PopulateFormOptionsAsync(vm);
             return View(vm);
         }
 
+        var invoiceId = await EnsureInvoiceAsync(vm);
+
         var appointment = new Appointment
         {
             PatientId = vm.PatientId,
+            InvoiceId = invoiceId,
             AppointmentDate = vm.AppointmentDate,
             Purpose = vm.Purpose?.Trim() ?? string.Empty,
             Status = vm.Status,
@@ -103,17 +115,24 @@ public class AppointmentsController : Controller
     public async Task<IActionResult> Edit(int id)
     {
         var appointment = await _db.Appointments.FindAsync(id);
-        if (appointment == null) return NotFound();
+        if (appointment == null)
+        {
+            return NotFound();
+        }
 
         var vm = new AppointmentFormViewModel
         {
             Id = appointment.Id,
             PatientId = appointment.PatientId,
+            InvoiceId = appointment.InvoiceId,
             AppointmentDate = appointment.AppointmentDate,
             Purpose = appointment.Purpose,
             Status = appointment.Status,
             Notes = appointment.Notes,
-            SelectedTeeth = TeethSelectionSerializer.Parse(appointment.SelectedTeethData)
+            SelectedTeeth = TeethSelectionSerializer.Parse(appointment.SelectedTeethData),
+            InvoiceDate = DateOnly.FromDateTime(appointment.AppointmentDate),
+            DueDate = DateOnly.FromDateTime(appointment.AppointmentDate.Date.AddDays(30)),
+            FirstInstallmentDate = DateOnly.FromDateTime(appointment.AppointmentDate.Date.AddDays(30))
         };
 
         await PopulateFormOptionsAsync(vm);
@@ -123,7 +142,12 @@ public class AppointmentsController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Edit(int id, AppointmentFormViewModel vm)
     {
-        if (id != vm.Id) return BadRequest();
+        if (id != vm.Id)
+        {
+            return BadRequest();
+        }
+
+        await ValidateBillingAsync(vm);
         if (!ModelState.IsValid)
         {
             await PopulateFormOptionsAsync(vm);
@@ -131,9 +155,15 @@ public class AppointmentsController : Controller
         }
 
         var appointment = await _db.Appointments.FindAsync(id);
-        if (appointment == null) return NotFound();
+        if (appointment == null)
+        {
+            return NotFound();
+        }
+
+        var invoiceId = await EnsureInvoiceAsync(vm);
 
         appointment.PatientId = vm.PatientId;
+        appointment.InvoiceId = invoiceId;
         appointment.AppointmentDate = vm.AppointmentDate;
         appointment.Purpose = vm.Purpose?.Trim() ?? string.Empty;
         appointment.Status = vm.Status;
@@ -150,7 +180,10 @@ public class AppointmentsController : Controller
     public async Task<IActionResult> Cancel(int id)
     {
         var appointment = await _db.Appointments.FindAsync(id);
-        if (appointment == null) return NotFound();
+        if (appointment == null)
+        {
+            return NotFound();
+        }
 
         appointment.Status = AppointmentStatus.Cancelled;
         appointment.UpdatedAt = DateTime.UtcNow;
@@ -163,6 +196,16 @@ public class AppointmentsController : Controller
     {
         vm.Patients = await GetPatientSelectList();
         vm.PurposeSuggestions = AppointmentPurposeCatalog.Default;
+        vm.Invoices = await _db.Invoices
+            .OrderByDescending(i => i.InvoiceDate)
+            .ThenByDescending(i => i.Id)
+            .Select(i => new AppointmentInvoiceOptionViewModel
+            {
+                Id = i.Id,
+                PatientId = i.PatientId,
+                Label = $"Fatura #{i.Id} - {i.InvoiceDate:dd.MM.yyyy} - {i.TotalAmount:C} - {i.Status.GetDisplayName()}"
+            })
+            .ToListAsync();
     }
 
     private async Task<IEnumerable<SelectListItem>> GetPatientSelectList()
@@ -172,6 +215,104 @@ public class AppointmentsController : Controller
             .OrderBy(p => p.FullName)
             .Select(p => new SelectListItem { Value = p.Id.ToString(), Text = p.FullName })
             .ToListAsync();
+    }
+
+    private async Task ValidateBillingAsync(AppointmentFormViewModel vm)
+    {
+        if (vm.CreateInvoice)
+        {
+            vm.InvoiceId = null;
+
+            if (!vm.InvoiceTotalAmount.HasValue || vm.InvoiceTotalAmount.Value <= 0)
+            {
+                ModelState.AddModelError(nameof(AppointmentFormViewModel.InvoiceTotalAmount), "Yeni fatura için toplam tutar zorunludur.");
+            }
+
+            if (vm.EnableInstallments && !vm.FirstInstallmentDate.HasValue)
+            {
+                ModelState.AddModelError(nameof(AppointmentFormViewModel.FirstInstallmentDate), "İlk taksit tarihi zorunludur.");
+            }
+
+            return;
+        }
+
+        if (!vm.InvoiceId.HasValue)
+        {
+            return;
+        }
+
+        var invoice = await _db.Invoices
+            .AsNoTracking()
+            .Where(i => i.Id == vm.InvoiceId.Value)
+            .Select(i => new { i.PatientId })
+            .FirstOrDefaultAsync();
+
+        if (invoice is null || invoice.PatientId != vm.PatientId)
+        {
+            vm.InvoiceId = null;
+            ModelState.AddModelError(nameof(AppointmentFormViewModel.InvoiceId), "Seçilen fatura seçili hastaya ait değil.");
+        }
+    }
+
+    private async Task<int?> EnsureInvoiceAsync(AppointmentFormViewModel vm)
+    {
+        if (!vm.CreateInvoice)
+        {
+            return vm.InvoiceId;
+        }
+
+        var invoice = new Invoice
+        {
+            PatientId = vm.PatientId,
+            InvoiceDate = vm.InvoiceDate,
+            DueDate = vm.DueDate,
+            TotalAmount = vm.InvoiceTotalAmount!.Value,
+            Status = InvoiceStatus.Issued,
+            Notes = vm.InvoiceNotes,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+
+        _db.Invoices.Add(invoice);
+        await _db.SaveChangesAsync();
+        await CreateInstallmentsAsync(invoice, vm);
+
+        return invoice.Id;
+    }
+
+    private async Task CreateInstallmentsAsync(Invoice invoice, AppointmentFormViewModel vm)
+    {
+        if (!vm.EnableInstallments || !vm.FirstInstallmentDate.HasValue)
+        {
+            return;
+        }
+
+        var installmentAmount = Math.Round(invoice.TotalAmount / vm.InstallmentCount, 2, MidpointRounding.AwayFromZero);
+        var runningTotal = 0m;
+
+        for (var installmentNumber = 1; installmentNumber <= vm.InstallmentCount; installmentNumber++)
+        {
+            var amount = installmentNumber == vm.InstallmentCount
+                ? invoice.TotalAmount - runningTotal
+                : installmentAmount;
+
+            runningTotal += amount;
+
+            _db.Payments.Add(new Payment
+            {
+                InvoiceId = invoice.Id,
+                PaymentDate = vm.FirstInstallmentDate.Value.AddMonths((installmentNumber - 1) * vm.InstallmentIntervalMonths),
+                Amount = amount,
+                PaymentMethod = PaymentMethod.Other,
+                Notes = "Randevu ekranından oluşturulan taksit kaydı",
+                IsPlanned = true,
+                IsSettled = false,
+                InstallmentNumber = installmentNumber,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        await _db.SaveChangesAsync();
     }
 
     private static (DateTime Start, DateTime End, DateTime PreviousDate, DateTime NextDate, List<AppointmentBucketViewModel> Buckets, string Label) BuildCalendarFrame(AppointmentCalendarView view, DateTime referenceDate)

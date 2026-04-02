@@ -16,10 +16,10 @@
     <div class="d-flex gap-2 flex-wrap">
         @if (canViewFinancials)
         {
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Duzenle</a>
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Düzenle</a>
             @if (Model.Status != InvoiceStatus.Paid && Model.Status != InvoiceStatus.Cancelled)
             {
-                <a asp-action="AddPayment" asp-route-invoiceId="@Model.Id" class="btn btn-success">Odeme Ekle</a>
+                <a asp-action="AddPayment" asp-route-invoiceId="@Model.Id" class="btn btn-success">Ödeme Ekle</a>
             }
         }
     </div>
@@ -33,7 +33,7 @@
             <div class="value">@Model.TotalAmount.ToString("C")</div>
         </article>
         <article class="stats-card glass-card text-center">
-            <div class="label">Odenen</div>
+            <div class="label">Ödenen</div>
             <div class="value text-success">@Model.TotalPaid.ToString("C")</div>
         </article>
         <article class="stats-card glass-card text-center">
@@ -44,7 +44,7 @@
 }
 else
 {
-    <div class="alert alert-info mb-4">Calisan hesabi tutarlari, odemeleri ve bakiyeleri goremez.</div>
+    <div class="alert alert-info mb-4">Çalışan hesabı tutarları, ödemeleri ve bakiyeleri göremez.</div>
 }
 
 <div class="row g-4">
@@ -55,7 +55,7 @@ else
                 <dl class="row mb-0">
                     <dt class="col-sm-5">Fatura Tarihi</dt>
                     <dd class="col-sm-7">@Model.InvoiceDate.ToString("D")</dd>
-                    <dt class="col-sm-5">Son Odeme Tarihi</dt>
+                    <dt class="col-sm-5">Son Ödeme Tarihi</dt>
                     <dd class="col-sm-7">@(Model.DueDate?.ToString("D") ?? "-")</dd>
                     <dt class="col-sm-5">Notlar</dt>
                     <dd class="col-sm-7">@(string.IsNullOrWhiteSpace(Model.Notes) ? "-" : Model.Notes)</dd>
@@ -68,11 +68,11 @@ else
     {
         <div class="col-lg-6">
             <div class="card h-100">
-                <div class="card-header"><h3 class="section-title">Odeme Gecmisi</h3></div>
+                <div class="card-header"><h3 class="section-title">Ödeme Geçmişi</h3></div>
                 <div class="card-body p-0">
                     @if (!Model.Payments.Any(p => !p.IsPlanned || p.IsSettled))
                     {
-                        <p class="empty-state mb-0">Bu fatura icin kayitli odeme yok.</p>
+                        <p class="empty-state mb-0">Bu fatura için kayıtlı ödeme yok.</p>
                     }
                     else
                     {
@@ -105,7 +105,7 @@ else
                 <div class="card-body p-0">
                     @if (!Model.Installments.Any())
                     {
-                        <p class="empty-state mb-0">Bu fatura icin tanimli taksit yok.</p>
+                        <p class="empty-state mb-0">Bu fatura için tanımli taksit yok.</p>
                     }
                     else
                     {
@@ -118,6 +118,7 @@ else
                                         <th>Tutar</th>
                                         <th>Durum</th>
                                         <th>Tahsil Tarihi</th>
+                                        <th class="text-end">İşlem</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -129,6 +130,16 @@ else
                                             <td>@item.Amount.ToString("C")</td>
                                             <td><span class="badge-soft @(item.IsSettled ? "success" : "warning")">@(item.IsSettled ? "Tahsil edildi" : "Bekliyor")</span></td>
                                             <td>@(item.SettledDate?.ToString("D") ?? "-")</td>
+                                            <td class="text-end">
+                                                @if (!item.IsSettled && Model.Status != InvoiceStatus.Paid && Model.Status != InvoiceStatus.Cancelled)
+                                                {
+                                                    <a asp-action="AddPayment" asp-route-invoiceId="@Model.Id" asp-route-installmentId="@item.Id" class="btn btn-sm btn-outline-success">Tahsil Et</a>
+                                                }
+                                                else
+                                                {
+                                                    <span class="text-muted">-</span>
+                                                }
+                                            </td>
                                         </tr>
                                     }
                                 </tbody>

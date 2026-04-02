@@ -18,6 +18,17 @@ public class PreviousOperation
     [DataType(DataType.Date)]
     public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
+    [Column(TypeName = "decimal(10,2)")]
+    [Display(Name = "Ücret")]
+    [Range(0, 999999.99)]
+    public decimal PriceAmount { get; set; }
+
+    [Display(Name = "Fatura")]
+    public int? InvoiceId { get; set; }
+
+    [ForeignKey(nameof(InvoiceId))]
+    public Invoice? Invoice { get; set; }
+
     [MaxLength(200)]
     [Display(Name = "İşlem Başlığı")]
     public string Title { get; set; } = string.Empty;

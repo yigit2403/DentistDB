@@ -17,7 +17,7 @@
 <div class="card mb-4">
     <div class="card-body">
         <div class="filter-strip">
-            <a asp-action="Index" class="btn btn-sm @(string.IsNullOrEmpty(statusFilter) ? "btn-primary" : "btn-outline-secondary")">Tumu</a>
+            <a asp-action="Index" class="btn btn-sm @(string.IsNullOrEmpty(statusFilter) ? "btn-primary" : "btn-outline-secondary")">Tümü</a>
             @foreach (var status in statuses)
             {
                 <a asp-action="Index" asp-route-status="@status" class="btn btn-sm @(statusFilter == status.ToString() ? "btn-primary" : "btn-outline-secondary")">@status.GetDisplayName()</a>
@@ -48,7 +48,7 @@ else
                             <th>Bekleyen Taksit</th>
                         }
                         <th>Durum</th>
-                        <th class="text-end">Islem</th>
+                        <th class="text-end">İşlem</th>
                     </tr>
                 </thead>
                 <tbody>

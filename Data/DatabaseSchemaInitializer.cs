@@ -7,78 +7,51 @@ public static class DatabaseSchemaInitializer
 {
     public static async Task EnsureAsync(ApplicationDbContext db)
     {
-        var provider = db.Database.ProviderName ?? string.Empty;
+        await EnsureColumnAsync(db, "Patients", "Tckn", """ALTER TABLE "Patients" ADD COLUMN "Tckn" TEXT NOT NULL DEFAULT '';""");
+        await EnsureColumnAsync(db, "Patients", "PhotoBase64", """ALTER TABLE "Patients" ADD COLUMN "PhotoBase64" TEXT NULL;""");
+        await EnsureColumnAsync(db, "Patients", "PhotoContentType", """ALTER TABLE "Patients" ADD COLUMN "PhotoContentType" TEXT NULL;""");
 
-        if (provider.Contains("Sqlite", StringComparison.OrdinalIgnoreCase))
-        {
-            await EnsureColumnAsync(db, "Patients", "Tckn", """ALTER TABLE "Patients" ADD COLUMN "Tckn" TEXT NOT NULL DEFAULT '';""");
-            await EnsureColumnAsync(db, "Patients", "PhotoBase64", """ALTER TABLE "Patients" ADD COLUMN "PhotoBase64" TEXT NULL;""");
-            await EnsureColumnAsync(db, "Patients", "PhotoContentType", """ALTER TABLE "Patients" ADD COLUMN "PhotoContentType" TEXT NULL;""");
-            await EnsureColumnAsync(db, "Appointments", "SelectedTeethData", """ALTER TABLE "Appointments" ADD COLUMN "SelectedTeethData" TEXT NULL;""");
-            await EnsureColumnAsync(db, "Payments", "IsPlanned", """ALTER TABLE "Payments" ADD COLUMN "IsPlanned" INTEGER NOT NULL DEFAULT 0;""");
-            await EnsureColumnAsync(db, "Payments", "IsSettled", """ALTER TABLE "Payments" ADD COLUMN "IsSettled" INTEGER NOT NULL DEFAULT 0;""");
-            await EnsureColumnAsync(db, "Payments", "SettledDate", """ALTER TABLE "Payments" ADD COLUMN "SettledDate" TEXT NULL;""");
-            await EnsureColumnAsync(db, "Payments", "InstallmentNumber", """ALTER TABLE "Payments" ADD COLUMN "InstallmentNumber" INTEGER NULL;""");
+        await EnsureColumnAsync(db, "Appointments", "SelectedTeethData", """ALTER TABLE "Appointments" ADD COLUMN "SelectedTeethData" TEXT NULL;""");
+        await EnsureColumnAsync(db, "Appointments", "InvoiceId", """ALTER TABLE "Appointments" ADD COLUMN "InvoiceId" INTEGER NULL;""");
 
-            await db.Database.ExecuteSqlRawAsync(
-                """
-                CREATE TABLE IF NOT EXISTS "PreviousOperations" (
-                    "Id" INTEGER NOT NULL CONSTRAINT "PK_PreviousOperations" PRIMARY KEY AUTOINCREMENT,
-                    "PatientId" INTEGER NOT NULL,
-                    "Date" TEXT NOT NULL,
-                    "Title" TEXT NOT NULL,
-                    "Diagnosis" TEXT NULL,
-                    "Procedures" TEXT NULL,
-                    "Prescriptions" TEXT NULL,
-                    "Notes" TEXT NULL,
-                    "SelectedTeethData" TEXT NULL,
-                    "CreatedAt" TEXT NOT NULL,
-                    "UpdatedAt" TEXT NOT NULL,
-                    CONSTRAINT "FK_PreviousOperations_Patients_PatientId" FOREIGN KEY ("PatientId") REFERENCES "Patients" ("Id") ON DELETE CASCADE
-                );
-                """);
+        await EnsureColumnAsync(db, "Payments", "IsPlanned", """ALTER TABLE "Payments" ADD COLUMN "IsPlanned" INTEGER NOT NULL DEFAULT 0;""");
+        await EnsureColumnAsync(db, "Payments", "IsSettled", """ALTER TABLE "Payments" ADD COLUMN "IsSettled" INTEGER NOT NULL DEFAULT 0;""");
+        await EnsureColumnAsync(db, "Payments", "SettledDate", """ALTER TABLE "Payments" ADD COLUMN "SettledDate" TEXT NULL;""");
+        await EnsureColumnAsync(db, "Payments", "InstallmentNumber", """ALTER TABLE "Payments" ADD COLUMN "InstallmentNumber" INTEGER NULL;""");
 
-            await db.Database.ExecuteSqlRawAsync(
-                """
-                CREATE INDEX IF NOT EXISTS "IX_PreviousOperations_PatientId_Date"
-                ON "PreviousOperations" ("PatientId", "Date");
-                """);
+        await EnsureColumnAsync(db, "PreviousOperations", "PriceAmount", """ALTER TABLE "PreviousOperations" ADD COLUMN "PriceAmount" TEXT NOT NULL DEFAULT '0';""");
+        await EnsureColumnAsync(db, "PreviousOperations", "InvoiceId", """ALTER TABLE "PreviousOperations" ADD COLUMN "InvoiceId" INTEGER NULL;""");
 
-            await db.Database.ExecuteSqlRawAsync("""CREATE INDEX IF NOT EXISTS "IX_Payments_InvoiceId_PaymentDate_IsPlanned" ON "Payments" ("InvoiceId", "PaymentDate", "IsPlanned");""");
-        }
-        else if (provider.Contains("MySql", StringComparison.OrdinalIgnoreCase))
-        {
-            await EnsureColumnAsync(db, "Patients", "Tckn", """ALTER TABLE `Patients` ADD COLUMN `Tckn` varchar(11) NOT NULL DEFAULT '';""");
-            await EnsureColumnAsync(db, "Patients", "PhotoBase64", """ALTER TABLE `Patients` ADD COLUMN `PhotoBase64` longtext NULL;""");
-            await EnsureColumnAsync(db, "Patients", "PhotoContentType", """ALTER TABLE `Patients` ADD COLUMN `PhotoContentType` varchar(100) NULL;""");
-            await EnsureColumnAsync(db, "Appointments", "SelectedTeethData", """ALTER TABLE `Appointments` ADD COLUMN `SelectedTeethData` varchar(200) NULL;""");
-            await EnsureColumnAsync(db, "Payments", "IsPlanned", """ALTER TABLE `Payments` ADD COLUMN `IsPlanned` tinyint(1) NOT NULL DEFAULT 0;""");
-            await EnsureColumnAsync(db, "Payments", "IsSettled", """ALTER TABLE `Payments` ADD COLUMN `IsSettled` tinyint(1) NOT NULL DEFAULT 0;""");
-            await EnsureColumnAsync(db, "Payments", "SettledDate", """ALTER TABLE `Payments` ADD COLUMN `SettledDate` date NULL;""");
-            await EnsureColumnAsync(db, "Payments", "InstallmentNumber", """ALTER TABLE `Payments` ADD COLUMN `InstallmentNumber` int NULL;""");
+        await db.Database.ExecuteSqlRawAsync(
+            """
+            CREATE TABLE IF NOT EXISTS "PreviousOperations" (
+                "Id" INTEGER NOT NULL CONSTRAINT "PK_PreviousOperations" PRIMARY KEY AUTOINCREMENT,
+                "PatientId" INTEGER NOT NULL,
+                "Date" TEXT NOT NULL,
+                "PriceAmount" TEXT NOT NULL,
+                "InvoiceId" INTEGER NULL,
+                "Title" TEXT NOT NULL,
+                "Diagnosis" TEXT NULL,
+                "Procedures" TEXT NULL,
+                "Prescriptions" TEXT NULL,
+                "Notes" TEXT NULL,
+                "SelectedTeethData" TEXT NULL,
+                "CreatedAt" TEXT NOT NULL,
+                "UpdatedAt" TEXT NOT NULL,
+                CONSTRAINT "FK_PreviousOperations_Patients_PatientId" FOREIGN KEY ("PatientId") REFERENCES "Patients" ("Id") ON DELETE CASCADE,
+                CONSTRAINT "FK_PreviousOperations_Invoices_InvoiceId" FOREIGN KEY ("InvoiceId") REFERENCES "Invoices" ("Id") ON DELETE SET NULL
+            );
+            """);
 
-            await db.Database.ExecuteSqlRawAsync(
-                """
-                CREATE TABLE IF NOT EXISTS `PreviousOperations` (
-                    `Id` int NOT NULL AUTO_INCREMENT,
-                    `PatientId` int NOT NULL,
-                    `Date` date NOT NULL,
-                    `Title` varchar(200) NOT NULL,
-                    `Diagnosis` varchar(500) NULL,
-                    `Procedures` varchar(500) NULL,
-                    `Prescriptions` varchar(500) NULL,
-                    `Notes` varchar(1000) NULL,
-                    `SelectedTeethData` varchar(200) NULL,
-                    `CreatedAt` datetime(6) NOT NULL,
-                    `UpdatedAt` datetime(6) NOT NULL,
-                    PRIMARY KEY (`Id`),
-                    KEY `IX_PreviousOperations_PatientId_Date` (`PatientId`, `Date`),
-                    CONSTRAINT `FK_PreviousOperations_Patients_PatientId` FOREIGN KEY (`PatientId`) REFERENCES `Patients` (`Id`) ON DELETE CASCADE
-                );
-                """);
+        await db.Database.ExecuteSqlRawAsync(
+            """
+            CREATE INDEX IF NOT EXISTS "IX_PreviousOperations_PatientId_Date"
+            ON "PreviousOperations" ("PatientId", "Date");
+            """);
 
-            await db.Database.ExecuteSqlRawAsync("""CREATE INDEX IF NOT EXISTS `IX_Payments_InvoiceId_PaymentDate_IsPlanned` ON `Payments` (`InvoiceId`, `PaymentDate`, `IsPlanned`);""");
-        }
+        await db.Database.ExecuteSqlRawAsync("""CREATE INDEX IF NOT EXISTS "IX_PreviousOperations_InvoiceId" ON "PreviousOperations" ("InvoiceId");""");
+        await db.Database.ExecuteSqlRawAsync("""CREATE INDEX IF NOT EXISTS "IX_Appointments_InvoiceId" ON "Appointments" ("InvoiceId");""");
+        await db.Database.ExecuteSqlRawAsync("""CREATE INDEX IF NOT EXISTS "IX_Payments_InvoiceId_PaymentDate_IsPlanned" ON "Payments" ("InvoiceId", "PaymentDate", "IsPlanned");""");
     }
 
     private static async Task EnsureColumnAsync(ApplicationDbContext db, string tableName, string columnName, string alterSql)
@@ -93,7 +66,6 @@ public static class DatabaseSchemaInitializer
 
     private static async Task<bool> ColumnExistsAsync(ApplicationDbContext db, string tableName, string columnName)
     {
-        var provider = db.Database.ProviderName ?? string.Empty;
         var connection = db.Database.GetDbConnection();
         var shouldCloseConnection = connection.State != System.Data.ConnectionState.Open;
 
@@ -105,37 +77,15 @@ public static class DatabaseSchemaInitializer
         try
         {
             await using var command = connection.CreateCommand();
+            command.CommandText =
+                """
+                SELECT COUNT(*)
+                FROM pragma_table_info(@tableName)
+                WHERE name = @columnName;
+                """;
 
-            if (provider.Contains("Sqlite", StringComparison.OrdinalIgnoreCase))
-            {
-                command.CommandText =
-                    """
-                    SELECT COUNT(*)
-                    FROM pragma_table_info(@tableName)
-                    WHERE name = @columnName;
-                    """;
-
-                AddParameter(command, "@tableName", tableName);
-                AddParameter(command, "@columnName", columnName);
-            }
-            else if (provider.Contains("MySql", StringComparison.OrdinalIgnoreCase))
-            {
-                command.CommandText =
-                    """
-                    SELECT COUNT(*)
-                    FROM INFORMATION_SCHEMA.COLUMNS
-                    WHERE TABLE_SCHEMA = DATABASE()
-                      AND TABLE_NAME = @tableName
-                      AND COLUMN_NAME = @columnName;
-                    """;
-
-                AddParameter(command, "@tableName", tableName);
-                AddParameter(command, "@columnName", columnName);
-            }
-            else
-            {
-                return false;
-            }
+            AddParameter(command, "@tableName", tableName);
+            AddParameter(command, "@columnName", columnName);
 
             var result = await command.ExecuteScalarAsync();
             return Convert.ToInt32(result) > 0;

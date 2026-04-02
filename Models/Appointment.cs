@@ -26,6 +26,12 @@ public class Appointment
     [ForeignKey(nameof(PatientId))]
     public Patient? Patient { get; set; }
 
+    [Display(Name = "Fatura")]
+    public int? InvoiceId { get; set; }
+
+    [ForeignKey(nameof(InvoiceId))]
+    public Invoice? Invoice { get; set; }
+
     [Required]
     [Display(Name = "Tarih ve Saat")]
     public DateTime AppointmentDate { get; set; }

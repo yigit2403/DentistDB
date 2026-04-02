@@ -28,3 +28,4 @@ appsettings.*.local.json
 *.db-shm
 *.db-wal
 codex-build.zip
+artifacts/DentistDB-win-x64-publish.zip

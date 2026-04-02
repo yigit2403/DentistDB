@@ -52,6 +52,8 @@ public class Invoice
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
+    public ICollection<PreviousOperation> PreviousOperations { get; set; } = new List<PreviousOperation>();
 
     [NotMapped]
     public decimal TotalPaid => Payments.Where(p => !p.IsPlanned || p.IsSettled).Sum(p => p.Amount);

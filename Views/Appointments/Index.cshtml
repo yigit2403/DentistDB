@@ -3,9 +3,9 @@
     ViewData["Title"] = "Randevular";
     string GetViewLabel(AppointmentCalendarView view) => view switch
     {
-        AppointmentCalendarView.Daily => "Gunluk",
+        AppointmentCalendarView.Daily => "Günlük",
         AppointmentCalendarView.Weekly => "Haftalik",
-        AppointmentCalendarView.Monthly => "Aylik",
+        AppointmentCalendarView.Monthly => "Aylık",
         AppointmentCalendarView.Yearly => "Yillik",
         _ => view.ToString()
     };
@@ -26,7 +26,7 @@
     <div class="card-body">
         <div class="d-flex flex-wrap justify-content-between gap-3">
             <div class="filter-strip">
-                <a asp-action="Index" asp-route-view="@Model.CalendarView" asp-route-date="@Model.ReferenceDate.ToString("yyyy-MM-dd")" class="btn btn-sm @(string.IsNullOrEmpty(Model.StatusFilter) ? "btn-primary" : "btn-outline-secondary")">Tumu</a>
+                <a asp-action="Index" asp-route-view="@Model.CalendarView" asp-route-date="@Model.ReferenceDate.ToString("yyyy-MM-dd")" class="btn btn-sm @(string.IsNullOrEmpty(Model.StatusFilter) ? "btn-primary" : "btn-outline-secondary")">Tümü</a>
                 @foreach (var status in Model.Statuses)
                 {
                     <a asp-action="Index" asp-route-status="@status" asp-route-view="@Model.CalendarView" asp-route-date="@Model.ReferenceDate.ToString("yyyy-MM-dd")" class="btn btn-sm @(Model.StatusFilter == status.ToString() ? "btn-primary" : "btn-outline-secondary")">@status.GetDisplayName()</a>
@@ -40,7 +40,7 @@
             </div>
         </div>
         <div class="filter-strip mt-3">
-            <a asp-action="Index" asp-route-view="@Model.CalendarView" asp-route-status="@Model.StatusFilter" asp-route-date="@Model.PreviousDate.ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-secondary">Onceki</a>
+            <a asp-action="Index" asp-route-view="@Model.CalendarView" asp-route-status="@Model.StatusFilter" asp-route-date="@Model.PreviousDate.ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-secondary">Önceki</a>
             <a asp-action="Index" asp-route-view="@Model.CalendarView" asp-route-status="@Model.StatusFilter" asp-route-date="@DateTime.Today.ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-secondary">Bugun</a>
             <a asp-action="Index" asp-route-view="@Model.CalendarView" asp-route-status="@Model.StatusFilter" asp-route-date="@Model.NextDate.ToString("yyyy-MM-dd")" class="btn btn-sm btn-outline-secondary">Sonraki</a>
         </div>
@@ -49,7 +49,7 @@
 
 @if (!hasAppointments)
 {
-    <div class="alert alert-info">Bu gorunum icin randevu kaydi bulunamadi.</div>
+    <div class="alert alert-info">Bu gorunum için randevu kaydi bulunamadi.</div>
 }
 else if (Model.CalendarView == AppointmentCalendarView.Daily)
 {
@@ -60,7 +60,7 @@ else if (Model.CalendarView == AppointmentCalendarView.Daily)
                 <header class="agenda-day__header">
                     <div>
                         <div class="agenda-day__title">@bucket.Label</div>
-                        <div class="agenda-day__count">@bucket.Appointments.Count kayit</div>
+                        <div class="agenda-day__count">@bucket.Appointments.Count kayıt</div>
                     </div>
                 </header>
 
@@ -84,7 +84,7 @@ else if (Model.CalendarView == AppointmentCalendarView.Daily)
                                     </div>
                                     <div class="d-flex gap-2 align-self-start">
                                         <a asp-controller="Patients" asp-action="Details" asp-route-id="@appt.PatientId" class="btn btn-sm btn-outline-secondary">Hasta</a>
-                                        <a asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-primary">Duzenle</a>
+                                        <a asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-primary">Düzenle</a>
                                         @if (appt.Status == AppointmentStatus.Scheduled)
                                         {
                                             <form asp-action="Cancel" asp-route-id="@appt.Id" method="post" class="d-inline" onsubmit="return confirm('Bu randevuyu iptal etmek istiyor musunuz?')">
@@ -110,12 +110,12 @@ else if (Model.CalendarView == AppointmentCalendarView.Yearly)
             <section class="calendar-cell calendar-cell--month">
                 <header class="calendar-cell__header">
                     <div class="calendar-cell__title">@bucket.Label</div>
-                    <div class="calendar-cell__count">@bucket.Appointments.Count kayit</div>
+                    <div class="calendar-cell__count">@bucket.Appointments.Count kayıt</div>
                 </header>
                 <div class="calendar-cell__content">
                     @if (!bucket.Appointments.Any())
                     {
-                        <div class="calendar-empty">Kayit yok</div>
+                        <div class="calendar-empty">Kayıt yok</div>
                     }
                     else
                     {

@@ -69,7 +69,7 @@ public class ScansController : Controller
 
         if (vm.File == null || vm.File.Length == 0)
         {
-            ModelState.AddModelError(nameof(vm.File), "Lutfen yuklemek icin bir dosya secin.");
+            ModelState.AddModelError(nameof(vm.File), "Lütfen yüklemek için bir dosya seçin.");
             var pat = await _db.Patients.FindAsync(vm.PatientId);
             ViewBag.PatientName = pat?.FullName;
             return View(vm);
@@ -112,7 +112,7 @@ public class ScansController : Controller
 
         _db.Scans.Add(scan);
         await _db.SaveChangesAsync();
-        TempData["Success"] = "Tarama basariyla yuklendi.";
+        TempData["Success"] = "Tarama başarıyla yüklendi.";
         return RedirectToAction("Details", "Patients", new { id = scan.PatientId });
     }
 

@@ -1,12 +1,15 @@
+using DentistDB.Models;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using DentistDB.Models;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace DentistDB.Data;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+    {
+    }
 
     public DbSet<Patient> Patients => Set<Patient>();
     public DbSet<Appointment> Appointments => Set<Appointment>();
@@ -19,52 +22,71 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(builder);
 
-        builder.Entity<Patient>(e =>
-        {
-            e.HasIndex(p => p.FullName);
-        });
+        ConfigurePatients(builder.Entity<Patient>());
+        ConfigureAppointments(builder.Entity<Appointment>());
+        ConfigurePreviousOperations(builder.Entity<PreviousOperation>());
+        ConfigureScans(builder.Entity<Scan>());
+        ConfigureInvoices(builder.Entity<Invoice>());
+        ConfigurePayments(builder.Entity<Payment>());
+    }
 
-        builder.Entity<Appointment>(e =>
-        {
-            e.HasIndex(a => a.AppointmentDate);
-            e.HasOne(a => a.Patient)
-             .WithMany(p => p.Appointments)
-             .HasForeignKey(a => a.PatientId)
-             .OnDelete(DeleteBehavior.Cascade);
-        });
+    private static void ConfigurePatients(EntityTypeBuilder<Patient> entity)
+    {
+        entity.HasIndex(patient => patient.FullName);
+    }
 
-        builder.Entity<PreviousOperation>(e =>
-        {
-            e.HasIndex(o => new { o.PatientId, o.Date });
-            e.HasOne(o => o.Patient)
-             .WithMany(p => p.PreviousOperations)
-             .HasForeignKey(o => o.PatientId)
-             .OnDelete(DeleteBehavior.Cascade);
-        });
+    private static void ConfigureAppointments(EntityTypeBuilder<Appointment> entity)
+    {
+        entity.HasIndex(appointment => appointment.AppointmentDate);
+        entity.HasIndex(appointment => appointment.InvoiceId);
+        entity.HasOne(appointment => appointment.Patient)
+            .WithMany(patient => patient.Appointments)
+            .HasForeignKey(appointment => appointment.PatientId)
+            .OnDelete(DeleteBehavior.Cascade);
+        entity.HasOne(appointment => appointment.Invoice)
+            .WithMany(invoice => invoice.Appointments)
+            .HasForeignKey(appointment => appointment.InvoiceId)
+            .OnDelete(DeleteBehavior.SetNull);
+    }
 
-        builder.Entity<Scan>(e =>
-        {
-            e.HasOne(s => s.Patient)
-             .WithMany(p => p.Scans)
-             .HasForeignKey(s => s.PatientId)
-             .OnDelete(DeleteBehavior.Cascade);
-        });
+    private static void ConfigurePreviousOperations(EntityTypeBuilder<PreviousOperation> entity)
+    {
+        entity.HasIndex(operation => new { operation.PatientId, operation.Date });
+        entity.HasIndex(operation => operation.InvoiceId);
 
-        builder.Entity<Invoice>(e =>
-        {
-            e.HasOne(i => i.Patient)
-             .WithMany(p => p.Invoices)
-             .HasForeignKey(i => i.PatientId)
-             .OnDelete(DeleteBehavior.Cascade);
-        });
+        entity.HasOne(operation => operation.Patient)
+            .WithMany(patient => patient.PreviousOperations)
+            .HasForeignKey(operation => operation.PatientId)
+            .OnDelete(DeleteBehavior.Cascade);
 
-        builder.Entity<Payment>(e =>
-        {
-            e.HasIndex(p => new { p.InvoiceId, p.PaymentDate, p.IsPlanned });
-            e.HasOne(p => p.Invoice)
-             .WithMany(i => i.Payments)
-             .HasForeignKey(p => p.InvoiceId)
-             .OnDelete(DeleteBehavior.Cascade);
-        });
+        entity.HasOne(operation => operation.Invoice)
+            .WithMany(invoice => invoice.PreviousOperations)
+            .HasForeignKey(operation => operation.InvoiceId)
+            .OnDelete(DeleteBehavior.SetNull);
+    }
+
+    private static void ConfigureScans(EntityTypeBuilder<Scan> entity)
+    {
+        entity.HasOne(scan => scan.Patient)
+            .WithMany(patient => patient.Scans)
+            .HasForeignKey(scan => scan.PatientId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private static void ConfigureInvoices(EntityTypeBuilder<Invoice> entity)
+    {
+        entity.HasOne(invoice => invoice.Patient)
+            .WithMany(patient => patient.Invoices)
+            .HasForeignKey(invoice => invoice.PatientId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+
+    private static void ConfigurePayments(EntityTypeBuilder<Payment> entity)
+    {
+        entity.HasIndex(payment => new { payment.InvoiceId, payment.PaymentDate, payment.IsPlanned });
+        entity.HasOne(payment => payment.Invoice)
+            .WithMany(invoice => invoice.Payments)
+            .HasForeignKey(payment => payment.InvoiceId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

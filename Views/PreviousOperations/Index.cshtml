@@ -1,19 +1,20 @@
 @model DentistDB.ViewModels.PreviousOperationsIndexViewModel
 @{
-    ViewData["Title"] = "Onceki Islemler";
+    ViewData["Title"] = "Önceki İşlemler";
+    var canViewFinancials = Context.CanViewFinancials();
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Hasta Gecmisi</div>
-        <h2 class="page-title">@(Model.Patient is null ? "Tum Onceki Islemler" : $"{Model.Patient.FullName} icin Onceki Islemler")</h2>
-        <p class="page-subtitle">Son islemleri gorun, filtreleyin ve gecmis kayitlari arayin.</p>
+        <div class="eyebrow">Hasta Geçmişi</div>
+        <h2 class="page-title">@(Model.Patient is null ? "Tum Önceki İşlemler" : $"{Model.Patient.FullName} için Önceki İşlemler")</h2>
+        <p class="page-subtitle">Son işlemleri görün, filtreleyin ve geçmiş kayıtları arayın.</p>
     </div>
     <div class="d-flex gap-2 flex-wrap">
-        <a asp-action="Create" asp-route-patientId="@Model.PatientId" class="btn btn-primary">Yeni Islem Kaydi</a>
+        <a asp-action="Create" asp-route-patientId="@Model.PatientId" class="btn btn-primary">Yeni İşlem Kaydı</a>
         @if (Model.Patient is not null)
         {
-            <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.Patient.Id" class="btn btn-outline-secondary">Hasta Detayina Don</a>
+            <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.Patient.Id" class="btn btn-outline-secondary">Hasta Detayına Dön</a>
         }
     </div>
 </div>
@@ -26,8 +27,8 @@
                 <input type="hidden" name="patientId" value="@Model.PatientId" />
             }
             <div class="col-md-9">
-                <label class="form-label">Islem Ara</label>
-                <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="Hasta adi, tani, islem veya not ile ara" />
+                <label class="form-label">İşlem Ara</label>
+                <input type="text" name="search" value="@Model.Search" class="form-control" placeholder="Hasta adı, tanı, işlem veya not ile ara" />
             </div>
             <div class="col-md-3 d-flex gap-2 align-items-end">
                 <button type="submit" class="btn btn-primary flex-fill">Ara</button>
@@ -37,7 +38,7 @@
 
         @if (!Model.Operations.Any())
         {
-            <p class="empty-state mb-0">Bu filtreye uygun islem kaydi bulunmuyor.</p>
+            <p class="empty-state mb-0">Bu filtreye uygun işlem kaydı bulunmuyor.</p>
         }
         else
         {
@@ -45,6 +46,34 @@
                 @foreach (var operation in Model.Operations)
                 {
                     var selectedTeeth = TeethSelectionSerializer.Parse(operation.SelectedTeethData);
+                    var linkedInvoice = operation.Invoice;
+                    var paymentStateText = "Fatura baglanmadi";
+                    var paymentStateClass = "neutral";
+
+                    if (linkedInvoice is not null)
+                    {
+                        if (linkedInvoice.Status == InvoiceStatus.Cancelled)
+                        {
+                            paymentStateText = "İptal edildi";
+                            paymentStateClass = "neutral";
+                        }
+                        else if (linkedInvoice.TotalPaid >= linkedInvoice.TotalAmount)
+                        {
+                            paymentStateText = "Ödendi";
+                            paymentStateClass = "success";
+                        }
+                        else if (linkedInvoice.TotalPaid > 0)
+                        {
+                            paymentStateText = "Kısmen odendi";
+                            paymentStateClass = "warning";
+                        }
+                        else
+                        {
+                            paymentStateText = "Ödenmedi";
+                            paymentStateClass = "danger";
+                        }
+                    }
+
                     <article class="operation-card">
                         <div class="operation-card__header">
                             <div>
@@ -53,8 +82,8 @@
                                 <div class="text-muted small">@operation.Patient?.FullName</div>
                             </div>
                             <div class="d-flex gap-2">
-                                <a asp-action="Edit" asp-route-id="@operation.Id" class="btn btn-sm btn-outline-secondary">Duzenle</a>
-                                <form asp-action="Delete" asp-route-id="@operation.Id" method="post" onsubmit="return confirm('Bu islem kaydini silmek istiyor musunuz?')">
+                                <a asp-action="Edit" asp-route-id="@operation.Id" class="btn btn-sm btn-outline-secondary">Düzenle</a>
+                                <form asp-action="Delete" asp-route-id="@operation.Id" method="post" onsubmit="return confirm('Bu işlem kaydını silmek istiyor musunuz?')">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn btn-sm btn-outline-danger">Sil</button>
                                 </form>
@@ -63,19 +92,42 @@
 
                         <div class="operation-card__grid">
                             <div>
-                                <div class="operation-card__label">Tani</div>
+                                <div class="operation-card__label">Tanı</div>
                                 <div>@(string.IsNullOrWhiteSpace(operation.Diagnosis) ? "-" : operation.Diagnosis)</div>
                             </div>
                             <div>
-                                <div class="operation-card__label">Uygulanan Islemler</div>
+                                <div class="operation-card__label">Uygulanan İşlemler</div>
                                 <div>@(string.IsNullOrWhiteSpace(operation.Procedures) ? "-" : operation.Procedures)</div>
                             </div>
+                            @if (canViewFinancials)
+                            {
+                                <div>
+                                    <div class="operation-card__label">Ücret</div>
+                                    <div class="fw-semibold">@operation.PriceAmount.ToString("C")</div>
+                                </div>
+                                <div>
+                                    <div class="operation-card__label">Fatura / Ödeme</div>
+                                    @if (linkedInvoice is null)
+                                    {
+                                        <div>-</div>
+                                    }
+                                    else
+                                    {
+                                        <div>
+                                            <a asp-controller="Billing" asp-action="Details" asp-route-id="@linkedInvoice.Id" class="text-decoration-none">Fatura #@linkedInvoice.Id</a>
+                                        </div>
+                                        <div class="mt-2">
+                                            <span class="badge-soft @paymentStateClass">@paymentStateText</span>
+                                        </div>
+                                    }
+                                </div>
+                            }
                             <div>
-                                <div class="operation-card__label">Receteler</div>
+                                <div class="operation-card__label">Reçeteler</div>
                                 <div>@(string.IsNullOrWhiteSpace(operation.Prescriptions) ? "-" : operation.Prescriptions)</div>
                             </div>
                             <div>
-                                <div class="operation-card__label">Secilen Disler</div>
+                                <div class="operation-card__label">Seçilen Disler</div>
                                 @if (selectedTeeth.Any())
                                 {
                                     <div class="operation-teeth">

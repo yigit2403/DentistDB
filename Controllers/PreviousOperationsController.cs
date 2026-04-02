@@ -30,6 +30,8 @@ public class PreviousOperationsController : Controller
 
         var query = _db.PreviousOperations
             .Include(o => o.Patient)
+            .Include(o => o.Invoice)
+                .ThenInclude(i => i!.Payments)
             .AsQueryable();
 
         if (patientId.HasValue)
@@ -70,16 +72,17 @@ public class PreviousOperationsController : Controller
             Date = DateOnly.FromDateTime(DateTime.Today)
         };
 
-        vm.Patients = await GetPatientSelectList();
+        await PopulateFormAsync(vm);
         return View(vm);
     }
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(PreviousOperationFormViewModel vm)
     {
+        await ValidateInvoiceSelectionAsync(vm);
         if (!ModelState.IsValid)
         {
-            vm.Patients = await GetPatientSelectList();
+            await PopulateFormAsync(vm);
             return View(vm);
         }
 
@@ -87,6 +90,8 @@ public class PreviousOperationsController : Controller
         {
             PatientId = vm.PatientId,
             Date = vm.Date,
+            PriceAmount = vm.PriceAmount,
+            InvoiceId = vm.InvoiceId,
             Title = vm.Title.Trim(),
             Diagnosis = vm.Diagnosis,
             Procedures = vm.Procedures,
@@ -113,6 +118,8 @@ public class PreviousOperationsController : Controller
             Id = operation.Id,
             PatientId = operation.PatientId,
             Date = operation.Date,
+            PriceAmount = operation.PriceAmount,
+            InvoiceId = operation.InvoiceId,
             Title = operation.Title,
             Diagnosis = operation.Diagnosis,
             Procedures = operation.Procedures,
@@ -121,7 +128,7 @@ public class PreviousOperationsController : Controller
             SelectedTeeth = TeethSelectionSerializer.Parse(operation.SelectedTeethData)
         };
 
-        vm.Patients = await GetPatientSelectList();
+        await PopulateFormAsync(vm);
         return View(vm);
     }
 
@@ -129,9 +136,10 @@ public class PreviousOperationsController : Controller
     public async Task<IActionResult> Edit(int id, PreviousOperationFormViewModel vm)
     {
         if (id != vm.Id) return BadRequest();
+        await ValidateInvoiceSelectionAsync(vm);
         if (!ModelState.IsValid)
         {
-            vm.Patients = await GetPatientSelectList();
+            await PopulateFormAsync(vm);
             return View(vm);
         }
 
@@ -140,6 +148,8 @@ public class PreviousOperationsController : Controller
 
         operation.PatientId = vm.PatientId;
         operation.Date = vm.Date;
+        operation.PriceAmount = vm.PriceAmount;
+        operation.InvoiceId = vm.InvoiceId;
         operation.Title = vm.Title.Trim();
         operation.Diagnosis = vm.Diagnosis;
         operation.Procedures = vm.Procedures;
@@ -173,5 +183,40 @@ public class PreviousOperationsController : Controller
             .OrderBy(p => p.FullName)
             .Select(p => new SelectListItem { Value = p.Id.ToString(), Text = p.FullName })
             .ToListAsync();
+    }
+
+    private async Task PopulateFormAsync(PreviousOperationFormViewModel vm)
+    {
+        vm.Patients = await GetPatientSelectList();
+        vm.Invoices = await _db.Invoices
+            .OrderByDescending(i => i.InvoiceDate)
+            .ThenByDescending(i => i.Id)
+            .Select(i => new PreviousOperationInvoiceOptionViewModel
+            {
+                Id = i.Id,
+                PatientId = i.PatientId,
+                Label = $"Fatura #{i.Id} - {i.InvoiceDate:dd.MM.yyyy} - {i.TotalAmount:C} - {i.Status.GetDisplayName()}"
+            })
+            .ToListAsync();
+    }
+
+    private async Task ValidateInvoiceSelectionAsync(PreviousOperationFormViewModel vm)
+    {
+        if (!vm.InvoiceId.HasValue)
+        {
+            return;
+        }
+
+        var invoice = await _db.Invoices
+            .AsNoTracking()
+            .Where(i => i.Id == vm.InvoiceId.Value)
+            .Select(i => new { i.Id, i.PatientId })
+            .FirstOrDefaultAsync();
+
+        if (invoice is null || invoice.PatientId != vm.PatientId)
+        {
+            vm.InvoiceId = null;
+            ModelState.AddModelError(nameof(PreviousOperationFormViewModel.InvoiceId), "Seçilen fatura seçili hastaya ait degil.");
+        }
     }
 }
