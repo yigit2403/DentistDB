@@ -27,6 +27,10 @@ public class Patient
     [DataType(DataType.Date)]
     public DateOnly? BirthDate { get; set; }
 
+    [Display(Name = "Geliş Tarihi")]
+    [DataType(DataType.Date)]
+    public DateOnly? ArrivalDate { get; set; }
+
     [MaxLength(300)]
     [Display(Name = "Adres")]
     public string? Address { get; set; }

@@ -12,6 +12,7 @@ namespace DentistDB.Controllers;
 [RequireAppAccount]
 public class PreviousOperationsController : Controller
 {
+    private const int PageSize = 20;
     private readonly ApplicationDbContext _db;
 
     public PreviousOperationsController(ApplicationDbContext db)
@@ -19,7 +20,7 @@ public class PreviousOperationsController : Controller
         _db = db;
     }
 
-    public async Task<IActionResult> Index(int? patientId, string? search)
+    public async Task<IActionResult> Index(int? patientId, string? search, int pageNumber = 1)
     {
         Patient? patient = null;
         if (patientId.HasValue)
@@ -37,26 +38,28 @@ public class PreviousOperationsController : Controller
             query = query.Where(o => o.PatientId == patientId.Value);
         }
 
-        if (!string.IsNullOrWhiteSpace(search))
+        var searchTerm = search?.Trim();
+
+        if (!string.IsNullOrWhiteSpace(searchTerm))
         {
+            var pattern = $"%{searchTerm}%";
             query = query.Where(o =>
-                o.Title.Contains(search) ||
-                (o.Diagnosis != null && o.Diagnosis.Contains(search)) ||
-                (o.Procedures != null && o.Procedures.Contains(search)) ||
-                (o.Prescriptions != null && o.Prescriptions.Contains(search)) ||
-                (o.Notes != null && o.Notes.Contains(search)) ||
-                (o.Patient != null && o.Patient.FullName.Contains(search)));
+                EF.Functions.Like(o.Title, pattern) ||
+                (o.Diagnosis != null && EF.Functions.Like(o.Diagnosis, pattern)) ||
+                (o.Procedures != null && EF.Functions.Like(o.Procedures, pattern)) ||
+                (o.Prescriptions != null && EF.Functions.Like(o.Prescriptions, pattern)) ||
+                (o.Notes != null && EF.Functions.Like(o.Notes, pattern)) ||
+                (o.Patient != null && EF.Functions.Like(o.Patient.FullName, pattern)));
         }
 
         var vm = new PreviousOperationsIndexViewModel
         {
             Patient = patient,
             PatientId = patientId,
-            Search = search,
-            Operations = await query
+            Search = searchTerm,
+            Operations = await PaginatedList<PreviousOperation>.CreateAsync(query
                 .OrderByDescending(o => o.Date)
-                .ThenByDescending(o => o.UpdatedAt)
-                .ToListAsync()
+                .ThenByDescending(o => o.UpdatedAt), pageNumber, PageSize)
         };
 
         return View(vm);

@@ -58,15 +58,9 @@ public class HomeController : Controller
 
             RecentPatients = await _db.Patients
                 .Where(p => !p.IsArchived)
-                .OrderByDescending(p => p.CreatedAt)
+                .OrderByDescending(p => p.ArrivalDate)
+                .ThenByDescending(p => p.CreatedAt)
                 .Take(5)
-                .ToListAsync(),
-
-            UnpaidInvoices = await _db.Invoices
-                .Include(i => i.Patient)
-                .Include(i => i.Payments)
-                .Where(i => i.Status == InvoiceStatus.Issued || i.Status == InvoiceStatus.PartiallyPaid)
-                .OrderBy(i => i.DueDate)
                 .ToListAsync(),
 
             TotalPatients = await _db.Patients.CountAsync(p => !p.IsArchived),

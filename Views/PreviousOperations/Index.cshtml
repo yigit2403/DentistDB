@@ -35,6 +35,16 @@
             </div>
         </form>
 
+        @await Html.PartialAsync("_Pagination", new PaginationViewModel
+        {
+            PageIndex = Model.Operations.PageIndex,
+            TotalPages = Model.Operations.TotalPages,
+            TotalCount = Model.Operations.TotalCount,
+            PageSize = Model.Operations.PageSize,
+            FirstItemNumber = Model.Operations.FirstItemNumber,
+            LastItemNumber = Model.Operations.LastItemNumber
+        })
+
         @if (!Model.Operations.Any())
         {
             <p class="empty-state mb-0">Bu filtreye uygun islem kaydi bulunmuyor.</p>
@@ -52,7 +62,7 @@
                                 <div class="operation-card__title">@operation.Title</div>
                                 <div class="text-muted small">@operation.Patient?.FullName</div>
                             </div>
-                            <div class="d-flex gap-2">
+                            <div class="operation-card__actions d-flex gap-2">
                                 <a asp-action="Edit" asp-route-id="@operation.Id" class="btn btn-sm btn-outline-secondary">Duzenle</a>
                                 <form asp-action="Delete" asp-route-id="@operation.Id" method="post" onsubmit="return confirm('Bu islem kaydini silmek istiyor musunuz?')">
                                     @Html.AntiForgeryToken()
@@ -101,3 +111,13 @@
         }
     </div>
 </div>
+
+@await Html.PartialAsync("_Pagination", new PaginationViewModel
+{
+    PageIndex = Model.Operations.PageIndex,
+    TotalPages = Model.Operations.TotalPages,
+    TotalCount = Model.Operations.TotalCount,
+    PageSize = Model.Operations.PageSize,
+    FirstItemNumber = Model.Operations.FirstItemNumber,
+    LastItemNumber = Model.Operations.LastItemNumber
+})

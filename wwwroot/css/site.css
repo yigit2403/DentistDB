@@ -59,6 +59,8 @@ a:hover {
   position: sticky;
   top: 0;
   height: 100vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   border-right: 1px solid rgba(255, 255, 255, 0.04);
 }
 
@@ -334,6 +336,44 @@ thead.table-light th {
   gap: 0.65rem;
 }
 
+.pagination-shell {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.pagination-summary {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.pagination .page-link {
+  color: #b2c6e3;
+  background: rgba(5, 14, 29, 0.92);
+  border-color: rgba(178, 198, 227, 0.24);
+}
+
+.pagination .page-link:hover,
+.pagination .page-link:focus {
+  color: #03101f;
+  background: #c4d9f5;
+  border-color: #c4d9f5;
+}
+
+.pagination .page-item.active .page-link {
+  color: #03101f;
+  background: #7ec4ff;
+  border-color: #7ec4ff;
+}
+
+.pagination .page-item.disabled .page-link {
+  color: rgba(142, 167, 200, 0.52);
+  background: rgba(5, 14, 29, 0.52);
+  border-color: rgba(178, 198, 227, 0.12);
+}
+
 .btn,
 .form-control,
 .form-select,
@@ -457,7 +497,7 @@ thead.table-light th {
 }
 
 .metric-grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
 .summary-grid {
@@ -693,9 +733,15 @@ dl dt {
 
 .operation-card__header {
   display: flex;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1rem;
+}
+
+.operation-card__actions {
+  align-items: flex-start;
+  flex-shrink: 0;
 }
 
 .operation-card__date {
@@ -881,7 +927,8 @@ dl dt {
   }
 
   .topbar,
-  .page-header {
+  .page-header,
+  .pagination-shell {
     align-items: start;
     flex-direction: column;
   }

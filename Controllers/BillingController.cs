@@ -11,6 +11,7 @@ namespace DentistDB.Controllers;
 [RequireAppAccount]
 public class BillingController : Controller
 {
+    private const int PageSize = 20;
     private readonly ApplicationDbContext _db;
 
     public BillingController(ApplicationDbContext db)
@@ -18,7 +19,7 @@ public class BillingController : Controller
         _db = db;
     }
 
-    public async Task<IActionResult> Index(string? status)
+    public async Task<IActionResult> Index(string? status, int pageNumber = 1)
     {
         var query = _db.Invoices
             .Include(i => i.Patient)
@@ -30,7 +31,7 @@ public class BillingController : Controller
 
         ViewBag.StatusFilter = status;
         ViewBag.Statuses = Enum.GetValues<InvoiceStatus>();
-        return View(await query.OrderByDescending(i => i.InvoiceDate).ToListAsync());
+        return View(await PaginatedList<Invoice>.CreateAsync(query.OrderByDescending(i => i.InvoiceDate), pageNumber, PageSize));
     }
 
     public async Task<IActionResult> Details(int id)
@@ -60,6 +61,7 @@ public class BillingController : Controller
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(InvoiceFormViewModel vm)
     {
+        NormalizePaymentPlanModelState(vm);
         ValidatePaymentPlan(vm);
         if (!ModelState.IsValid)
         {
@@ -94,6 +96,7 @@ public class BillingController : Controller
             .FirstOrDefaultAsync(i => i.Id == id);
         if (invoice == null) return NotFound();
 
+        var plannedPayments = invoice.Payments.Where(p => p.IsPlanned).OrderBy(p => p.PaymentDate).ToList();
         var vm = new InvoiceFormViewModel
         {
             Id = invoice.Id,
@@ -103,12 +106,10 @@ public class BillingController : Controller
             TotalAmount = invoice.TotalAmount,
             Status = invoice.Status,
             Notes = invoice.Notes,
-            EnablePaymentPlan = invoice.Payments.Any(p => p.IsPlanned),
-            FirstPaymentDate = invoice.Payments.Where(p => p.IsPlanned).OrderBy(p => p.PaymentDate).Select(p => (DateOnly?)p.PaymentDate).FirstOrDefault(),
-            InstallmentCount = invoice.Payments.Count(p => p.IsPlanned),
-            ExistingPlannedPayments = invoice.Payments
-                .Where(p => p.IsPlanned)
-                .OrderBy(p => p.PaymentDate)
+            EnablePaymentPlan = plannedPayments.Any(),
+            FirstPaymentDate = plannedPayments.Select(p => (DateOnly?)p.PaymentDate).FirstOrDefault(),
+            InstallmentCount = plannedPayments.Count == 0 ? 1 : plannedPayments.Count,
+            ExistingPlannedPayments = plannedPayments
                 .Select(p => new PlannedPaymentViewModel
                 {
                     Id = p.Id,
@@ -128,6 +129,7 @@ public class BillingController : Controller
     public async Task<IActionResult> Edit(int id, InvoiceFormViewModel vm)
     {
         if (id != vm.Id) return BadRequest();
+        NormalizePaymentPlanModelState(vm);
         ValidatePaymentPlan(vm);
         if (!ModelState.IsValid)
         {
@@ -257,6 +259,22 @@ public class BillingController : Controller
         {
             ModelState.AddModelError(nameof(InvoiceFormViewModel.FirstPaymentDate), "İlk ödeme tarihi zorunludur.");
         }
+    }
+
+    private void NormalizePaymentPlanModelState(InvoiceFormViewModel vm)
+    {
+        if (vm.EnablePaymentPlan)
+        {
+            return;
+        }
+
+        vm.FirstPaymentDate = null;
+        vm.InstallmentCount = 1;
+        vm.InstallmentIntervalMonths = 1;
+
+        ModelState.Remove(nameof(InvoiceFormViewModel.FirstPaymentDate));
+        ModelState.Remove(nameof(InvoiceFormViewModel.InstallmentCount));
+        ModelState.Remove(nameof(InvoiceFormViewModel.InstallmentIntervalMonths));
     }
 
     private async Task ReplacePaymentPlanAsync(Invoice invoice, InvoiceFormViewModel vm)

@@ -20,6 +20,7 @@ public static class SeedData
                     Phone = "555-0101",
                     Email = "alice@example.com",
                     BirthDate = new DateOnly(1985, 4, 12),
+                    ArrivalDate = DateOnly.FromDateTime(DateTime.Today),
                     Address = "123 Maple St, Springfield",
                     Notes = "Prefers morning appointments.",
                     MedicalAlerts = "Penicillin allergy",
@@ -33,6 +34,7 @@ public static class SeedData
                     Phone = "555-0102",
                     Email = "bob@example.com",
                     BirthDate = new DateOnly(1978, 9, 3),
+                    ArrivalDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-1)),
                     Address = "456 Oak Ave, Springfield",
                     MedicalAlerts = "Latex allergy",
                     CreatedAt = DateTime.UtcNow,
@@ -45,6 +47,7 @@ public static class SeedData
                     Phone = "555-0103",
                     Email = "carol@example.com",
                     BirthDate = new DateOnly(1992, 6, 25),
+                    ArrivalDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-2)),
                     Address = "789 Pine Rd, Springfield",
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow

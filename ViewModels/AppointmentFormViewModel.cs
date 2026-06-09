@@ -9,6 +9,7 @@ public class AppointmentFormViewModel
     public int Id { get; set; }
 
     [Required(ErrorMessage = "Hasta seçimi zorunludur.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Hasta seçimi zorunludur.")]
     [Display(Name = "Hasta")]
     public int PatientId { get; set; }
 

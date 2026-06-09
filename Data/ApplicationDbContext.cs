@@ -22,6 +22,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<Patient>(e =>
         {
             e.HasIndex(p => p.FullName);
+            e.HasIndex(p => p.ArrivalDate);
         });
 
         builder.Entity<Appointment>(e =>

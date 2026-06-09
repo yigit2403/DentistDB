@@ -42,7 +42,12 @@
                     <input asp-for="BirthDate" class="form-control" type="date" />
                     <span asp-validation-for="BirthDate" class="text-danger small"></span>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-3">
+                    <label asp-for="ArrivalDate" class="form-label"></label>
+                    <input asp-for="ArrivalDate" class="form-control" type="date" />
+                    <span asp-validation-for="ArrivalDate" class="text-danger small"></span>
+                </div>
+                <div class="col-md-3">
                     <label asp-for="Address" class="form-label"></label>
                     <input asp-for="Address" class="form-control" />
                 </div>

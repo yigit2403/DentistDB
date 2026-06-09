@@ -9,6 +9,7 @@ public class InvoiceFormViewModel
     public int Id { get; set; }
 
     [Required]
+    [Range(1, int.MaxValue, ErrorMessage = "Hasta seçimi zorunludur.")]
     [Display(Name = "Hasta")]
     public int PatientId { get; set; }
 

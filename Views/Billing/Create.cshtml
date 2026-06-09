@@ -50,21 +50,21 @@
                 </div>
                 <div class="col-md-12">
                     <div class="form-check">
-                        <input asp-for="EnablePaymentPlan" class="form-check-input" type="checkbox" />
+                        <input asp-for="EnablePaymentPlan" class="form-check-input payment-plan-toggle" type="checkbox" />
                         <label asp-for="EnablePaymentPlan" class="form-check-label"></label>
                     </div>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4 payment-plan-field">
                     <label asp-for="FirstPaymentDate" class="form-label"></label>
                     <input asp-for="FirstPaymentDate" class="form-control" type="date" />
                     <span asp-validation-for="FirstPaymentDate" class="text-danger small"></span>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4 payment-plan-field">
                     <label asp-for="InstallmentCount" class="form-label"></label>
                     <input asp-for="InstallmentCount" class="form-control" type="number" min="1" max="48" />
                     <span asp-validation-for="InstallmentCount" class="text-danger small"></span>
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-4 payment-plan-field">
                     <label asp-for="InstallmentIntervalMonths" class="form-label"></label>
                     <input asp-for="InstallmentIntervalMonths" class="form-control" type="number" min="1" max="12" />
                     <span asp-validation-for="InstallmentIntervalMonths" class="text-danger small"></span>
@@ -81,4 +81,5 @@
 
 @section Scripts {
     @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <script src="~/js/payment-plan.js" asp-append-version="true"></script>
 }

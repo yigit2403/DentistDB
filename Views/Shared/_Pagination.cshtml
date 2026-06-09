@@ -1,0 +1,53 @@
+@model PaginationViewModel
+
+@functions {
+    private Dictionary<string, string> GetRouteValues(int pageNumber)
+    {
+        var routeValues = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var queryItem in Context.Request.Query)
+        {
+            if (!string.Equals(queryItem.Key, "pageNumber", StringComparison.OrdinalIgnoreCase))
+            {
+                routeValues[queryItem.Key] = queryItem.Value.ToString();
+            }
+        }
+
+        routeValues["pageNumber"] = pageNumber.ToString();
+        return routeValues;
+    }
+}
+
+@if (Model.TotalCount > 0)
+{
+    var startPage = Math.Max(1, Model.PageIndex - 2);
+    var endPage = Math.Min(Model.TotalPages, Model.PageIndex + 2);
+
+    <div class="pagination-shell">
+        <div class="pagination-summary">
+            @Model.TotalCount kayittan @Model.FirstItemNumber-@Model.LastItemNumber arasi gosteriliyor
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav aria-label="Sayfalama">
+                <ul class="pagination pagination-sm mb-0">
+                    <li class="page-item @(Model.PageIndex <= 1 ? "disabled" : "")">
+                        <a class="page-link" asp-all-route-data="GetRouteValues(Model.PageIndex - 1)">Onceki</a>
+                    </li>
+
+                    @for (var pageNumber = startPage; pageNumber <= endPage; pageNumber++)
+                    {
+                        <li class="page-item @(pageNumber == Model.PageIndex ? "active" : "")">
+                            <a class="page-link" asp-all-route-data="GetRouteValues(pageNumber)">@pageNumber</a>
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.PageIndex >= Model.TotalPages ? "disabled" : "")">
+                        <a class="page-link" asp-all-route-data="GetRouteValues(Model.PageIndex + 1)">Sonraki</a>
+                    </li>
+                </ul>
+            </nav>
+        }
+    </div>
+}

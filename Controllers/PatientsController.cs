@@ -11,6 +11,7 @@ namespace DentistDB.Controllers;
 [RequireAppAccount]
 public class PatientsController : Controller
 {
+    private const int PageSize = 20;
     private readonly ApplicationDbContext _db;
 
     public PatientsController(ApplicationDbContext db)
@@ -18,24 +19,29 @@ public class PatientsController : Controller
         _db = db;
     }
 
-    public async Task<IActionResult> Index(string? search, bool showArchived = false)
+    public async Task<IActionResult> Index(string? search, bool showArchived = false, int pageNumber = 1)
     {
         var query = _db.Patients.AsQueryable();
 
         if (!showArchived)
             query = query.Where(p => !p.IsArchived);
 
-        if (!string.IsNullOrWhiteSpace(search))
-            query = query.Where(p =>
-                p.FullName.Contains(search) ||
-                p.Tckn.Contains(search) ||
-                (p.Phone != null && p.Phone.Contains(search)) ||
-                (p.Email != null && p.Email.Contains(search)));
+        var searchTerm = search?.Trim();
 
-        ViewBag.Search = search;
+        if (!string.IsNullOrWhiteSpace(searchTerm))
+        {
+            var pattern = $"%{searchTerm}%";
+            query = query.Where(p =>
+                EF.Functions.Like(p.FullName, pattern) ||
+                EF.Functions.Like(p.Tckn, pattern) ||
+                (p.Phone != null && EF.Functions.Like(p.Phone, pattern)) ||
+                (p.Email != null && EF.Functions.Like(p.Email, pattern)));
+        }
+
+        ViewBag.Search = searchTerm;
         ViewBag.ShowArchived = showArchived;
 
-        return View(await query.OrderBy(p => p.FullName).ToListAsync());
+        return View(await PaginatedList<Patient>.CreateAsync(query.OrderBy(p => p.FullName), pageNumber, PageSize));
     }
 
     public async Task<IActionResult> Details(int id)
@@ -52,7 +58,10 @@ public class PatientsController : Controller
         return View(patient);
     }
 
-    public IActionResult Create() => View(new PatientFormViewModel());
+    public IActionResult Create() => View(new PatientFormViewModel
+    {
+        ArrivalDate = DateOnly.FromDateTime(DateTime.Today)
+    });
 
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(PatientFormViewModel vm)
@@ -68,6 +77,7 @@ public class PatientsController : Controller
             Tckn = vm.Tckn,
             Email = vm.Email,
             BirthDate = vm.BirthDate,
+            ArrivalDate = vm.ArrivalDate,
             Address = vm.Address,
             Notes = vm.Notes,
             MedicalAlerts = vm.MedicalAlerts,
@@ -96,6 +106,7 @@ public class PatientsController : Controller
             Tckn = patient.Tckn,
             Email = patient.Email,
             BirthDate = patient.BirthDate,
+            ArrivalDate = patient.ArrivalDate,
             Address = patient.Address,
             Notes = patient.Notes,
             MedicalAlerts = patient.MedicalAlerts,
@@ -128,6 +139,7 @@ public class PatientsController : Controller
         patient.Tckn = vm.Tckn;
         patient.Email = vm.Email;
         patient.BirthDate = vm.BirthDate;
+        patient.ArrivalDate = vm.ArrivalDate;
         patient.Address = vm.Address;
         patient.Notes = vm.Notes;
         patient.MedicalAlerts = vm.MedicalAlerts;

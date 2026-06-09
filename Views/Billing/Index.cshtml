@@ -1,4 +1,4 @@
-@model IEnumerable<DentistDB.Models.Invoice>
+@model PaginatedList<Invoice>
 @{
     ViewData["Title"] = "Faturalar";
     var statusFilter = ViewBag.StatusFilter as string;
@@ -25,6 +25,16 @@
         </div>
     </div>
 </div>
+
+@await Html.PartialAsync("_Pagination", new PaginationViewModel
+{
+    PageIndex = Model.PageIndex,
+    TotalPages = Model.TotalPages,
+    TotalCount = Model.TotalCount,
+    PageSize = Model.PageSize,
+    FirstItemNumber = Model.FirstItemNumber,
+    LastItemNumber = Model.LastItemNumber
+})
 
 @if (!Model.Any())
 {
@@ -78,3 +88,13 @@ else
         </div>
     </div>
 }
+
+@await Html.PartialAsync("_Pagination", new PaginationViewModel
+{
+    PageIndex = Model.PageIndex,
+    TotalPages = Model.TotalPages,
+    TotalCount = Model.TotalCount,
+    PageSize = Model.PageSize,
+    FirstItemNumber = Model.FirstItemNumber,
+    LastItemNumber = Model.LastItemNumber
+})

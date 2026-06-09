@@ -9,7 +9,7 @@
         <div class="eyebrow">Hasta Dosyasi</div>
         <h2 class="page-title">@Model.FullName</h2>
         <p class="page-subtitle">
-            Kayit tarihi @Model.CreatedAt.ToString("MMMM yyyy")
+            Gelis tarihi @(Model.ArrivalDate?.ToString("D") ?? "belirtilmemis")
             <span class="badge-soft @(Model.IsArchived ? "neutral" : "success") ms-2">@(Model.IsArchived ? "Arsivde" : "Aktif")</span>
         </p>
     </div>
@@ -71,6 +71,8 @@
                     <dd class="col-sm-8">@(Model.Email ?? "-")</dd>
                     <dt class="col-sm-4">Dogum Tarihi</dt>
                     <dd class="col-sm-8">@(Model.BirthDate?.ToString("D") ?? "-")</dd>
+                    <dt class="col-sm-4">Gelis Tarihi</dt>
+                    <dd class="col-sm-8">@(Model.ArrivalDate?.ToString("D") ?? "-")</dd>
                     <dt class="col-sm-4">Adres</dt>
                     <dd class="col-sm-8">@(Model.Address ?? "-")</dd>
                 </dl>

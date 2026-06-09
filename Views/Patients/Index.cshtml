@@ -1,4 +1,4 @@
-@model IEnumerable<DentistDB.Models.Patient>
+@model PaginatedList<Patient>
 @{
     ViewData["Title"] = "Hastalar";
     var showArchived = (bool)(ViewBag.ShowArchived ?? false);
@@ -38,6 +38,16 @@
     </div>
 </div>
 
+@await Html.PartialAsync("_Pagination", new PaginationViewModel
+{
+    PageIndex = Model.PageIndex,
+    TotalPages = Model.TotalPages,
+    TotalCount = Model.TotalCount,
+    PageSize = Model.PageSize,
+    FirstItemNumber = Model.FirstItemNumber,
+    LastItemNumber = Model.LastItemNumber
+})
+
 @if (!Model.Any())
 {
     <div class="alert alert-info">Aramaniza uygun hasta bulunamadi.</div>
@@ -54,6 +64,7 @@ else
                         <th>Telefon</th>
                         <th>E-posta</th>
                         <th>Dogum Tarihi</th>
+                        <th>Gelis Tarihi</th>
                         <th>Uyarilar</th>
                         <th>Durum</th>
                         <th class="text-end">Islem</th>
@@ -70,6 +81,7 @@ else
                             <td>@(string.IsNullOrWhiteSpace(patient.Phone) ? "-" : patient.Phone)</td>
                             <td>@(string.IsNullOrWhiteSpace(patient.Email) ? "-" : patient.Email)</td>
                             <td>@(patient.BirthDate?.ToString("d") ?? "-")</td>
+                            <td>@(patient.ArrivalDate?.ToString("d") ?? "-")</td>
                             <td>
                                 @if (!string.IsNullOrEmpty(patient.MedicalAlerts))
                                 {
@@ -95,3 +107,13 @@ else
         </div>
     </div>
 }
+
+@await Html.PartialAsync("_Pagination", new PaginationViewModel
+{
+    PageIndex = Model.PageIndex,
+    TotalPages = Model.TotalPages,
+    TotalCount = Model.TotalCount,
+    PageSize = Model.PageSize,
+    FirstItemNumber = Model.FirstItemNumber,
+    LastItemNumber = Model.LastItemNumber
+})
