@@ -358,7 +358,7 @@ else if (tab == "plan")
                                                     <button type="submit" class="btn btn-sm btn-outline-primary" title="Tamamlandı"><svg class="icon"><use href="#i-check"/></svg></button>
                                                 </form>
                                                 <button type="button" class="btn btn-sm btn-outline-secondary js-plan-edit" title="Düzenle"
-                                                        data-id="@item.Id" data-procedure="@item.ProcedureId" data-description="@item.Description" data-teeth="@item.ToothNumbers" data-price="@item.EstimatedPrice.ToString("0.00")" data-notes="@item.Notes"><svg class="icon"><use href="#i-edit"/></svg></button>
+                                                        data-id="@item.Id" data-procedure="@item.ProcedureId" data-description="@item.Description" data-teeth="@item.ToothNumbers" data-price="@(Model.ShowFinancials ? item.EstimatedPrice.ToString("0.00") : "0.00")" data-notes="@item.Notes"><svg class="icon"><use href="#i-edit"/></svg></button>
                                                 <form asp-controller="TreatmentPlan" asp-action="SetStatus" asp-route-id="@item.Id" asp-route-status="Cancelled" method="post" class="d-inline">
                                                     @Html.AntiForgeryToken()
                                                     <button type="submit" class="btn btn-sm btn-outline-secondary" title="İptal"><svg class="icon"><use href="#i-x"/></svg></button>
@@ -424,10 +424,17 @@ else if (tab == "plan")
                                 <label class="form-label">Dişler</label>
                                 <input type="text" name="ToothNumbers" class="form-control num" maxlength="200" placeholder="16, 17" autocomplete="off" data-plan-teeth />
                             </div>
-                            <div class="col-6">
-                                <label class="form-label">Tahmini Ücret</label>
-                                <div class="input-group"><input type="text" name="EstimatedPrice" class="form-control num text-end" inputmode="decimal" value="0,00" data-plan-price /><span class="input-group-text">₺</span></div>
-                            </div>
+                            @if (Model.ShowFinancials)
+                            {
+                                <div class="col-6">
+                                    <label class="form-label">Tahmini Ücret</label>
+                                    <div class="input-group"><input type="text" name="EstimatedPrice" class="form-control num text-end" inputmode="decimal" value="0,00" data-plan-price /><span class="input-group-text">₺</span></div>
+                                </div>
+                            }
+                            else
+                            {
+                                <input type="hidden" name="EstimatedPrice" value="0" data-plan-price />
+                            }
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Notlar</label>

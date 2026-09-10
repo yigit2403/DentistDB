@@ -178,7 +178,7 @@ public class AppointmentsController : ClinicControllerBase
         return RedirectToReturnUrlOr(vm.ReturnUrl, RedirectToAction(nameof(Index), new { date = first.AppointmentDate.ToString("yyyy-MM-dd") }));
     }
 
-    public async Task<IActionResult> Edit(int id, string? returnUrl)
+    public async Task<IActionResult> Edit([FromRoute] int id, string? returnUrl)
     {
         var appointment = await Db.Appointments.AsNoTracking().FirstOrDefaultAsync(a => a.Id == id);
         if (appointment == null) return NotFound();
@@ -205,7 +205,7 @@ public class AppointmentsController : ClinicControllerBase
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, AppointmentFormViewModel vm)
+    public async Task<IActionResult> Edit([FromRoute] int id, AppointmentFormViewModel vm)
     {
         if (id != vm.Id) return BadRequest();
 

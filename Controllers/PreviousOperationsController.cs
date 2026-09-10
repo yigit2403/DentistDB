@@ -120,7 +120,7 @@ public class PreviousOperationsController : ClinicControllerBase
         return RedirectToReturnUrlOr(vm.ReturnUrl, RedirectToAction("Details", "Patients", new { id = operation.PatientId, tab = "treatments" }));
     }
 
-    public async Task<IActionResult> Edit(int id, string? returnUrl)
+    public async Task<IActionResult> Edit([FromRoute] int id, string? returnUrl)
     {
         var operation = await Db.PreviousOperations.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id);
         if (operation == null) return NotFound();
@@ -144,7 +144,7 @@ public class PreviousOperationsController : ClinicControllerBase
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, PreviousOperationFormViewModel vm)
+    public async Task<IActionResult> Edit([FromRoute] int id, PreviousOperationFormViewModel vm)
     {
         if (id != vm.Id) return BadRequest();
         if (!ModelState.IsValid)

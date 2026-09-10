@@ -12,7 +12,7 @@ namespace DentistDB.Tests.Integration;
 /// Hosts the real application against a throw-away SQLite database in the temp folder.
 /// The Development environment is used so the demo seed and the default dev PINs (1234 / 5678) apply.
 /// </summary>
-public sealed class ClinicAppFactory : WebApplicationFactory<Program>
+public class ClinicAppFactory : WebApplicationFactory<Program>
 {
     private readonly string _root = Path.Combine(Path.GetTempPath(), "DentistDB.Tests", Guid.NewGuid().ToString("N"));
 

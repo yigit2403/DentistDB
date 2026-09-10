@@ -263,7 +263,7 @@ public class PatientsController : ClinicControllerBase
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, PatientFormViewModel vm)
+    public async Task<IActionResult> Edit([FromRoute] int id, PatientFormViewModel vm)
     {
         if (id != vm.Id) return BadRequest();
 
@@ -512,7 +512,7 @@ public class PatientsController : ClinicControllerBase
     {
         static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
-        vm.FullName = vm.FullName.Trim();
+        vm.FullName = (vm.FullName ?? string.Empty).Trim();
         vm.Tckn = SearchNormalizer.DigitsOnly(vm.Tckn);
         vm.Phone = Clean(vm.Phone);
         vm.Email = Clean(vm.Email);

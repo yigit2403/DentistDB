@@ -135,7 +135,7 @@ public class ScansController : ClinicControllerBase
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, ScanEditViewModel vm)
+    public async Task<IActionResult> Edit([FromRoute] int id, ScanEditViewModel vm)
     {
         if (id != vm.Id) return BadRequest();
 

@@ -25,6 +25,12 @@ Clinical workflow release. The schema is upgraded automatically at startup (migr
 ### Fixed
 
 - Demo TCKNs now pass checksum validation.
+- Client-side validation was initialised before jQuery Validation loaded, so Turkish messages and comma-decimal support never activated and invoice line totals mis-parsed "1.250,50".
+- Price-list duplicate check compared names with SQLite's ASCII-only lower(), so "İşlem" and "işlem" were not seen as duplicates.
+- Worker account could see and set the estimated price on the treatment plan form.
+- Empty required text fields (patient name, backup folder) crashed with a 500 instead of a validation message.
+- Agenda keyboard shortcuts navigated to HTML-encoded URLs (`&amp;`), dropping the date parameter.
+- Edit forms now bind the record id from the route so a tampered form id cannot redirect the update.
 
 ## [0.3.0] - 2026-09-10
 

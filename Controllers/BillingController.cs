@@ -251,7 +251,7 @@ public class BillingController : ClinicControllerBase
 
     [HttpPost, ValidateAntiForgeryToken]
     [AdminOnly]
-    public async Task<IActionResult> Edit(int id, InvoiceFormViewModel vm)
+    public async Task<IActionResult> Edit([FromRoute] int id, InvoiceFormViewModel vm)
     {
         if (id != vm.Id) return BadRequest();
 

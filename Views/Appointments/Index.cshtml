@@ -261,16 +261,18 @@ else
 @section Scripts {
     <script>
         (function () {
-            var links = {
-                prev: "@Url.Action("Index", new { view = Model.CalendarView, status = statusRoute, patientId = Model.PatientId, date = Model.PreviousDate.ToString("yyyy-MM-dd") })",
-                next: "@Url.Action("Index", new { view = Model.CalendarView, status = statusRoute, patientId = Model.PatientId, date = Model.NextDate.ToString("yyyy-MM-dd") })",
-                today: "@Url.Action("Index", new { view = Model.CalendarView, status = statusRoute, patientId = Model.PatientId })",
-                g: "@Url.Action("Index", new { view = "Daily", status = statusRoute, patientId = Model.PatientId, date = refIso })",
-                h: "@Url.Action("Index", new { view = "Weekly", status = statusRoute, patientId = Model.PatientId, date = refIso })",
-                a: "@Url.Action("Index", new { view = "Monthly", status = statusRoute, patientId = Model.PatientId, date = refIso })",
-                l: "@Url.Action("Index", new { view = "List", status = statusRoute, patientId = Model.PatientId, date = refIso })",
-                print: "@Url.Action("PrintDay", new { date = refIso })"
-            };
+            // Serialised as JSON so query-string ampersands are not HTML-encoded inside the script.
+            var links = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new
+            {
+                prev = Url.Action("Index", new { view = Model.CalendarView, status = statusRoute, patientId = Model.PatientId, date = Model.PreviousDate.ToString("yyyy-MM-dd") }),
+                next = Url.Action("Index", new { view = Model.CalendarView, status = statusRoute, patientId = Model.PatientId, date = Model.NextDate.ToString("yyyy-MM-dd") }),
+                today = Url.Action("Index", new { view = Model.CalendarView, status = statusRoute, patientId = Model.PatientId }),
+                g = Url.Action("Index", new { view = "Daily", status = statusRoute, patientId = Model.PatientId, date = refIso }),
+                h = Url.Action("Index", new { view = "Weekly", status = statusRoute, patientId = Model.PatientId, date = refIso }),
+                a = Url.Action("Index", new { view = "Monthly", status = statusRoute, patientId = Model.PatientId, date = refIso }),
+                l = Url.Action("Index", new { view = "List", status = statusRoute, patientId = Model.PatientId, date = refIso }),
+                print = Url.Action("PrintDay", new { date = refIso })
+            }));
             document.addEventListener("keydown", function (e) {
                 var tag = (document.activeElement && document.activeElement.tagName || "").toLowerCase();
                 if (tag === "input" || tag === "textarea" || tag === "select" || e.ctrlKey || e.altKey || e.metaKey) return;

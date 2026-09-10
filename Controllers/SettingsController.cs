@@ -73,7 +73,8 @@ public class SettingsController : ClinicControllerBase
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> SaveBackup(BackupSettingsFormModel backup)
     {
-        var folder = Environment.ExpandEnvironmentVariables(backup.Folder.Trim());
+        backup.Folder = (backup.Folder ?? string.Empty).Trim();
+        var folder = Environment.ExpandEnvironmentVariables(backup.Folder);
         if (ModelState.IsValid)
         {
             try
@@ -301,8 +302,9 @@ public class SettingsController : ClinicControllerBase
 
         if (ModelState.IsValid)
         {
-            var duplicate = await Db.Procedures.AnyAsync(p => p.Id != model.Id && p.Name.ToLower() == model.Name.ToLower());
-            if (duplicate)
+            var normalized = SearchNormalizer.Normalize(model.Name);
+            var others = await Db.Procedures.Where(p => p.Id != model.Id).Select(p => p.Name).ToListAsync();
+            if (others.Any(n => SearchNormalizer.Normalize(n) == normalized))
             {
                 ModelState.AddModelError("NewProcedure.Name", "Bu isimde bir işlem zaten var.");
             }

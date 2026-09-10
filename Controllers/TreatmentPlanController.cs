@@ -28,6 +28,21 @@ public class TreatmentPlanController : ClinicControllerBase
         var description = model.Description.Trim();
         var teeth = TeethSelectionSerializer.Normalize(model.ToothNumbers) ?? (string.IsNullOrWhiteSpace(model.ToothNumbers) ? null : model.ToothNumbers.Trim());
 
+        // The Worker account never sees prices; fill the estimate from the price list on their behalf.
+        if (!HttpContext.IsAdmin())
+        {
+            if (model.Id > 0)
+            {
+                model.EstimatedPrice = await Db.TreatmentPlanItems.Where(t => t.Id == model.Id).Select(t => t.EstimatedPrice).FirstOrDefaultAsync();
+            }
+            else
+            {
+                model.EstimatedPrice = model.ProcedureId.HasValue
+                    ? await Db.Procedures.Where(p => p.Id == model.ProcedureId.Value).Select(p => p.DefaultPrice).FirstOrDefaultAsync()
+                    : 0m;
+            }
+        }
+
         if (model.Id > 0)
         {
             var item = await Db.TreatmentPlanItems.FirstOrDefaultAsync(t => t.Id == model.Id && t.PatientId == model.PatientId);
