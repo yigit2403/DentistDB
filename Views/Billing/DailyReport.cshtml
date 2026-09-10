@@ -1,0 +1,145 @@
+@model DentistDB.ViewModels.DailyReportViewModel
+@{
+    ViewData["Title"] = "Gün Sonu Raporu";
+    var iso = Model.Date.ToString("yyyy-MM-dd");
+}
+
+<div class="page-header no-print">
+    <div>
+        <div class="topbar-crumb"><a asp-action="Index">Faturalar</a> / Gün Sonu</div>
+        <h2 class="page-title">Gün Sonu Raporu</h2>
+        <p class="page-subtitle">@Model.Date.ToLongDate()</p>
+    </div>
+    <div class="page-actions">
+        <div class="cal-nav">
+            <a asp-action="DailyReport" asp-route-date="@Model.Date.AddDays(-1).ToString("yyyy-MM-dd")" class="btn btn-outline-secondary btn-icon"><svg class="icon"><use href="#i-chevron-left"/></svg></a>
+            <a asp-action="DailyReport" class="btn btn-outline-secondary">Bugün</a>
+            <a asp-action="DailyReport" asp-route-date="@Model.Date.AddDays(1).ToString("yyyy-MM-dd")" class="btn btn-outline-secondary btn-icon"><svg class="icon"><use href="#i-chevron-right"/></svg></a>
+        </div>
+        <form method="get" class="m-0"><input type="date" name="date" value="@iso" class="form-control" data-autosubmit /></form>
+        <button type="button" class="btn btn-primary" onclick="window.print()"><svg class="icon"><use href="#i-print"/></svg> Yazdır</button>
+    </div>
+</div>
+
+<div class="d-none d-print-block mb-3">
+    <h2 class="page-title">@Model.ClinicName · Gün Sonu Raporu</h2>
+    <div class="text-muted">@Model.Date.ToLongDate()</div>
+</div>
+
+<div class="stat-grid">
+    <div class="stat stat-success">
+        <span class="stat-label">Toplam Tahsilat</span>
+        <span class="stat-value money">@Model.TotalCollected.ToMoney()</span>
+        <span class="stat-hint">@Model.Payments.Count ödeme</span>
+    </div>
+    <div class="stat">
+        <span class="stat-label">Kesilen Fatura</span>
+        <span class="stat-value money">@Model.TotalIssued.ToMoney()</span>
+        <span class="stat-hint">@Model.InvoicesIssued.Count fatura</span>
+    </div>
+    <div class="stat">
+        <span class="stat-label">Randevular</span>
+        <span class="stat-value">@Model.AppointmentsCompleted / @Model.AppointmentsTotal</span>
+        <span class="stat-hint">tamamlandı · @Model.AppointmentsNoShow gelmedi</span>
+    </div>
+    <div class="stat @(Model.DueInstallments.Any() ? "stat-warn" : "")">
+        <span class="stat-label">Vadesi Gelen Taksit</span>
+        <span class="stat-value money">@Model.DueInstallments.Sum(p => p.Amount).ToMoney()</span>
+        <span class="stat-hint">@Model.DueInstallments.Count taksit bekliyor</span>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Tahsilatlar</h3></div>
+            @if (!Model.Payments.Any())
+            {
+                <div class="empty-state"><p>Bu gün tahsilat yapılmadı.</p></div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead><tr><th>Hasta</th><th>Fatura</th><th>Yöntem</th><th>Açıklama</th><th class="text-end">Tutar</th></tr></thead>
+                        <tbody>
+                            @foreach (var pay in Model.Payments)
+                            {
+                                <tr>
+                                    <td><a asp-controller="Patients" asp-action="Details" asp-route-id="@pay.Invoice?.PatientId" class="row-link">@pay.Invoice?.Patient?.FullName</a></td>
+                                    <td><a asp-action="Details" asp-route-id="@pay.InvoiceId">#@pay.InvoiceId</a></td>
+                                    <td>@pay.PaymentMethod.GetDisplayName()</td>
+                                    <td class="text-muted">@(pay.IsPlanned ? $"{pay.InstallmentNumber}. taksit" : "")@(string.IsNullOrWhiteSpace(pay.Notes) ? "" : $" {pay.Notes}")</td>
+                                    <td class="text-end money fw-600">@pay.Amount.ToMoney()</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot>
+                            <tr><td colspan="4" class="text-end fw-600">Toplam</td><td class="text-end money fw-600">@Model.TotalCollected.ToMoney()</td></tr>
+                        </tfoot>
+                    </table>
+                </div>
+            }
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Ödeme Yöntemine Göre</h3></div>
+            @if (!Model.Payments.Any())
+            {
+                <div class="empty-state"><p>—</p></div>
+            }
+            else
+            {
+                <table class="table">
+                    <tbody>
+                        @foreach (var row in Model.ByMethod)
+                        {
+                            <tr><td>@row.Method.GetDisplayName() <span class="text-muted">(@row.Count)</span></td><td class="text-end money fw-600">@row.Total.ToMoney()</td></tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Kesilen Faturalar</h3></div>
+            @if (!Model.InvoicesIssued.Any())
+            {
+                <div class="empty-state"><p>Bu gün fatura kesilmedi.</p></div>
+            }
+            else
+            {
+                <table class="table">
+                    <tbody>
+                        @foreach (var inv in Model.InvoicesIssued)
+                        {
+                            <tr>
+                                <td><a asp-action="Details" asp-route-id="@inv.Id">#@inv.Id</a> @inv.Patient?.FullName <span class="badge-soft @inv.Status.ToBadgeClass() ms-1">@inv.Status.GetDisplayName()</span></td>
+                                <td class="text-end money">@inv.TotalAmount.ToMoney()</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+
+        @if (Model.DueInstallments.Any())
+        {
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Vadesi Gelen / Geçen Taksitler</h3></div>
+                <table class="table">
+                    <tbody>
+                        @foreach (var p in Model.DueInstallments)
+                        {
+                            <tr>
+                                <td><a asp-action="Details" asp-route-id="@p.InvoiceId">@p.Invoice?.Patient?.FullName</a><span class="sub">@p.InstallmentNumber. taksit · vade @p.PaymentDate.ToShortDate()</span></td>
+                                <td class="text-end money @(p.IsOverdue ? "text-danger fw-600" : "")">@p.Amount.ToMoney()</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

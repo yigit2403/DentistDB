@@ -1,0 +1,49 @@
+@model DentistDB.ViewModels.ConsentTemplatesFormModel
+@{
+    ViewData["Title"] = "Form Metinleri";
+}
+
+<div class="page-header">
+    <div>
+        <div class="topbar-crumb"><a asp-action="Index">Ayarlar</a> / Form Metinleri</div>
+        <h2 class="page-title">Onam ve KVKK Form Metinleri</h2>
+        <p class="page-subtitle">Hasta kartındaki “Formlar” sekmesinden yazdırılan metinler. Yer tutucular yazdırma anında doldurulur.</p>
+    </div>
+</div>
+
+<div class="alert alert-info mb-3">
+    <svg class="icon"><use href="#i-info"/></svg>
+    <div>Kullanılabilir yer tutucular: <code>{HastaAdi}</code> <code>{TCKN}</code> <code>{DogumTarihi}</code> <code>{Tarih}</code> <code>{KlinikAdi}</code> <code>{HekimAdi}</code> <code>{Adres}</code> <code>{Telefon}</code>. Boş satırla ayrılan bölümler ayrı paragraf olur. Metinler yalnızca örnektir; kliniğinizin hukuki danışmanıyla gözden geçirin.</div>
+</div>
+
+<form asp-action="Consents" method="post">
+    @Html.AntiForgeryToken()
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Tedavi Onam Formu</h3>
+            <button type="submit" name="reset" value="treatment" class="btn btn-sm btn-ghost" formnovalidate onclick="return confirm('Tedavi onam metni varsayılana döndürülsün mü?')">Varsayılana dön</button>
+        </div>
+        <div class="card-body">
+            <textarea asp-for="TreatmentText" class="form-control" rows="12"></textarea>
+            <span asp-validation-for="TreatmentText" class="text-danger small"></span>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">KVKK Aydınlatma ve Açık Rıza</h3>
+            <button type="submit" name="reset" value="kvkk" class="btn btn-sm btn-ghost" formnovalidate onclick="return confirm('KVKK metni varsayılana döndürülsün mü?')">Varsayılana dön</button>
+        </div>
+        <div class="card-body">
+            <textarea asp-for="KvkkText" class="form-control" rows="12"></textarea>
+            <span asp-validation-for="KvkkText" class="text-danger small"></span>
+        </div>
+    </div>
+    <div class="form-actions">
+        <button type="submit" class="btn btn-primary"><svg class="icon"><use href="#i-check"/></svg> Metinleri Kaydet</button>
+        <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

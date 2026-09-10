@@ -25,7 +25,7 @@
 
     <div class="pagination-shell">
         <div class="pagination-summary">
-            @Model.TotalCount kayittan @Model.FirstItemNumber-@Model.LastItemNumber arasi gosteriliyor
+            @Model.TotalCount kayıttan @Model.FirstItemNumber–@Model.LastItemNumber arası gösteriliyor
         </div>
 
         @if (Model.TotalPages > 1)
@@ -33,8 +33,17 @@
             <nav aria-label="Sayfalama">
                 <ul class="pagination pagination-sm mb-0">
                     <li class="page-item @(Model.PageIndex <= 1 ? "disabled" : "")">
-                        <a class="page-link" asp-all-route-data="GetRouteValues(Model.PageIndex - 1)">Onceki</a>
+                        <a class="page-link" asp-all-route-data="GetRouteValues(Model.PageIndex - 1)" aria-label="Önceki">‹</a>
                     </li>
+
+                    @if (startPage > 1)
+                    {
+                        <li class="page-item"><a class="page-link" asp-all-route-data="GetRouteValues(1)">1</a></li>
+                        @if (startPage > 2)
+                        {
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        }
+                    }
 
                     @for (var pageNumber = startPage; pageNumber <= endPage; pageNumber++)
                     {
@@ -43,8 +52,17 @@
                         </li>
                     }
 
+                    @if (endPage < Model.TotalPages)
+                    {
+                        @if (endPage < Model.TotalPages - 1)
+                        {
+                            <li class="page-item disabled"><span class="page-link">…</span></li>
+                        }
+                        <li class="page-item"><a class="page-link" asp-all-route-data="GetRouteValues(Model.TotalPages)">@Model.TotalPages</a></li>
+                    }
+
                     <li class="page-item @(Model.PageIndex >= Model.TotalPages ? "disabled" : "")">
-                        <a class="page-link" asp-all-route-data="GetRouteValues(Model.PageIndex + 1)">Sonraki</a>
+                        <a class="page-link" asp-all-route-data="GetRouteValues(Model.PageIndex + 1)" aria-label="Sonraki">›</a>
                     </li>
                 </ul>
             </nav>

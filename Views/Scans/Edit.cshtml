@@ -1,0 +1,45 @@
+@model DentistDB.ViewModels.ScanEditViewModel
+@{
+    ViewData["Title"] = "Görüntü Bilgileri";
+}
+
+<div class="page-header">
+    <div>
+        <div class="topbar-crumb"><a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" asp-route-tab="scans">@Model.PatientName</a> / <a asp-action="View" asp-route-id="@Model.Id">Görüntü</a> / Düzenle</div>
+        <h2 class="page-title">Görüntü Bilgilerini Düzenle</h2>
+        <p class="page-subtitle">@Model.FileName</p>
+    </div>
+</div>
+
+<div class="card content--narrow">
+    <div class="card-body p-4">
+        <form asp-action="Edit" asp-route-id="@Model.Id" method="post">
+            @Html.AntiForgeryToken()
+            <input asp-for="Id" type="hidden" />
+            <input asp-for="PatientId" type="hidden" />
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="ScanType" class="form-label"></label>
+                    <select asp-for="ScanType" asp-items="Html.GetEnumSelectList<ScanType>()" class="form-select"></select>
+                </div>
+                <div class="col-md-6">
+                    <label asp-for="ScanDate" class="form-label"></label>
+                    <input asp-for="ScanDate" class="form-control" type="date" asp-format="{0:yyyy-MM-dd}" />
+                </div>
+                <div class="col-12">
+                    <label asp-for="Notes" class="form-label"></label>
+                    <textarea asp-for="Notes" class="form-control" rows="3"></textarea>
+                    <span asp-validation-for="Notes" class="text-danger small"></span>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary"><svg class="icon"><use href="#i-check"/></svg> Kaydet</button>
+                <a asp-action="View" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Vazgeç</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

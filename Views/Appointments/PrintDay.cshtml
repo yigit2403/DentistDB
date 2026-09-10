@@ -1,0 +1,43 @@
+@model DentistDB.ViewModels.DaySheetViewModel
+@{
+    Layout = "_PrintLayout";
+    ViewData["Title"] = $"Günlük Liste · {Model.Date.ToShortDate()}";
+}
+
+<div class="doc-header">
+    <div><div class="doc-clinic">@Model.ClinicName<small>Günlük randevu listesi</small></div></div>
+    <div class="doc-meta"><strong>@Model.Date.ToDayHeading()</strong><br />@Model.Appointments.Count randevu</div>
+</div>
+
+@if (!Model.Appointments.Any())
+{
+    <p class="muted">Bu gün için randevu yok.</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr><th style="width:14mm">Saat</th><th>Hasta</th><th>Telefon</th><th>İşlem</th><th>Diş</th><th style="width:22mm">Durum</th><th style="width:26mm">Not</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var a in Model.Appointments)
+            {
+                var teeth = TeethSelectionSerializer.Parse(a.SelectedTeethData);
+                <tr>
+                    <td class="num"><strong>@a.AppointmentDate.ToTimeText()</strong><br /><span class="muted small">@a.DurationMinutes.ToDurationText()</span></td>
+                    <td>
+                        <strong>@a.Patient?.FullName</strong>
+                        @if (a.Patient?.HasMedicalRisk == true) { <br /><span class="badge">⚠ Tıbbi uyarı</span> }
+                    </td>
+                    <td class="num">@(a.Patient?.Phone.FormatPhone() ?? "—")</td>
+                    <td>@a.Purpose @if (!string.IsNullOrWhiteSpace(a.Notes)) { <br /><span class="muted small">@a.Notes</span> }</td>
+                    <td class="num">@(teeth.Any() ? string.Join(", ", teeth) : "—")</td>
+                    <td>@a.Status.GetDisplayName()</td>
+                    <td></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<div class="doc-footer"><span>@Model.ClinicName</span><span>Yazdırma: @DateTime.Now.ToDateTimeText()</span></div>

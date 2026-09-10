@@ -1,89 +1,31 @@
 @model DentistDB.ViewModels.AppointmentFormViewModel
 @{
     ViewData["Title"] = "Yeni Randevu";
+    var cancelUrl = Model.ReturnUrl ?? Url.Action("Index", new { date = Model.Date.ToString("yyyy-MM-dd") });
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Randevu Oluştur</div>
-        <h2 class="page-title">Takvime yeni bir ziyaret ekleyin.</h2>
+        <div class="topbar-crumb"><a asp-action="Index">Randevular</a> / Yeni</div>
+        <h2 class="page-title">Yeni Randevu@(Model.PatientName != null ? $" · {Model.PatientName}" : "")</h2>
     </div>
 </div>
 
 <div class="card">
     <div class="card-body p-4">
-        <form asp-action="Create" method="post">
+        <form asp-action="Create" method="post" data-appointment-form data-conflicts-url="@Url.Action("Conflicts")">
             @Html.AntiForgeryToken()
-            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-
-            <div class="row g-4">
-                <div class="col-lg-7">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label asp-for="PatientId" class="form-label"></label>
-                            <select asp-for="PatientId" asp-items="Model.Patients" class="form-select">
-                                <option value="">Hasta seçin</option>
-                            </select>
-                            <span asp-validation-for="PatientId" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-6">
-                            <label asp-for="AppointmentDate" class="form-label"></label>
-                            <div class="input-group bootstrap-picker">
-                                <input asp-for="AppointmentDate" class="form-control js-picker" type="datetime-local" />
-                                <button class="btn btn-outline-secondary js-picker-button" type="button" data-picker-target="AppointmentDate">Takvim</button>
-                            </div>
-                            <span asp-validation-for="AppointmentDate" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-12">
-                            <label asp-for="Purpose" class="form-label"></label>
-                            <input asp-for="Purpose" class="form-control" list="purpose-options" placeholder="İsterseniz konu ekleyin" />
-                            <datalist id="purpose-options">
-                                @foreach (var purpose in Model.PurposeSuggestions)
-                                {
-                                    <option value="@purpose"></option>
-                                }
-                            </datalist>
-                            <div class="quick-choice-group mt-2">
-                                @foreach (var purpose in Model.PurposeSuggestions)
-                                {
-                                    <button type="button" class="btn btn-sm btn-outline-secondary js-quick-fill" data-target-id="Purpose" data-value="@purpose">@purpose</button>
-                                }
-                            </div>
-                            <span asp-validation-for="Purpose" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-4">
-                            <label asp-for="Status" class="form-label"></label>
-                            <select asp-for="Status" asp-items="Html.GetEnumSelectList<AppointmentStatus>()" class="form-select"></select>
-                        </div>
-                        <div class="col-md-12">
-                            <label asp-for="Notes" class="form-label"></label>
-                            <textarea asp-for="Notes" class="form-control" rows="4" placeholder="Randevu notları, hazırlık talepleri veya açıklamalar"></textarea>
-                            <span asp-validation-for="Notes" class="text-danger small"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-5">
-                    @{
-                        await Html.RenderPartialAsync("_ToothSelector", new DentistDB.ViewModels.ToothSelectorViewModel
-                        {
-                            Label = "Dis Secimi",
-                            InputId = "SelectedTeeth",
-                            InputName = "SelectedTeeth",
-                            SummaryId = "SelectedTeethSummary",
-                            SelectedTeethCsv = string.Join(",", Model.SelectedTeeth)
-                        });
-                    }
-                </div>
-            </div>
-
-            <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">Randevuyu Kaydet</button>
-                <a asp-action="Index" class="btn btn-outline-secondary">Vazgeç</a>
+            <input type="hidden" asp-for="ReturnUrl" />
+            <partial name="_AppointmentForm" model="Model" />
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary"><svg class="icon"><use href="#i-check"/></svg> Randevuyu Kaydet</button>
+                <a href="@cancelUrl" class="btn btn-outline-secondary">Vazgeç</a>
             </div>
         </form>
     </div>
 </div>
 
 @section Scripts {
-    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <partial name="_ValidationScriptsPartial" />
+    <script src="~/js/appointment-form.js" asp-append-version="true"></script>
 }

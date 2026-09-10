@@ -27,3 +27,15 @@ appsettings.*.local.json
 *.db
 *.db-shm
 *.db-wal
+
+## Build output copied by external tooling
+.codex-build/
+
+## Local data protection keys (never commit)
+.aspnet/
+
+## Local IDE / assistant config
+.claude/
+
+## Local nightly backups (dev default folder)
+backups/

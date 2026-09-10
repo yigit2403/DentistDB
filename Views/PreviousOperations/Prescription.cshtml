@@ -1,0 +1,60 @@
+@model DentistDB.ViewModels.PrescriptionPrintViewModel
+@{
+    Layout = "_PrintLayout";
+    ViewData["Title"] = $"Reçete · {Model.Patient.FullName}";
+    var dentist = string.IsNullOrWhiteSpace(Model.Identity.DentistName) ? Model.ClinicName : $"{Model.Identity.DentistTitle} {Model.Identity.DentistName}".Trim();
+    var teeth = TeethSelectionSerializer.Parse(Model.Operation.SelectedTeethData);
+}
+
+<div class="doc-header">
+    <div>
+        <div class="doc-clinic">@Model.ClinicName
+            <small>
+                @dentist@(string.IsNullOrWhiteSpace(Model.Identity.DiplomaNo) ? "" : $" · Dipl. No {Model.Identity.DiplomaNo}")<br />
+                @if (!string.IsNullOrWhiteSpace(Model.Identity.Address)) { <text>@Model.Identity.Address<br /></text> }
+                @if (!string.IsNullOrWhiteSpace(Model.Identity.Phone)) { <text>Tel: @Model.Identity.Phone</text> }
+            </small>
+        </div>
+    </div>
+    <div class="doc-meta">
+        Tarih: <strong>@Model.Operation.Date.ToShortDate()</strong><br />
+        Protokol: <strong>@Model.Operation.Id.ToString("D5")</strong>
+    </div>
+</div>
+
+<div class="doc-title">Reçete</div>
+
+<div class="box">
+    <div class="kv-2col">
+        <dl class="kv">
+            <dt>Hasta</dt><dd>@Model.Patient.FullName</dd>
+            <dt>T.C. Kimlik No</dt><dd>@Model.Patient.Tckn</dd>
+        </dl>
+        <dl class="kv">
+            <dt>Doğum Tarihi</dt><dd>@Model.Patient.BirthDate.ToShortDate()@(Model.Patient.Age is { } age ? $" ({age} yaş)" : "")</dd>
+            <dt>Tanı</dt><dd>@(string.IsNullOrWhiteSpace(Model.Operation.Diagnosis) ? Model.Operation.Title : Model.Operation.Diagnosis)@(teeth.Any() ? $" · Diş {string.Join(", ", teeth)}" : "")</dd>
+        </dl>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.Patient.Allergies))
+    {
+        <div class="small"><strong>Alerji:</strong> @Model.Patient.Allergies</div>
+    }
+</div>
+
+<div class="rx">
+    <span class="rx-symbol">℞</span>
+    <div class="pre-wrap">@(string.IsNullOrWhiteSpace(Model.Operation.Prescriptions) ? "" : Model.Operation.Prescriptions)</div>
+</div>
+
+<div class="signatures">
+    <div></div>
+    <div class="sig">
+        <strong>@dentist</strong>
+        <span class="muted">İmza / Kaşe</span>
+    </div>
+</div>
+
+<div class="doc-footer">
+    <span>@Model.ClinicName</span>
+    <span>Bu reçete @Model.Operation.Date.ToShortDate() tarihli muayeneye aittir.</span>
+</div>

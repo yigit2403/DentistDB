@@ -11,7 +11,7 @@ public enum PaymentMethod
     CreditCard,
     [Display(Name = "Banka Kartı")]
     DebitCard,
-    [Display(Name = "Banka Havalesi")]
+    [Display(Name = "Havale / EFT")]
     BankTransfer,
     [Display(Name = "Sigorta")]
     Insurance,
@@ -30,13 +30,12 @@ public class Payment
     [ForeignKey(nameof(InvoiceId))]
     public Invoice? Invoice { get; set; }
 
+    /// <summary>For settled payments: the payment date. For planned installments: the due date.</summary>
     [Display(Name = "Ödeme Tarihi")]
-    [DataType(DataType.Date)]
     public DateOnly PaymentDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
-    [Column(TypeName = "decimal(10,2)")]
+    [Column(TypeName = "decimal(12,2)")]
     [Display(Name = "Tutar")]
-    [Range(0.01, 999999.99)]
     public decimal Amount { get; set; }
 
     [Display(Name = "Ödeme Yöntemi")]
@@ -53,11 +52,13 @@ public class Payment
     public bool IsSettled { get; set; }
 
     [Display(Name = "Tahsil Tarihi")]
-    [DataType(DataType.Date)]
     public DateOnly? SettledDate { get; set; }
 
     [Display(Name = "Taksit No")]
     public int? InstallmentNumber { get; set; }
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    [NotMapped]
+    public bool IsOverdue => IsPlanned && !IsSettled && PaymentDate < DateOnly.FromDateTime(DateTime.Today);
 }

@@ -2,22 +2,37 @@ using DentistDB.Data;
 using DentistDB.Extensions;
 using DentistDB.Filters;
 using DentistDB.Models;
+using DentistDB.Services;
 using DentistDB.ViewModels;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 
 namespace DentistDB.Controllers;
 
-[RequireAppAccount]
-public class PreviousOperationsController : Controller
+public class PreviousOperationsController : ClinicControllerBase
 {
     private const int PageSize = 20;
-    private readonly ApplicationDbContext _db;
+    private readonly ISettingsService _settings;
 
-    public PreviousOperationsController(ApplicationDbContext db)
+    public PreviousOperationsController(ApplicationDbContext db, ISettingsService settings) : base(db)
     {
-        _db = db;
+        _settings = settings;
+    }
+
+    /// <summary>Printable prescription sheet for a treatment record.</summary>
+    public async Task<IActionResult> Prescription(int id)
+    {
+        var operation = await Db.PreviousOperations.AsNoTracking().Include(o => o.Patient).FirstOrDefaultAsync(o => o.Id == id);
+        if (operation?.Patient == null) return NotFound();
+
+        var clinic = await _settings.GetClinicSettingsAsync();
+        return View(new PrescriptionPrintViewModel
+        {
+            Operation = operation,
+            Patient = operation.Patient,
+            ClinicName = clinic.ClinicName,
+            Identity = await _settings.GetClinicIdentityAsync()
+        });
     }
 
     public async Task<IActionResult> Index(int? patientId, string? search, int pageNumber = 1)
@@ -25,13 +40,11 @@ public class PreviousOperationsController : Controller
         Patient? patient = null;
         if (patientId.HasValue)
         {
-            patient = await _db.Patients.FirstOrDefaultAsync(p => p.Id == patientId.Value);
+            patient = await Db.Patients.AsNoTracking().FirstOrDefaultAsync(p => p.Id == patientId.Value);
             if (patient == null) return NotFound();
         }
 
-        var query = _db.PreviousOperations
-            .Include(o => o.Patient)
-            .AsQueryable();
+        var query = Db.PreviousOperations.AsNoTracking().Include(o => o.Patient).AsQueryable();
 
         if (patientId.HasValue)
         {
@@ -39,17 +52,18 @@ public class PreviousOperationsController : Controller
         }
 
         var searchTerm = search?.Trim();
-
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
             var pattern = $"%{searchTerm}%";
+            var normalizedPattern = $"%{SearchNormalizer.Normalize(searchTerm)}%";
             query = query.Where(o =>
                 EF.Functions.Like(o.Title, pattern) ||
                 (o.Diagnosis != null && EF.Functions.Like(o.Diagnosis, pattern)) ||
                 (o.Procedures != null && EF.Functions.Like(o.Procedures, pattern)) ||
                 (o.Prescriptions != null && EF.Functions.Like(o.Prescriptions, pattern)) ||
                 (o.Notes != null && EF.Functions.Like(o.Notes, pattern)) ||
-                (o.Patient != null && EF.Functions.Like(o.Patient.FullName, pattern)));
+                (o.SelectedTeethData != null && EF.Functions.Like(o.SelectedTeethData, pattern)) ||
+                (o.Patient != null && EF.Functions.Like(o.Patient.SearchIndex, normalizedPattern)));
         }
 
         var vm = new PreviousOperationsIndexViewModel
@@ -57,23 +71,23 @@ public class PreviousOperationsController : Controller
             Patient = patient,
             PatientId = patientId,
             Search = searchTerm,
-            Operations = await PaginatedList<PreviousOperation>.CreateAsync(query
-                .OrderByDescending(o => o.Date)
-                .ThenByDescending(o => o.UpdatedAt), pageNumber, PageSize)
+            Operations = await PaginatedList<PreviousOperation>.CreateAsync(
+                query.OrderByDescending(o => o.Date).ThenByDescending(o => o.Id), pageNumber, PageSize)
         };
 
         return View(vm);
     }
 
-    public async Task<IActionResult> Create(int? patientId)
+    public async Task<IActionResult> Create(int? patientId, string? returnUrl)
     {
         var vm = new PreviousOperationFormViewModel
         {
             PatientId = patientId ?? 0,
-            Date = DateOnly.FromDateTime(DateTime.Today)
+            Date = DateOnly.FromDateTime(DateTime.Today),
+            ReturnUrl = SafeReturnUrl(returnUrl)
         };
 
-        vm.Patients = await GetPatientSelectList();
+        await PopulateAsync(vm);
         return View(vm);
     }
 
@@ -82,7 +96,7 @@ public class PreviousOperationsController : Controller
     {
         if (!ModelState.IsValid)
         {
-            vm.Patients = await GetPatientSelectList();
+            await PopulateAsync(vm);
             return View(vm);
         }
 
@@ -91,24 +105,24 @@ public class PreviousOperationsController : Controller
             PatientId = vm.PatientId,
             Date = vm.Date,
             Title = vm.Title.Trim(),
-            Diagnosis = vm.Diagnosis,
-            Procedures = vm.Procedures,
-            Prescriptions = vm.Prescriptions,
-            Notes = vm.Notes,
-            SelectedTeethData = TeethSelectionSerializer.Serialize(vm.SelectedTeeth),
+            Diagnosis = Clean(vm.Diagnosis),
+            Procedures = Clean(vm.Procedures),
+            Prescriptions = Clean(vm.Prescriptions),
+            Notes = Clean(vm.Notes),
+            SelectedTeethData = TeethSelectionSerializer.Normalize(vm.SelectedTeeth),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
-        _db.PreviousOperations.Add(operation);
-        await _db.SaveChangesAsync();
-        TempData["Success"] = "Önceki işlem kaydı oluşturuldu.";
-        return RedirectToAction(nameof(Index), new { patientId = operation.PatientId });
+        Db.PreviousOperations.Add(operation);
+        await Db.SaveChangesAsync();
+        Success("Tedavi kaydı oluşturuldu.");
+        return RedirectToReturnUrlOr(vm.ReturnUrl, RedirectToAction("Details", "Patients", new { id = operation.PatientId, tab = "treatments" }));
     }
 
-    public async Task<IActionResult> Edit(int id)
+    public async Task<IActionResult> Edit(int id, string? returnUrl)
     {
-        var operation = await _db.PreviousOperations.FindAsync(id);
+        var operation = await Db.PreviousOperations.AsNoTracking().FirstOrDefaultAsync(o => o.Id == id);
         if (operation == null) return NotFound();
 
         var vm = new PreviousOperationFormViewModel
@@ -121,10 +135,11 @@ public class PreviousOperationsController : Controller
             Procedures = operation.Procedures,
             Prescriptions = operation.Prescriptions,
             Notes = operation.Notes,
-            SelectedTeeth = TeethSelectionSerializer.Parse(operation.SelectedTeethData)
+            SelectedTeeth = operation.SelectedTeethData,
+            ReturnUrl = SafeReturnUrl(returnUrl)
         };
 
-        vm.Patients = await GetPatientSelectList();
+        await PopulateAsync(vm);
         return View(vm);
     }
 
@@ -134,47 +149,56 @@ public class PreviousOperationsController : Controller
         if (id != vm.Id) return BadRequest();
         if (!ModelState.IsValid)
         {
-            vm.Patients = await GetPatientSelectList();
+            await PopulateAsync(vm);
             return View(vm);
         }
 
-        var operation = await _db.PreviousOperations.FindAsync(id);
+        var operation = await Db.PreviousOperations.FindAsync(id);
         if (operation == null) return NotFound();
 
         operation.PatientId = vm.PatientId;
         operation.Date = vm.Date;
         operation.Title = vm.Title.Trim();
-        operation.Diagnosis = vm.Diagnosis;
-        operation.Procedures = vm.Procedures;
-        operation.Prescriptions = vm.Prescriptions;
-        operation.Notes = vm.Notes;
-        operation.SelectedTeethData = TeethSelectionSerializer.Serialize(vm.SelectedTeeth);
+        operation.Diagnosis = Clean(vm.Diagnosis);
+        operation.Procedures = Clean(vm.Procedures);
+        operation.Prescriptions = Clean(vm.Prescriptions);
+        operation.Notes = Clean(vm.Notes);
+        operation.SelectedTeethData = TeethSelectionSerializer.Normalize(vm.SelectedTeeth);
         operation.UpdatedAt = DateTime.UtcNow;
 
-        await _db.SaveChangesAsync();
-        TempData["Success"] = "Önceki işlem kaydı güncellendi.";
-        return RedirectToAction(nameof(Index), new { patientId = operation.PatientId });
+        await Db.SaveChangesAsync();
+        Success("Tedavi kaydı güncellendi.");
+        return RedirectToReturnUrlOr(vm.ReturnUrl, RedirectToAction("Details", "Patients", new { id = operation.PatientId, tab = "treatments" }));
     }
 
     [HttpPost, ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(int id)
+    [AdminOnly]
+    public async Task<IActionResult> Delete(int id, string? returnUrl)
     {
-        var operation = await _db.PreviousOperations.FindAsync(id);
+        var operation = await Db.PreviousOperations.FindAsync(id);
         if (operation == null) return NotFound();
 
         var patientId = operation.PatientId;
-        _db.PreviousOperations.Remove(operation);
-        await _db.SaveChangesAsync();
-        TempData["Success"] = "Önceki işlem kaydı silindi.";
-        return RedirectToAction(nameof(Index), new { patientId });
+        Db.PreviousOperations.Remove(operation);
+        await Db.SaveChangesAsync();
+        Success("Tedavi kaydı silindi.");
+        return RedirectToReturnUrlOr(returnUrl, RedirectToAction("Details", "Patients", new { id = patientId, tab = "treatments" }));
     }
 
-    private async Task<IEnumerable<SelectListItem>> GetPatientSelectList()
+    private async Task PopulateAsync(PreviousOperationFormViewModel vm)
     {
-        return await _db.Patients
-            .Where(p => !p.IsArchived)
-            .OrderBy(p => p.FullName)
-            .Select(p => new SelectListItem { Value = p.Id.ToString(), Text = p.FullName })
+        vm.Patients = await GetPatientSelectListAsync(vm.PatientId == 0 ? null : vm.PatientId);
+        vm.TitleSuggestions = await Db.Procedures.AsNoTracking()
+            .Where(p => p.IsActive)
+            .OrderBy(p => p.SortOrder)
+            .Select(p => p.Name)
             .ToListAsync();
+
+        if (vm.PatientId > 0)
+        {
+            vm.PatientName = await Db.Patients.Where(p => p.Id == vm.PatientId).Select(p => p.FullName).FirstOrDefaultAsync();
+        }
     }
+
+    private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 }

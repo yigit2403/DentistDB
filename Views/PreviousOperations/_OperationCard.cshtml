@@ -1,0 +1,67 @@
+@model DentistDB.Models.PreviousOperation
+@{
+    var returnUrl = ViewData["ReturnUrl"] as string;
+    var showPatient = ViewData["ShowPatient"] as bool? ?? true;
+    var isAdmin = Context.IsAdmin();
+    var teeth = TeethSelectionSerializer.Parse(Model.SelectedTeethData);
+}
+
+<article class="op-card">
+    <div class="op-head">
+        <div>
+            <div class="op-date">@Model.Date.ToLongDate()</div>
+            <div class="op-title">@Model.Title</div>
+            @if (showPatient && Model.Patient != null)
+            {
+                <div class="small"><a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" asp-route-tab="treatments">@Model.Patient.FullName</a></div>
+            }
+        </div>
+        <div class="d-flex gap-1 flex-shrink-0">
+            @if (!string.IsNullOrWhiteSpace(Model.Prescriptions))
+            {
+                <a asp-controller="PreviousOperations" asp-action="Prescription" asp-route-id="@Model.Id" target="_blank" class="btn btn-sm btn-outline-primary" title="Reçete yazdır"><svg class="icon"><use href="#i-print"/></svg> Reçete</a>
+            }
+            <a asp-controller="PreviousOperations" asp-action="Edit" asp-route-id="@Model.Id" asp-route-returnUrl="@returnUrl" class="btn btn-sm btn-outline-secondary"><svg class="icon"><use href="#i-edit"/></svg> Düzenle</a>
+            @if (isAdmin)
+            {
+                <form asp-controller="PreviousOperations" asp-action="Delete" asp-route-id="@Model.Id" asp-route-returnUrl="@returnUrl" method="post" class="m-0" data-confirm="Bu tedavi kaydı kalıcı olarak silinsin mi?">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Sil"><svg class="icon"><use href="#i-trash"/></svg></button>
+                </form>
+            }
+        </div>
+    </div>
+
+    <div class="op-grid">
+        <div>
+            <div class="op-label">Tanı</div>
+            <div class="pre-wrap">@(string.IsNullOrWhiteSpace(Model.Diagnosis) ? "—" : Model.Diagnosis)</div>
+        </div>
+        <div>
+            <div class="op-label">Uygulanan İşlemler</div>
+            <div class="pre-wrap">@(string.IsNullOrWhiteSpace(Model.Procedures) ? "—" : Model.Procedures)</div>
+        </div>
+        <div>
+            <div class="op-label">Reçete</div>
+            <div class="pre-wrap">@(string.IsNullOrWhiteSpace(Model.Prescriptions) ? "—" : Model.Prescriptions)</div>
+        </div>
+        <div>
+            <div class="op-label">Dişler</div>
+            @if (teeth.Any())
+            {
+                <span class="tooth-chips">@foreach (var t in teeth) { <span class="tooth-chip">@t</span> }</span>
+            }
+            else
+            {
+                <div>—</div>
+            }
+        </div>
+        @if (!string.IsNullOrWhiteSpace(Model.Notes))
+        {
+            <div class="full">
+                <div class="op-label">Notlar</div>
+                <div class="pre-wrap">@Model.Notes</div>
+            </div>
+        }
+    </div>
+</article>

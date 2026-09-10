@@ -16,6 +16,9 @@ public static class TeethSelectionSerializer
             .ToArray();
     }
 
+    /// <summary>Cleans a comma-separated list typed or posted by the tooth selector ("17, 16,16" → "16,17").</summary>
+    public static string? Normalize(string? csv) => Serialize(Parse(csv));
+
     public static string? Serialize(IEnumerable<string>? selectedTeeth)
     {
         var teeth = (selectedTeeth ?? Array.Empty<string>())

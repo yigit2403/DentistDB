@@ -1,0 +1,131 @@
+@model DentistDB.ViewModels.InvoiceFormViewModel
+@{
+    var procedureItems = Model.Procedures.Select(p => new SelectListItem(p.Name, p.Id.ToString())).ToList();
+    var anySettled = Model.PlanLocked;
+}
+
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+<input type="hidden" asp-for="PlanItemIds" />
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="PatientId" class="form-label">Hasta <span class="req">*</span></label>
+        <select asp-for="PatientId" asp-items="Model.Patients" class="form-select">
+            <option value="">Hasta seçin…</option>
+        </select>
+        <span asp-validation-for="PatientId" class="text-danger small"></span>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="InvoiceDate" class="form-label"></label>
+        <input asp-for="InvoiceDate" class="form-control" type="date" asp-format="{0:yyyy-MM-dd}" />
+        <span asp-validation-for="InvoiceDate" class="text-danger small"></span>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="DueDate" class="form-label"></label>
+        <input asp-for="DueDate" class="form-control" type="date" asp-format="{0:yyyy-MM-dd}" />
+        <span asp-validation-for="DueDate" class="text-danger small"></span>
+    </div>
+    <div class="col-md-2">
+        <label asp-for="Status" class="form-label"></label>
+        <select asp-for="Status" class="form-select">
+            <option value="@InvoiceStatus.Issued">@InvoiceStatus.Issued.GetDisplayName()</option>
+            <option value="@InvoiceStatus.Draft">@InvoiceStatus.Draft.GetDisplayName()</option>
+            @if (Model.Status is InvoiceStatus.PartiallyPaid or InvoiceStatus.Paid or InvoiceStatus.Cancelled)
+            {
+                <option value="@Model.Status">@Model.Status.GetDisplayName()</option>
+            }
+        </select>
+        <div class="form-text">Ödendi / kısmen ödendi durumu tahsilatlara göre otomatik belirlenir.</div>
+    </div>
+</div>
+
+<div class="form-section">
+    <div class="d-flex align-items-center justify-content-between mb-2">
+        <div class="form-section-title mb-0">Fatura Kalemleri</div>
+        <button type="button" class="btn btn-sm btn-outline-primary" data-add-item><svg class="icon"><use href="#i-plus"/></svg> Satır Ekle</button>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table items-table">
+            <thead>
+                <tr>
+                    <th style="width:32px">#</th>
+                    <th style="width:22%">Fiyat Listesi</th>
+                    <th>İşlem Açıklaması <span class="req">*</span></th>
+                    <th style="width:110px">Diş</th>
+                    <th style="width:80px">Adet</th>
+                    <th style="width:140px">Birim Fiyat</th>
+                    <th style="width:120px" class="text-end">Tutar</th>
+                    <th style="width:40px"></th>
+                </tr>
+            </thead>
+            <tbody data-items-body>
+                @for (var i = 0; i < Model.Items.Count; i++)
+                {
+                    <partial name="_InvoiceItemRow" model="Model.Items[i]" view-data='new ViewDataDictionary(ViewData) { { "Index", i }, { "ProcedureItems", procedureItems } }' />
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="items-total">
+        <span class="label">Genel Toplam</span>
+        <span class="value" data-items-total>@Model.Total.ToMoney()</span>
+    </div>
+
+    <template id="invoice-item-template">
+        <partial name="_InvoiceItemRow" model="new InvoiceItemInputModel()" view-data='new ViewDataDictionary(ViewData) { { "Index", 0 }, { "ProcedureItems", procedureItems } }' />
+    </template>
+</div>
+
+<div class="form-section">
+    <div class="form-section-title">Ödeme Planı</div>
+
+    @if (anySettled)
+    {
+        <div class="alert alert-warning mb-3"><svg class="icon"><use href="#i-lock"/></svg><div>Bu faturanın taksitlerinden en az biri tahsil edildiği için plan değiştirilemez. Tutar değişirse kalan bakiye plan dışı tahsilatla kapatılabilir.</div></div>
+        <div class="d-flex flex-wrap gap-2">
+            @foreach (var p in Model.ExistingPlannedPayments)
+            {
+                <span class="badge-soft @(p.IsSettled ? "success" : "info")">@p.InstallmentNumber. taksit · @p.PaymentDate.ToShortDate() · @p.Amount.ToMoney()</span>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="form-check mb-3">
+            <input asp-for="EnablePaymentPlan" class="form-check-input payment-plan-toggle" type="checkbox" />
+            <label asp-for="EnablePaymentPlan" class="form-check-label"></label>
+            <div class="form-text">Toplam tutar eşit taksitlere bölünür; küsurat son taksite eklenir. Taksitler kontrol panelinde vade takibiyle görünür.</div>
+        </div>
+        <div class="row g-3">
+            <div class="col-md-4 payment-plan-field">
+                <label asp-for="FirstPaymentDate" class="form-label"></label>
+                <input asp-for="FirstPaymentDate" class="form-control" type="date" asp-format="{0:yyyy-MM-dd}" />
+                <span asp-validation-for="FirstPaymentDate" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4 payment-plan-field">
+                <label asp-for="InstallmentCount" class="form-label"></label>
+                <input asp-for="InstallmentCount" class="form-control" type="number" min="2" max="48" />
+                <span asp-validation-for="InstallmentCount" class="text-danger small"></span>
+            </div>
+            <div class="col-md-4 payment-plan-field">
+                <label asp-for="InstallmentIntervalMonths" class="form-label"></label>
+                <select asp-for="InstallmentIntervalMonths" class="form-select">
+                    <option value="1">Her ay</option>
+                    <option value="2">2 ayda bir</option>
+                    <option value="3">3 ayda bir</option>
+                    <option value="6">6 ayda bir</option>
+                </select>
+                <span asp-validation-for="InstallmentIntervalMonths" class="text-danger small"></span>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="form-section">
+    <label asp-for="Notes" class="form-label"></label>
+    <textarea asp-for="Notes" class="form-control" rows="2" placeholder="Faturada görünmesi istenen açıklama"></textarea>
+    <span asp-validation-for="Notes" class="text-danger small"></span>
+</div>

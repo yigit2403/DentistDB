@@ -1,0 +1,119 @@
+@model DentistDB.ViewModels.AppointmentFormViewModel
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+@if (Model.Conflicts.Any())
+{
+    <div class="conflict-box mb-3">
+        <div><strong>Bu saat dolu.</strong> Çakışan randevular:</div>
+        <ul>
+            @foreach (var c in Model.Conflicts)
+            {
+                <li><strong>@c.AppointmentDate.ToTimeText()–@c.EndDate.ToTimeText()</strong> @c.Patient?.FullName · @c.Purpose</li>
+            }
+        </ul>
+        <div class="form-check mt-2">
+            <input asp-for="IgnoreConflicts" class="form-check-input" type="checkbox" />
+            <label asp-for="IgnoreConflicts" class="form-check-label fw-600"></label>
+        </div>
+    </div>
+}
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="row g-3">
+            <div class="col-12">
+                <label asp-for="PatientId" class="form-label">Hasta <span class="req">*</span></label>
+                <select asp-for="PatientId" asp-items="Model.Patients" class="form-select">
+                    <option value="">Hasta seçin…</option>
+                </select>
+                <span asp-validation-for="PatientId" class="text-danger small"></span>
+                <div class="form-text">Hasta listede yoksa önce <a asp-controller="Patients" asp-action="Create" target="_blank">yeni hasta kartı</a> oluşturun.</div>
+            </div>
+
+            <div class="col-sm-5">
+                <label asp-for="Date" class="form-label">Tarih <span class="req">*</span></label>
+                <input asp-for="Date" class="form-control" type="date" asp-format="{0:yyyy-MM-dd}" />
+                <span asp-validation-for="Date" class="text-danger small"></span>
+            </div>
+            <div class="col-sm-3">
+                <label asp-for="Time" class="form-label">Saat <span class="req">*</span></label>
+                <input asp-for="Time" class="form-control" type="time" asp-format="{0:HH:mm}" step="300" />
+                <span asp-validation-for="Time" class="text-danger small"></span>
+            </div>
+            <div class="col-sm-4">
+                <label asp-for="DurationMinutes" class="form-label"></label>
+                <select asp-for="DurationMinutes" class="form-select">
+                    @foreach (var option in AppointmentPurposeCatalog.DurationOptions.Union(new[] { Model.DurationMinutes }).OrderBy(x => x))
+                    {
+                        <option value="@option">@option.ToDurationText()</option>
+                    }
+                </select>
+                <div class="form-text" data-end-time></div>
+                <span asp-validation-for="DurationMinutes" class="text-danger small"></span>
+            </div>
+
+            <div class="col-12">
+                <div class="conflict-box" data-conflict-live hidden></div>
+            </div>
+
+            <div class="col-12">
+                <label asp-for="Purpose" class="form-label">Randevu Nedeni <span class="req">*</span></label>
+                <input asp-for="Purpose" class="form-control" list="purpose-options" autocomplete="off" placeholder="Muayene, dolgu, kontrol…" />
+                <datalist id="purpose-options">
+                    @foreach (var purpose in Model.PurposeSuggestions)
+                    {
+                        <option value="@purpose"></option>
+                    }
+                </datalist>
+                <div class="chip-group mt-2">
+                    @foreach (var purpose in Model.PurposeSuggestions.Take(12))
+                    {
+                        <button type="button" class="chip js-quick-fill" data-target-id="Purpose" data-value="@purpose">@purpose</button>
+                    }
+                </div>
+                <span asp-validation-for="Purpose" class="text-danger small"></span>
+            </div>
+
+            <div class="col-sm-5">
+                <label asp-for="Status" class="form-label"></label>
+                <select asp-for="Status" asp-items="Html.GetEnumSelectList<AppointmentStatus>()" class="form-select"></select>
+            </div>
+
+            @if (Model.Id == 0)
+            {
+                <input type="hidden" asp-for="PlanItemId" />
+                <div class="col-sm-3">
+                    <label asp-for="RepeatCount" class="form-label"></label>
+                    <select asp-for="RepeatCount" class="form-select">
+                        <option value="0">Tek randevu</option>
+                        @for (var i = 1; i <= 12; i++)
+                        {
+                            <option value="@i">+@i tekrar</option>
+                        }
+                    </select>
+                    <span asp-validation-for="RepeatCount" class="text-danger small"></span>
+                </div>
+                <div class="col-sm-4">
+                    <label asp-for="RepeatIntervalDays" class="form-label"></label>
+                    <select asp-for="RepeatIntervalDays" class="form-select">
+                        @foreach (var r in AppointmentPurposeCatalog.RepeatIntervals)
+                        {
+                            <option value="@r.Days">@r.Label</option>
+                        }
+                    </select>
+                    <div class="form-text">Seri randevular (örn. haftalık kanal seansları) tek seferde oluşturulur.</div>
+                </div>
+            }
+
+            <div class="col-12">
+                <label asp-for="Notes" class="form-label"></label>
+                <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Hazırlık, hasta talepleri, hatırlatmalar…"></textarea>
+                <span asp-validation-for="Notes" class="text-danger small"></span>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-5">
+        <partial name="_ToothSelector" model='new ToothSelectorViewModel { Label = "İlgili Dişler", SelectedTeethCsv = Model.SelectedTeeth ?? string.Empty }' />
+    </div>
+</div>

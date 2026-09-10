@@ -7,7 +7,7 @@ public class PreviousOperationFormViewModel
 {
     public int Id { get; set; }
 
-    [Required(ErrorMessage = "Hasta seçimi zorunludur.")]
+    [Range(1, int.MaxValue, ErrorMessage = "Hasta seçimi zorunludur.")]
     [Display(Name = "Hasta")]
     public int PatientId { get; set; }
 
@@ -24,18 +24,23 @@ public class PreviousOperationFormViewModel
     [Display(Name = "Tanı")]
     public string? Diagnosis { get; set; }
 
-    [MaxLength(500, ErrorMessage = "Uygulanan işlemler en fazla 500 karakter olabilir.")]
+    [MaxLength(1000, ErrorMessage = "Uygulanan işlemler en fazla 1000 karakter olabilir.")]
     [Display(Name = "Uygulanan İşlemler")]
     public string? Procedures { get; set; }
 
-    [MaxLength(500, ErrorMessage = "Reçeteler en fazla 500 karakter olabilir.")]
-    [Display(Name = "Reçeteler")]
+    [MaxLength(500, ErrorMessage = "Reçete en fazla 500 karakter olabilir.")]
+    [Display(Name = "Reçete")]
     public string? Prescriptions { get; set; }
 
-    [MaxLength(1000, ErrorMessage = "Notlar en fazla 1000 karakter olabilir.")]
+    [MaxLength(2000, ErrorMessage = "Notlar en fazla 2000 karakter olabilir.")]
     [Display(Name = "Notlar")]
     public string? Notes { get; set; }
 
-    public IReadOnlyList<string> SelectedTeeth { get; set; } = Array.Empty<string>();
+    public string? ReturnUrl { get; set; }
+    public string? PatientName { get; set; }
+
+    /// <summary>Comma-separated FDI tooth numbers posted by the tooth selector.</summary>
+    public string? SelectedTeeth { get; set; }
+    public IReadOnlyList<string> TitleSuggestions { get; set; } = Array.Empty<string>();
     public IEnumerable<SelectListItem> Patients { get; set; } = Enumerable.Empty<SelectListItem>();
 }

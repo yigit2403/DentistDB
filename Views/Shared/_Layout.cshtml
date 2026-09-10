@@ -1,90 +1,164 @@
+@inject DentistDB.Services.ISettingsService SettingsService
+@inject DentistDB.Services.BackupRunner BackupRunner
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
     var currentAccount = Context.GetCurrentAccount();
     var isSignedIn = currentAccount != null;
-    var canViewFinancials = Context.CanViewFinancials();
+    var isAdmin = Context.IsAdmin();
+    var clinic = await SettingsService.GetClinicSettingsAsync();
+    var title = ViewData["Title"]?.ToString() ?? clinic.ClinicName;
+    var currentUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
+    var backup = isAdmin ? await BackupRunner.GetSettingsAsync() : null;
+
+    string NavClass(params string[] controllers) => controllers.Contains(currentController) ? "nav-item active" : "nav-item";
+
+    static string RelativeTime(DateTime utc)
+    {
+        var span = DateTime.UtcNow - utc;
+        if (span.TotalMinutes < 60) return $"{Math.Max(1, (int)span.TotalMinutes)} dk önce";
+        if (span.TotalHours < 48) return $"{(int)span.TotalHours} saat önce";
+        return $"{(int)span.TotalDays} gün önce";
+    }
 }
 <!DOCTYPE html>
 <html lang="tr">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>@ViewData["Title"] - DentistDB</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <meta name="color-scheme" content="light" />
+    <title>@title · @clinic.ClinicName</title>
+    <link rel="icon" href="~/favicon.ico" />
+    <link rel="manifest" href="~/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="~/images/apple-touch-icon.png" />
+    <meta name="theme-color" content="#0e7490" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="@clinic.ClinicName" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-    <link rel="stylesheet" href="~/DentistDB.styles.css" asp-append-version="true" />
+    @await RenderSectionAsync("Head", required: false)
 </head>
 <body>
-    <div class="app-shell">
-        <aside class="app-sidebar @(isSignedIn ? string.Empty : "d-none")">
-            <a class="brand-mark" asp-controller="Home" asp-action="Index">
-                <span class="brand-kicker">Klinik Yönetimi</span>
-                <strong>DentistDB</strong>
-                <small>Diş kliniği operasyon paneli</small>
-            </a>
+    <partial name="_Icons" />
 
-            <nav class="nav-cluster">
-                <div class="nav-caption">Genel Bakış</div>
-                <a class="nav-pill @(currentController == "Home" ? "active" : "")" asp-controller="Home" asp-action="Index">Kontrol Paneli</a>
+    @if (!isSignedIn)
+    {
+        <main class="content content--auth">
+            @RenderBody()
+        </main>
+    }
+    else
+    {
+        <div class="app">
+            <div class="sidebar-backdrop" data-sidebar-close></div>
+            <aside class="sidebar" id="sidebar">
+                <a class="brand" asp-controller="Home" asp-action="Index">
+                    <span class="brand-logo">@clinic.ClinicName.Initials()</span>
+                    <span>
+                        <span class="brand-name d-block">@clinic.ClinicName</span>
+                        <span class="brand-sub">Klinik Yönetimi</span>
+                    </span>
+                </a>
 
-                <div class="nav-caption">Hasta Yönetimi</div>
-                <a class="nav-pill @(currentController == "Patients" && currentAction == "Index" ? "active" : "")" asp-controller="Patients" asp-action="Index">Tüm Hastalar</a>
-                <a class="nav-pill @(currentController == "Patients" && currentAction == "Create" ? "active" : "")" asp-controller="Patients" asp-action="Create">Yeni Hasta</a>
-                <a class="nav-pill @(currentController == "PreviousOperations" ? "active" : "")" asp-controller="PreviousOperations" asp-action="Index">Onceki Islemler</a>
+                <nav class="nav-section">
+                    <a class="@NavClass("Home")" asp-controller="Home" asp-action="Index"><svg class="icon"><use href="#i-home"/></svg> Kontrol Paneli</a>
+                    <a class="@NavClass("Patients")" asp-controller="Patients" asp-action="Index"><svg class="icon"><use href="#i-users"/></svg> Hastalar</a>
+                    <a class="@NavClass("Appointments")" asp-controller="Appointments" asp-action="Index"><svg class="icon"><use href="#i-calendar"/></svg> Randevular</a>
+                    <a class="@NavClass("PreviousOperations")" asp-controller="PreviousOperations" asp-action="Index"><svg class="icon"><use href="#i-clipboard"/></svg> Tedavi Kayıtları</a>
+                    <a class="@NavClass("Billing")" asp-controller="Billing" asp-action="Index"><svg class="icon"><use href="#i-receipt"/></svg> Faturalar</a>
+                </nav>
 
-                <div class="nav-caption">Takvim</div>
-                <a class="nav-pill @(currentController == "Appointments" && currentAction == "Index" ? "active" : "")" asp-controller="Appointments" asp-action="Index">Randevular</a>
-                <a class="nav-pill @(currentController == "Appointments" && currentAction == "Create" ? "active" : "")" asp-controller="Appointments" asp-action="Create">Randevu Oluştur</a>
-
-                <div class="nav-caption">Finans</div>
-                <a class="nav-pill @(currentController == "Billing" && currentAction == "Index" ? "active" : "")" asp-controller="Billing" asp-action="Index">Faturalar</a>
-                <a class="nav-pill @(currentController == "Billing" && currentAction == "Create" ? "active" : "")" asp-controller="Billing" asp-action="Create">Fatura Oluştur</a>
-            </nav>
-        </aside>
-
-        <div class="app-main">
-            <header class="topbar">
-                <div>
-                    <div class="topbar-eyebrow">DentistDB</div>
-                    <h1 class="topbar-title">@ViewData["Title"]</h1>
-                </div>
-                <div class="topbar-actions">
-                    @if (isSignedIn)
+                <nav class="nav-section">
+                    <div class="nav-caption">Hızlı İşlemler</div>
+                    <a class="nav-item @(currentController == "Patients" && currentAction == "Create" ? "active" : "")" asp-controller="Patients" asp-action="Create"><svg class="icon"><use href="#i-user-plus"/></svg> Yeni Hasta</a>
+                    <a class="nav-item @(currentController == "Appointments" && currentAction == "Create" ? "active" : "")" asp-controller="Appointments" asp-action="Create"><svg class="icon"><use href="#i-calendar-plus"/></svg> Yeni Randevu</a>
+                    @if (isAdmin)
                     {
-                        <div class="topbar-user">
-                            <strong>@currentAccount!.Name</strong>
-                            <span>@(canViewFinancials ? "Yönetici" : "Çalışan")</span>
-                        </div>
-                        <form asp-controller="Access" asp-action="Logout" method="post" class="m-0">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-outline-light">Hesap Değiştir</button>
-                        </form>
+                        <a class="nav-item @(currentController == "Billing" && currentAction == "Create" ? "active" : "")" asp-controller="Billing" asp-action="Create"><svg class="icon"><use href="#i-plus"/></svg> Yeni Fatura</a>
                     }
+                </nav>
+
+                @if (isAdmin)
+                {
+                    <nav class="nav-section">
+                        <div class="nav-caption">Yönetim</div>
+                        <a class="nav-item @(currentController == "Billing" && currentAction == "DailyReport" ? "active" : "")" asp-controller="Billing" asp-action="DailyReport"><svg class="icon"><use href="#i-coins"/></svg> Gün Sonu</a>
+                        <a class="nav-item @(currentController == "Settings" && currentAction == "AuditLog" ? "active" : "")" asp-controller="Settings" asp-action="AuditLog"><svg class="icon"><use href="#i-list"/></svg> İşlem Günlüğü</a>
+                        <a class="nav-item @(currentController == "Settings" && currentAction != "AuditLog" ? "active" : "")" asp-controller="Settings" asp-action="Index"><svg class="icon"><use href="#i-settings"/></svg> Ayarlar</a>
+                    </nav>
+                }
+
+                <div class="sidebar-footer">
+                    @if (backup != null)
+                    {
+                        <a asp-controller="Settings" asp-action="Index" class="backup-pill @(backup.IsStale || backup.LastFailed ? "is-stale" : "")" title="@(backup.LastResult ?? "Henüz yedek alınmadı")">
+                            <span class="dot"></span>
+                            <span class="truncate">@(backup.LastRunAt is null ? "Yedek alınmadı" : backup.LastFailed ? "Yedek başarısız" : $"Son yedek: {RelativeTime(backup.LastRunAt.Value)}")</span>
+                        </a>
+                    }
+                    <div class="user-chip">
+                        <span class="user-avatar">@(currentAccount!.Name.Initials())</span>
+                        <span>
+                            <span class="user-name d-block">@currentAccount.Name</span>
+                            <span class="user-role">@(isAdmin ? "Tüm yetkiler" : "Klinik personeli")</span>
+                        </span>
+                        <form asp-controller="Access" asp-action="Logout" method="post" class="m-0 ms-auto">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-ghost btn-icon" title="Hesap değiştir / çıkış"><svg class="icon"><use href="#i-logout"/></svg></button>
+                        </form>
+                    </div>
                 </div>
-            </header>
+            </aside>
 
-            <main class="content-stage @(isSignedIn ? string.Empty : "content-stage--wide")">
-                @if (TempData["Success"] != null)
-                {
-                    <div class="alert alert-success shadow-sm border-0" role="alert">
-                        @TempData["Success"]
+            <div class="main">
+                <header class="topbar">
+                    <button type="button" class="btn btn-ghost btn-icon menu-toggle" data-sidebar-toggle aria-label="Menü"><svg class="icon icon-lg"><use href="#i-menu"/></svg></button>
+                    <div class="topbar-title-wrap">
+                        <h1 class="topbar-title">@title</h1>
                     </div>
-                }
-                @if (TempData["Error"] != null)
-                {
-                    <div class="alert alert-danger shadow-sm border-0" role="alert">
-                        @TempData["Error"]
+                    <div class="topbar-spacer"></div>
+                    <div class="quick-search" data-quick-search data-search-url="@Url.Action("Search", "Patients")" data-patient-url="@Url.Action("Details", "Patients", new { id = "__ID__" })">
+                        <svg class="icon"><use href="#i-search"/></svg>
+                        <input type="search" class="form-control" placeholder="Hasta ara: ad, TCKN, telefon…" autocomplete="off" aria-label="Hasta ara" />
+                        <div class="quick-search-results" hidden></div>
                     </div>
-                }
+                </header>
 
-                @RenderBody()
-            </main>
+                <main class="content">
+                    @{
+                        var flashes = new[]
+                        {
+                            (Key: "Success", Css: "alert-success", Icon: "i-check"),
+                            (Key: "Warning", Css: "alert-warning", Icon: "i-alert"),
+                            (Key: "Error", Css: "alert-danger", Icon: "i-alert")
+                        };
+                        var hasFlash = flashes.Any(f => TempData[f.Key] != null);
+                    }
+                    @if (hasFlash)
+                    {
+                        <div class="flash-stack">
+                            @foreach (var flash in flashes)
+                            {
+                                if (TempData[flash.Key] is string message && !string.IsNullOrWhiteSpace(message))
+                                {
+                                    <div class="alert @flash.Css alert-dismissible" role="alert">
+                                        <svg class="icon"><use href="#@flash.Icon"/></svg>
+                                        <div>@message</div>
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
+
+                    @RenderBody()
+                </main>
+            </div>
         </div>
-    </div>
+    }
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
-    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

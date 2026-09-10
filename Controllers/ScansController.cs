@@ -1,81 +1,83 @@
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using DentistDB.Data;
 using DentistDB.Filters;
 using DentistDB.Models;
 using DentistDB.ViewModels;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
 namespace DentistDB.Controllers;
 
-[RequireAppAccount]
-public class ScansController : Controller
+public class ScansController : ClinicControllerBase
 {
-    private readonly ApplicationDbContext _db;
+    private const long MaxFileBytes = 20 * 1024 * 1024;
     private readonly IWebHostEnvironment _env;
     private readonly string _scanStoragePath;
 
-    private static readonly string[] AllowedExtensions = { ".jpg", ".jpeg", ".png", ".pdf" };
-    private static readonly string[] AllowedContentTypes = {
-        "image/jpeg", "image/png", "application/pdf"
+    private static readonly Dictionary<string, string[]> AllowedTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ["image/jpeg"] = new[] { ".jpg", ".jpeg" },
+        ["image/png"] = new[] { ".png" },
+        ["image/webp"] = new[] { ".webp" },
+        ["application/pdf"] = new[] { ".pdf" }
     };
 
-    public ScansController(ApplicationDbContext db, IWebHostEnvironment env, IOptions<StorageOptions> storageOptions)
+    public ScansController(ApplicationDbContext db, IWebHostEnvironment env, IOptions<StorageOptions> storageOptions) : base(db)
     {
-        _db = db;
         _env = env;
         _scanStoragePath = DeploymentPaths.ResolveScanStoragePath(storageOptions.Value.ScanStoragePath, env);
     }
 
-    // GET: /Scans/Upload?patientId=5
     public async Task<IActionResult> Upload(int patientId)
     {
-        var patient = await _db.Patients.FindAsync(patientId);
+        var patient = await Db.Patients.AsNoTracking().FirstOrDefaultAsync(p => p.Id == patientId);
         if (patient == null) return NotFound();
 
-        ViewBag.PatientName = patient.FullName;
         return View(new ScanUploadViewModel
         {
             PatientId = patientId,
+            PatientName = patient.FullName,
             ScanDate = DateOnly.FromDateTime(DateTime.Today)
         });
     }
 
-    // POST: /Scans/Upload
     [HttpPost, ValidateAntiForgeryToken]
+    [RequestSizeLimit(MaxFileBytes + 1024 * 1024)]
     public async Task<IActionResult> Upload(ScanUploadViewModel vm)
     {
-        if (!ModelState.IsValid)
-        {
-            var pat = await _db.Patients.FindAsync(vm.PatientId);
-            ViewBag.PatientName = pat?.FullName;
-            return View(vm);
-        }
+        var patient = await Db.Patients.AsNoTracking().FirstOrDefaultAsync(p => p.Id == vm.PatientId);
+        if (patient == null) return NotFound();
+        vm.PatientName = patient.FullName;
 
         if (vm.File == null || vm.File.Length == 0)
         {
-            ModelState.AddModelError(nameof(vm.File), "Lutfen yuklemek icin bir dosya secin.");
-            var pat = await _db.Patients.FindAsync(vm.PatientId);
-            ViewBag.PatientName = pat?.FullName;
-            return View(vm);
+            ModelState.AddModelError(nameof(vm.File), "Yüklemek için bir dosya seçin.");
         }
-
-        var ext = Path.GetExtension(vm.File.FileName).ToLowerInvariant();
-        if (!AllowedExtensions.Contains(ext) || !AllowedContentTypes.Contains(vm.File.ContentType))
+        else
         {
-            ModelState.AddModelError(nameof(vm.File), "Yalnizca JPG, PNG ve PDF dosyalari kabul edilir.");
-            var pat = await _db.Patients.FindAsync(vm.PatientId);
-            ViewBag.PatientName = pat?.FullName;
+            var ext = Path.GetExtension(vm.File.FileName).ToLowerInvariant();
+            if (!AllowedTypes.TryGetValue(vm.File.ContentType, out var extensions) || !extensions.Contains(ext))
+            {
+                ModelState.AddModelError(nameof(vm.File), "Yalnızca JPG, PNG, WebP ve PDF dosyaları kabul edilir.");
+            }
+
+            if (vm.File.Length > MaxFileBytes)
+            {
+                ModelState.AddModelError(nameof(vm.File), "Dosya en fazla 20 MB olabilir.");
+            }
+        }
+
+        if (!ModelState.IsValid)
+        {
             return View(vm);
         }
 
-        // Store the file
         Directory.CreateDirectory(_scanStoragePath);
 
-        var storedFileName = $"{Guid.NewGuid()}{ext}";
+        var storedFileName = $"{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}{Path.GetExtension(vm.File!.FileName).ToLowerInvariant()}";
         var filePath = Path.Combine(_scanStoragePath, storedFileName);
 
-        await using (var stream = new FileStream(filePath, FileMode.Create))
+        await using (var stream = new FileStream(filePath, FileMode.CreateNew))
         {
             await vm.File.CopyToAsync(stream);
         }
@@ -83,35 +85,84 @@ public class ScansController : Controller
         var scan = new Scan
         {
             PatientId = vm.PatientId,
-            FileName = vm.File.FileName,
+            FileName = Path.GetFileName(vm.File.FileName),
             StoredPath = storedFileName,
             ContentType = vm.File.ContentType,
             FileSize = vm.File.Length,
             ScanType = vm.ScanType,
             ScanDate = vm.ScanDate,
-            Notes = vm.Notes,
+            Notes = string.IsNullOrWhiteSpace(vm.Notes) ? null : vm.Notes.Trim(),
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
 
-        _db.Scans.Add(scan);
-        await _db.SaveChangesAsync();
-        TempData["Success"] = "Tarama basariyla yuklendi.";
-        return RedirectToAction("Details", "Patients", new { id = scan.PatientId });
+        Db.Scans.Add(scan);
+        await Db.SaveChangesAsync();
+        Success("Görüntü yüklendi.");
+        return RedirectToAction("Details", "Patients", new { id = scan.PatientId, tab = "scans" });
     }
 
-    // GET: /Scans/View/5
     public async Task<IActionResult> View(int id)
     {
-        var scan = await _db.Scans.Include(s => s.Patient).FirstOrDefaultAsync(s => s.Id == id);
+        var scan = await Db.Scans.AsNoTracking().Include(s => s.Patient).FirstOrDefaultAsync(s => s.Id == id);
         if (scan == null) return NotFound();
+
+        ViewBag.Siblings = await Db.Scans.AsNoTracking()
+            .Where(s => s.PatientId == scan.PatientId)
+            .OrderByDescending(s => s.ScanDate)
+            .ThenByDescending(s => s.Id)
+            .Select(s => new { s.Id, s.ScanType, s.ScanDate, s.ContentType, s.FileName })
+            .ToListAsync();
+
         return View(scan);
     }
 
-    // GET: /Scans/Content/5
+    public async Task<IActionResult> Edit(int id)
+    {
+        var scan = await Db.Scans.AsNoTracking().Include(s => s.Patient).FirstOrDefaultAsync(s => s.Id == id);
+        if (scan == null) return NotFound();
+
+        return View(new ScanEditViewModel
+        {
+            Id = scan.Id,
+            PatientId = scan.PatientId,
+            ScanType = scan.ScanType,
+            ScanDate = scan.ScanDate,
+            Notes = scan.Notes,
+            FileName = scan.FileName,
+            PatientName = scan.Patient?.FullName
+        });
+    }
+
+    [HttpPost, ValidateAntiForgeryToken]
+    public async Task<IActionResult> Edit(int id, ScanEditViewModel vm)
+    {
+        if (id != vm.Id) return BadRequest();
+
+        var scan = await Db.Scans.Include(s => s.Patient).FirstOrDefaultAsync(s => s.Id == id);
+        if (scan == null) return NotFound();
+
+        if (!ModelState.IsValid)
+        {
+            vm.FileName = scan.FileName;
+            vm.PatientName = scan.Patient?.FullName;
+            vm.PatientId = scan.PatientId;
+            return View(vm);
+        }
+
+        scan.ScanType = vm.ScanType;
+        scan.ScanDate = vm.ScanDate;
+        scan.Notes = string.IsNullOrWhiteSpace(vm.Notes) ? null : vm.Notes.Trim();
+        scan.UpdatedAt = DateTime.UtcNow;
+        await Db.SaveChangesAsync();
+
+        Success("Görüntü bilgileri güncellendi.");
+        return RedirectToAction(nameof(View), new { id });
+    }
+
     public async Task<IActionResult> ContentFile(int id, bool download = false)
     {
-        var scan = await _db.Scans.FindAsync(id);
+        var scan = await Db.Scans.AsNoTracking().FirstOrDefaultAsync(s => s.Id == id);
         if (scan == null) return NotFound();
 
         var filePath = DeploymentPaths.ResolveStoredScanPath(_env, _scanStoragePath, scan.StoredPath);
@@ -121,26 +172,40 @@ public class ScansController : Controller
         }
 
         var downloadName = download ? scan.FileName : null;
+        if (!download)
+        {
+            Response.Headers.ContentDisposition = $"inline; filename*=UTF-8''{Uri.EscapeDataString(scan.FileName)}";
+        }
+
         return PhysicalFile(filePath, scan.ContentType, downloadName, enableRangeProcessing: true);
     }
 
-    // POST: /Scans/Delete/5
     [HttpPost, ValidateAntiForgeryToken]
+    [AdminOnly]
     public async Task<IActionResult> Delete(int id)
     {
-        var scan = await _db.Scans.FindAsync(id);
+        var scan = await Db.Scans.FindAsync(id);
         if (scan == null) return NotFound();
 
         var patientId = scan.PatientId;
-
-        // Delete physical file
         var filePath = DeploymentPaths.ResolveStoredScanPath(_env, _scanStoragePath, scan.StoredPath);
-        if (System.IO.File.Exists(filePath))
-            System.IO.File.Delete(filePath);
 
-        _db.Scans.Remove(scan);
-        await _db.SaveChangesAsync();
-        TempData["Success"] = "Tarama silindi.";
-        return RedirectToAction("Details", "Patients", new { id = patientId });
+        Db.Scans.Remove(scan);
+        await Db.SaveChangesAsync();
+
+        if (System.IO.File.Exists(filePath))
+        {
+            try
+            {
+                System.IO.File.Delete(filePath);
+            }
+            catch (IOException)
+            {
+                // The record is gone; a leftover file is harmless and can be cleaned up manually.
+            }
+        }
+
+        Success("Görüntü silindi.");
+        return RedirectToAction("Details", "Patients", new { id = patientId, tab = "scans" });
     }
 }

@@ -1,0 +1,67 @@
+@model DentistDB.ViewModels.ConsentPrintViewModel
+@{
+    Layout = "_PrintLayout";
+    ViewData["Title"] = $"{Model.Title} · {Model.Patient.FullName}";
+    var paragraphs = Model.BodyText.Split(new[] { "\r\n\r\n", "\n\n" }, StringSplitOptions.RemoveEmptyEntries);
+    var dentist = string.IsNullOrWhiteSpace(Model.Identity.DentistName) ? Model.ClinicName : $"{Model.Identity.DentistTitle} {Model.Identity.DentistName}".Trim();
+}
+
+<div class="doc-header">
+    <div>
+        <div class="doc-clinic">@Model.ClinicName
+            <small>
+                @if (!string.IsNullOrWhiteSpace(Model.Identity.DentistName)) { <text>@dentist@(string.IsNullOrWhiteSpace(Model.Identity.DiplomaNo) ? "" : $" · Dipl. No {Model.Identity.DiplomaNo}")<br /></text> }
+                @if (!string.IsNullOrWhiteSpace(Model.Identity.Address)) { <text>@Model.Identity.Address<br /></text> }
+                @if (!string.IsNullOrWhiteSpace(Model.Identity.Phone)) { <text>Tel: @Model.Identity.Phone</text> }
+            </small>
+        </div>
+    </div>
+    <div class="doc-meta">Tarih: <strong>@Model.Date.ToShortDate()</strong></div>
+</div>
+
+<div class="doc-title">@Model.Title</div>
+
+<div class="box">
+    <div class="box-title">Hasta Bilgileri</div>
+    <div class="kv-2col">
+        <dl class="kv"><dt>Ad Soyad</dt><dd>@Model.Patient.FullName</dd><dt>T.C. Kimlik No</dt><dd>@Model.Patient.Tckn</dd></dl>
+        <dl class="kv"><dt>Doğum Tarihi</dt><dd>@Model.Patient.BirthDate.ToShortDate()</dd><dt>Telefon</dt><dd>@(Model.Patient.Phone.FormatPhone() ?? "—")</dd></dl>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.Patient.GuardianName))
+    {
+        <dl class="kv"><dt>Veli / Vasi</dt><dd>@Model.Patient.GuardianName</dd></dl>
+    }
+</div>
+
+<div class="body-text">
+    @foreach (var paragraph in paragraphs)
+    {
+        <p>@paragraph.Trim()</p>
+    }
+</div>
+
+@if (Model.Type == ConsentType.Treatment)
+{
+    <div class="box">
+        <div class="box-title">Planlanan tedavi(ler)</div>
+        <div style="min-height:24mm"></div>
+    </div>
+}
+
+<div class="signatures">
+    <div class="sig">
+        <strong>Hasta / Veli</strong>
+        <span class="muted">@(string.IsNullOrWhiteSpace(Model.Patient.GuardianName) ? Model.Patient.FullName : $"{Model.Patient.GuardianName} (veli)")</span>
+        <span class="muted">İmza:</span>
+    </div>
+    <div class="sig">
+        <strong>Hekim</strong>
+        <span class="muted">@dentist</span>
+        <span class="muted">İmza / Kaşe:</span>
+    </div>
+</div>
+
+@if (Model.LastSigned != null)
+{
+    <div class="doc-footer no-print"><span>Bu form daha önce @Model.LastSigned.SignedOn.ToShortDate() tarihinde imzalandı olarak kaydedilmiş.</span></div>
+}

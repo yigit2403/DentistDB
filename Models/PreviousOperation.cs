@@ -3,6 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DentistDB.Models;
 
+/// <summary>A treatment / procedure record in the patient's history.</summary>
 public class PreviousOperation
 {
     public int Id { get; set; }
@@ -15,10 +16,9 @@ public class PreviousOperation
     public Patient? Patient { get; set; }
 
     [Display(Name = "Tarih")]
-    [DataType(DataType.Date)]
     public DateOnly Date { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
-    [MaxLength(200)]
+    [Required, MaxLength(200)]
     [Display(Name = "İşlem Başlığı")]
     public string Title { get; set; } = string.Empty;
 
@@ -26,15 +26,15 @@ public class PreviousOperation
     [Display(Name = "Tanı")]
     public string? Diagnosis { get; set; }
 
-    [MaxLength(500)]
+    [MaxLength(1000)]
     [Display(Name = "Uygulanan İşlemler")]
     public string? Procedures { get; set; }
 
     [MaxLength(500)]
-    [Display(Name = "Reçeteler")]
+    [Display(Name = "Reçete")]
     public string? Prescriptions { get; set; }
 
-    [MaxLength(1000)]
+    [MaxLength(2000)]
     [Display(Name = "Notlar")]
     public string? Notes { get; set; }
 

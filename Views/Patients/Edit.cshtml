@@ -1,93 +1,29 @@
 @model DentistDB.ViewModels.PatientFormViewModel
 @{
-    ViewData["Title"] = "Hasta Duzenle";
+    ViewData["Title"] = "Hasta Düzenle";
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Hasta Duzenleme</div>
-        <h2 class="page-title">Hasta bilgilerini guncelleyin.</h2>
+        <div class="topbar-crumb"><a asp-action="Index">Hastalar</a> / <a asp-action="Details" asp-route-id="@Model.Id">@Model.FullName</a></div>
+        <h2 class="page-title">Hasta Bilgilerini Düzenle</h2>
     </div>
 </div>
 
-<div class="card">
+<div class="card content--narrow">
     <div class="card-body p-4">
         <form asp-action="Edit" asp-route-id="@Model.Id" method="post" enctype="multipart/form-data">
             @Html.AntiForgeryToken()
             <input asp-for="Id" type="hidden" />
-            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-
-            <div class="row g-3">
-                <div class="col-md-6">
-                    <label asp-for="FullName" class="form-label"></label>
-                    <input asp-for="FullName" class="form-control" />
-                    <span asp-validation-for="FullName" class="text-danger small"></span>
-                </div>
-                <div class="col-md-3">
-                    <label asp-for="Phone" class="form-label"></label>
-                    <input asp-for="Phone" class="form-control" />
-                    <span asp-validation-for="Phone" class="text-danger small"></span>
-                </div>
-                <div class="col-md-3">
-                    <label asp-for="Tckn" class="form-label"></label>
-                    <input asp-for="Tckn" class="form-control" maxlength="11" inputmode="numeric" />
-                    <span asp-validation-for="Tckn" class="text-danger small"></span>
-                </div>
-                <div class="col-md-3">
-                    <label asp-for="Email" class="form-label"></label>
-                    <input asp-for="Email" class="form-control" />
-                    <span asp-validation-for="Email" class="text-danger small"></span>
-                </div>
-                <div class="col-md-3">
-                    <label asp-for="BirthDate" class="form-label"></label>
-                    <input asp-for="BirthDate" class="form-control" type="date" />
-                    <span asp-validation-for="BirthDate" class="text-danger small"></span>
-                </div>
-                <div class="col-md-3">
-                    <label asp-for="ArrivalDate" class="form-label"></label>
-                    <input asp-for="ArrivalDate" class="form-control" type="date" />
-                    <span asp-validation-for="ArrivalDate" class="text-danger small"></span>
-                </div>
-                <div class="col-md-3">
-                    <label asp-for="Address" class="form-label"></label>
-                    <input asp-for="Address" class="form-control" />
-                </div>
-                <div class="col-md-12">
-                    <label asp-for="MedicalAlerts" class="form-label"></label>
-                    <input asp-for="MedicalAlerts" class="form-control" />
-                    <span asp-validation-for="MedicalAlerts" class="text-danger small"></span>
-                </div>
-                <div class="col-md-12">
-                    <label asp-for="PhotoFile" class="form-label"></label>
-                    <input asp-for="PhotoFile" class="form-control" type="file" accept="image/*" />
-                    @if (!string.IsNullOrWhiteSpace(Model.ExistingPhotoBase64) && !string.IsNullOrWhiteSpace(Model.ExistingPhotoContentType))
-                    {
-                        <div class="patient-photo-preview mt-3">
-                            <img src="data:@Model.ExistingPhotoContentType;base64,@Model.ExistingPhotoBase64" alt="@Model.FullName" class="patient-photo-preview__img" />
-                        </div>
-                    }
-                    <span asp-validation-for="PhotoFile" class="text-danger small"></span>
-                </div>
-                <div class="col-md-12">
-                    <label asp-for="Notes" class="form-label"></label>
-                    <textarea asp-for="Notes" class="form-control" rows="4"></textarea>
-                </div>
-                <div class="col-md-12">
-                    <div class="form-check">
-                        <input asp-for="IsArchived" class="form-check-input" type="checkbox" />
-                        <label asp-for="IsArchived" class="form-check-label"></label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">Degisiklikleri Kaydet</button>
-                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Vazgec</a>
+            <partial name="_PatientForm" model="Model" />
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary"><svg class="icon"><use href="#i-check"/></svg> Değişiklikleri Kaydet</button>
+                <a asp-action="Details" asp-route-id="@Model.Id" class="btn btn-outline-secondary">Vazgeç</a>
             </div>
         </form>
     </div>
 </div>
 
 @section Scripts {
-    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <partial name="_ValidationScriptsPartial" />
 }

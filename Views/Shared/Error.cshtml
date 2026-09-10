@@ -1,21 +1,30 @@
 @model ErrorViewModel
 @{
-    ViewData["Title"] = "Hata";
+    ViewData["Title"] = Model.IsNotFound ? "Sayfa Bulunamadı" : "Hata";
 }
 
-<div class="card">
-    <div class="card-body p-4">
-        <div class="eyebrow">Sistem Bildirimi</div>
-        <h2 class="page-title text-danger">Bir hata olustu.</h2>
-        <p class="page-subtitle">Istek islenirken beklenmeyen bir sorun meydana geldi.</p>
+<div class="card" style="max-width: 640px; margin: 40px auto;">
+    <div class="card-body text-center py-5">
+        <svg class="icon icon-lg text-muted mb-3" style="width:40px;height:40px"><use href="#@(Model.IsNotFound ? "i-search" : "i-alert")"/></svg>
+        @if (Model.IsNotFound)
+        {
+            <h2 class="page-title mb-2">Aradığınız sayfa bulunamadı</h2>
+            <p class="text-muted mb-4">Bağlantı hatalı olabilir ya da kayıt silinmiş olabilir.</p>
+        }
+        else
+        {
+            <h2 class="page-title mb-2">Beklenmeyen bir hata oluştu</h2>
+            <p class="text-muted mb-4">İşlem tamamlanamadı. Tekrar deneyin; sorun sürerse aşağıdaki istek numarasını yöneticinize iletin.</p>
+        }
 
         @if (Model.ShowRequestId)
         {
-            <p><strong>Istek Numarasi:</strong> <code>@Model.RequestId</code></p>
+            <p class="small text-faint mb-4">İstek No: <code>@Model.RequestId</code></p>
         }
 
-        <h3 class="section-title mt-4">Gelisitirme Modu</h3>
-        <p class="mb-2">Gelisitirme ortamina gecildiginde hataya dair daha ayrintili teknik bilgi goruntulenir.</p>
-        <p class="mb-0"><strong>Canli ortamlarda gelistirme modu acik olmamalidir.</strong> Son kullanicilara hassas hata bilgileri gosterilebilir.</p>
+        <div class="d-flex gap-2 justify-content-center">
+            <a asp-controller="Home" asp-action="Index" class="btn btn-primary"><svg class="icon"><use href="#i-home"/></svg> Kontrol Paneline Dön</a>
+            <a href="javascript:history.back()" class="btn btn-outline-secondary">Geri</a>
+        </div>
     </div>
 </div>

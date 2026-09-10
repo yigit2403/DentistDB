@@ -1,12 +1,13 @@
 @model DentistDB.ViewModels.PreviousOperationFormViewModel
 @{
-    ViewData["Title"] = "Yeni Önceki İşlem";
+    ViewData["Title"] = "Yeni Tedavi Kaydı";
+    var cancelUrl = Model.ReturnUrl ?? (Model.PatientId > 0 ? Url.Action("Details", "Patients", new { id = Model.PatientId, tab = "treatments" }) : Url.Action("Index"));
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Önceki İşlem Kaydı</div>
-        <h2 class="page-title">Yeni işlem geçmişi kaydı ekleyin.</h2>
+        <div class="topbar-crumb"><a asp-action="Index">Tedavi Kayıtları</a> / Yeni</div>
+        <h2 class="page-title">Yeni Tedavi Kaydı@(Model.PatientName != null ? $" · {Model.PatientName}" : "")</h2>
     </div>
 </div>
 
@@ -14,74 +15,16 @@
     <div class="card-body p-4">
         <form asp-action="Create" method="post">
             @Html.AntiForgeryToken()
-            <div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
-
-            <div class="row g-4">
-                <div class="col-lg-7">
-                    <div class="row g-3">
-                        <div class="col-md-8">
-                            <label asp-for="PatientId" class="form-label"></label>
-                            <select asp-for="PatientId" asp-items="Model.Patients" class="form-select">
-                                <option value="">Hasta seçin</option>
-                            </select>
-                            <span asp-validation-for="PatientId" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-4">
-                            <label asp-for="Date" class="form-label"></label>
-                            <div class="input-group bootstrap-picker">
-                                <input asp-for="Date" class="form-control js-picker" type="date" />
-                                <button class="btn btn-outline-secondary js-picker-button" type="button" data-picker-target="Date">Takvim</button>
-                            </div>
-                        </div>
-                        <div class="col-md-12">
-                            <label asp-for="Title" class="form-label"></label>
-                            <input asp-for="Title" class="form-control" placeholder="Örn. Kanal tedavisi - 26 numara" />
-                            <span asp-validation-for="Title" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-12">
-                            <label asp-for="Diagnosis" class="form-label"></label>
-                            <input asp-for="Diagnosis" class="form-control" />
-                            <span asp-validation-for="Diagnosis" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-12">
-                            <label asp-for="Procedures" class="form-label"></label>
-                            <input asp-for="Procedures" class="form-control" />
-                            <span asp-validation-for="Procedures" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-12">
-                            <label asp-for="Prescriptions" class="form-label"></label>
-                            <input asp-for="Prescriptions" class="form-control" />
-                            <span asp-validation-for="Prescriptions" class="text-danger small"></span>
-                        </div>
-                        <div class="col-md-12">
-                            <label asp-for="Notes" class="form-label"></label>
-                            <textarea asp-for="Notes" class="form-control" rows="4"></textarea>
-                            <span asp-validation-for="Notes" class="text-danger small"></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-5">
-                    @{
-                        await Html.RenderPartialAsync("_ToothSelector", new DentistDB.ViewModels.ToothSelectorViewModel
-                        {
-                            Label = "Dis Secimi",
-                            InputId = "SelectedTeeth",
-                            InputName = "SelectedTeeth",
-                            SummaryId = "SelectedTeethSummary",
-                            SelectedTeethCsv = string.Join(",", Model.SelectedTeeth)
-                        });
-                    }
-                </div>
-            </div>
-
-            <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-primary">Kaydı Oluştur</button>
-                <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" class="btn btn-outline-secondary">Vazgeç</a>
+            <input type="hidden" asp-for="ReturnUrl" />
+            <partial name="_OperationForm" model="Model" />
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary"><svg class="icon"><use href="#i-check"/></svg> Kaydı Oluştur</button>
+                <a href="@cancelUrl" class="btn btn-outline-secondary">Vazgeç</a>
             </div>
         </form>
     </div>
 </div>
 
 @section Scripts {
-    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <partial name="_ValidationScriptsPartial" />
 }

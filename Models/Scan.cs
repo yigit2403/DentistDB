@@ -7,12 +7,16 @@ public enum ScanType
 {
     [Display(Name = "Panoramik")]
     Panoramic,
-    [Display(Name = "BT")]
+    [Display(Name = "Tomografi (BT)")]
     CT,
     [Display(Name = "Periapikal")]
     Periapical,
     [Display(Name = "Bitewing")]
     Bitewing,
+    [Display(Name = "Ağız İçi Fotoğraf")]
+    IntraoralPhoto,
+    [Display(Name = "Belge")]
+    Document,
     [Display(Name = "Diğer")]
     Other
 }
@@ -33,21 +37,18 @@ public class Scan
     public string FileName { get; set; } = string.Empty;
 
     [Required, MaxLength(300)]
-    [Display(Name = "Kayıt Yolu")]
     public string StoredPath { get; set; } = string.Empty;
 
-    [MaxLength(50)]
-    [Display(Name = "İçerik Türü")]
+    [MaxLength(100)]
     public string ContentType { get; set; } = string.Empty;
 
-    [Display(Name = "Dosya Boyutu (bayt)")]
+    [Display(Name = "Dosya Boyutu")]
     public long FileSize { get; set; }
 
-    [Display(Name = "Tarama Türü")]
+    [Display(Name = "Görüntü Türü")]
     public ScanType ScanType { get; set; } = ScanType.Other;
 
-    [Display(Name = "Tarama Tarihi")]
-    [DataType(DataType.Date)]
+    [Display(Name = "Çekim Tarihi")]
     public DateOnly ScanDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
     [MaxLength(500)]
@@ -56,4 +57,18 @@ public class Scan
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    [NotMapped]
+    public bool IsImage => ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
+
+    [NotMapped]
+    public bool IsPdf => string.Equals(ContentType, "application/pdf", StringComparison.OrdinalIgnoreCase);
+
+    [NotMapped]
+    public string FileSizeDisplay => FileSize switch
+    {
+        < 1024 => $"{FileSize} B",
+        < 1024 * 1024 => $"{FileSize / 1024.0:F0} KB",
+        _ => $"{FileSize / (1024.0 * 1024.0):F1} MB"
+    };
 }

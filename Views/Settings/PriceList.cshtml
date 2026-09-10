@@ -1,0 +1,108 @@
+@model DentistDB.ViewModels.PriceListViewModel
+@{
+    ViewData["Title"] = "Fiyat Listesi";
+    var editing = Model.NewProcedure.Id > 0 ? Model.NewProcedure.Id : 0;
+}
+
+<div class="page-header">
+    <div>
+        <div class="topbar-crumb"><a asp-action="Index">Ayarlar</a> / Fiyat Listesi</div>
+        <h2 class="page-title">Fiyat Listesi</h2>
+        <p class="page-subtitle">Faturalarda seçilebilen işlemler ve liste fiyatları.</p>
+    </div>
+    <div class="page-actions">
+        <form method="get" class="form-check m-0">
+            <input type="checkbox" name="showInactive" value="true" class="form-check-input" id="chkInactive" @(Model.ShowInactive ? "checked" : "") data-autosubmit />
+            <label class="form-check-label" for="chkInactive">Pasif işlemleri göster</label>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h3 class="card-title">@(editing > 0 ? "İşlemi Düzenle" : "Yeni İşlem Ekle")</h3></div>
+    <div class="card-body">
+        <form asp-action="SaveProcedure" method="post" asp-route-showInactive="@Model.ShowInactive">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="Id" value="@Model.NewProcedure.Id" />
+            <input type="hidden" name="IsActive" value="@(Model.NewProcedure.IsActive ? "true" : "false")" />
+            <div asp-validation-summary="All" class="alert alert-danger"></div>
+            <div class="row g-3 align-items-end">
+                <div class="col-md-7">
+                    <label class="form-label" for="Name">İşlem Adı <span class="req">*</span></label>
+                    <input type="text" name="Name" id="Name" class="form-control" value="@Model.NewProcedure.Name" maxlength="150" autocomplete="off" autofocus />
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label" for="DefaultPrice">Liste Fiyatı</label>
+                    <div class="input-group">
+                        <input type="text" name="DefaultPrice" id="DefaultPrice" class="form-control num text-end" value="@(Model.NewProcedure.DefaultPrice.ToString("0.00"))" inputmode="decimal" />
+                        <span class="input-group-text">₺</span>
+                    </div>
+                </div>
+                <div class="col-md-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">@(editing > 0 ? "Kaydet" : "Ekle")</button>
+                    @if (editing > 0)
+                    {
+                        <a asp-action="PriceList" asp-route-showInactive="@Model.ShowInactive" class="btn btn-outline-secondary">Vazgeç</a>
+                    }
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    @if (!Model.Procedures.Any())
+    {
+        <div class="empty-state"><svg class="icon"><use href="#i-tag"/></svg><p>Henüz işlem tanımlanmadı.</p></div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead><tr><th>İşlem</th><th class="text-end">Liste Fiyatı</th><th>Durum</th><th class="row-actions"></th></tr></thead>
+                <tbody>
+                    @foreach (var p in Model.Procedures)
+                    {
+                        <tr class="@(p.IsActive ? "" : "text-muted")">
+                            <td class="fw-600">@p.Name</td>
+                            <td class="text-end money">@p.DefaultPrice.ToMoney()</td>
+                            <td><span class="badge-soft @(p.IsActive ? "success" : "neutral")">@(p.IsActive ? "Aktif" : "Pasif")</span></td>
+                            <td class="row-actions">
+                                <form asp-action="SaveProcedure" asp-route-showInactive="@Model.ShowInactive" method="post" class="d-inline" id="edit-@p.Id"></form>
+                                <a asp-action="PriceList" asp-route-showInactive="@Model.ShowInactive" asp-fragment="Name" class="btn btn-sm btn-outline-secondary js-edit-procedure" data-id="@p.Id" data-name="@p.Name" data-price="@p.DefaultPrice.ToString("0.00")" data-active="@(p.IsActive ? "true" : "false")" title="Düzenle"><svg class="icon"><use href="#i-edit"/></svg></a>
+                                <form asp-action="ToggleProcedure" asp-route-id="@p.Id" asp-route-showInactive="@Model.ShowInactive" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="@(p.IsActive ? "Pasife al" : "Aktif et")">@(p.IsActive ? "Pasife Al" : "Aktif Et")</button>
+                                </form>
+                                <form asp-action="DeleteProcedure" asp-route-id="@p.Id" asp-route-showInactive="@Model.ShowInactive" method="post" class="d-inline" data-confirm="“@p.Name” silinsin mi? Faturalarda kullanılmışsa silinmez, pasife alınır.">
+                                    @Html.AntiForgeryToken()
+                                    <button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Sil"><svg class="icon"><use href="#i-trash"/></svg></button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Edit in place: load the row values into the form at the top instead of navigating.
+        document.querySelectorAll(".js-edit-procedure").forEach(function (link) {
+            link.addEventListener("click", function (event) {
+                event.preventDefault();
+                var form = document.querySelector("form[action*='SaveProcedure']");
+                form.querySelector("[name='Id']").value = link.dataset.id;
+                form.querySelector("[name='IsActive']").value = link.dataset.active;
+                form.querySelector("[name='Name']").value = link.dataset.name;
+                form.querySelector("[name='DefaultPrice']").value = link.dataset.price;
+                form.closest(".card").querySelector(".card-title").textContent = "İşlemi Düzenle";
+                form.querySelector("button[type='submit']").textContent = "Kaydet";
+                form.querySelector("[name='Name']").focus();
+                window.scrollTo({ top: 0, behavior: "smooth" });
+            });
+        });
+    </script>
+}

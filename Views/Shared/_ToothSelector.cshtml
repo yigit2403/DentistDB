@@ -1,11 +1,18 @@
 @model DentistDB.ViewModels.ToothSelectorViewModel
 
 <div class="tooth-selector-card">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-        <label class="form-label mb-0 fw-semibold">@Model.Label</label>
-        <button type="button" class="btn btn-sm btn-outline-secondary" data-tooth-clear>
-            Temizle
-        </button>
+    <div class="tooth-selector-head">
+        <div>
+            <label class="form-label mb-0">@Model.Label</label>
+            <div id="@Model.SummaryId" class="tooth-selector-summary">Diş seçilmedi</div>
+        </div>
+        <div class="d-flex align-items-center gap-2">
+            <div class="btn-group-seg btn-group-seg--sm">
+                <button type="button" data-dentition="permanent" class="active" title="Kalıcı dişler (11–48)">Kalıcı</button>
+                <button type="button" data-dentition="deciduous" title="Süt dişleri (51–85)">Süt</button>
+            </div>
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-tooth-clear>Temizle</button>
+        </div>
     </div>
 
     <div class="tooth-selector-widget"
@@ -14,118 +21,22 @@
          data-input-id="@Model.InputId"
          data-summary-id="@Model.SummaryId"
          data-mode="multiple">
-        <input type="hidden"
-               id="@Model.InputId"
-               name="@Model.InputName"
-               value="@Model.SelectedTeethCsv" />
-
-        <div id="@Model.SummaryId" class="tooth-selector-summary mb-2">
-            Dis secilmedi
-        </div>
+        <input type="hidden" id="@Model.InputId" name="@Model.InputName" value="@Model.SelectedTeethCsv" />
 
         <div class="tooth-selector-stage" data-tooth-stage>
-            <div class="tooth-selector-loading">Dis semasi yukleniyor...</div>
+            <div class="tooth-selector-loading">Diş şeması yükleniyor…</div>
         </div>
+
+        <div class="tooth-selector-tools">
+            <div class="chip-group" data-tooth-quick></div>
+            <div class="tooth-typed">
+                <input type="text" class="form-control form-control-sm num" data-tooth-typed placeholder="Numara yazın: 16, 17, 26" inputmode="numeric" autocomplete="off" aria-label="Diş numaraları" />
+            </div>
+            <div class="tooth-chips" data-tooth-chips></div>
+        </div>
+        <div class="form-text">Tıklayın veya sürükleyerek birden fazla diş seçin. Numaralar FDI sistemine göredir; hasta karşınızdaymış gibi sağ taraf solda görünür.</div>
     </div>
 </div>
 
-<style>
-    .tooth-selector-card {
-        background: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(101, 145, 214, 0.18);
-        border-radius: 18px;
-        padding: 16px;
-    }
-
-    .tooth-selector-widget {
-        padding: 0;
-    }
-
-    .tooth-selector-summary {
-        min-height: 24px;
-        font-size: .95rem;
-        color: #b2c6e3;
-    }
-
-    .tooth-selector-stage {
-        position: relative;
-        width: 100%;
-        max-width: 780px;
-        margin: 0 auto;
-        aspect-ratio: 3 / 5;
-        background: linear-gradient(180deg, #f8fbff, #e8eef5);
-        border: 1px solid #d9e2ef;
-        border-radius: 16px;
-        overflow: hidden;
-    }
-
-    .tooth-selector-stage svg {
-        position: absolute;
-        inset: 0;
-        width: 100%;
-        height: 100%;
-        display: block;
-    }
-
-    .tooth-selector-stage .tooth-shape {
-        fill: #d8d4ff;
-        stroke: #7c73d8;
-        stroke-width: 1.5;
-        cursor: pointer;
-        transition: fill .15s ease, stroke .15s ease, opacity .15s ease;
-    }
-
-    .tooth-selector-stage .tooth-shape:hover {
-        fill: #c1b9ff;
-    }
-
-    .tooth-selector-stage .tooth-shape.is-selected {
-        fill: #7c73d8;
-        stroke: #4c3fb8;
-    }
-
-    .tooth-hotspot {
-        position: absolute;
-        transform: translate(-50%, -50%);
-        min-width: 34px;
-        height: 26px;
-        padding: 0 8px;
-        border: 1px solid #adb5bd;
-        border-radius: 999px;
-        background: rgba(255,255,255,.92);
-        color: #212529;
-        font-size: 12px;
-        font-weight: 700;
-        line-height: 24px;
-        text-align: center;
-        cursor: pointer;
-        transition: all .15s ease;
-        user-select: none;
-        box-shadow: 0 1px 4px rgba(0,0,0,.08);
-    }
-
-    .tooth-hotspot:hover {
-        background: #eef2ff;
-        border-color: #7c73d8;
-    }
-
-    .tooth-hotspot.is-selected {
-        background: #7c73d8;
-        border-color: #4c3fb8;
-        color: #fff;
-    }
-
-    .tooth-selector-loading,
-    .tooth-selector-error {
-        position: absolute;
-        inset: 0;
-        display: grid;
-        place-items: center;
-        color: #6c757d;
-        font-size: .95rem;
-        text-align: center;
-        padding: 16px;
-    }
-</style>
-
-<script src="~/js/tooth-selector.js" asp-append-version="true"></script>
+<script src="~/js/tooth-chart.js" asp-append-version="true" defer></script>
+<script src="~/js/tooth-selector.js" asp-append-version="true" defer></script>

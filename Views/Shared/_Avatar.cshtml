@@ -1,0 +1,11 @@
+@model DentistDB.ViewModels.AvatarModel
+<span class="avatar @Model.Size" title="@Model.Name">
+    @if (Model.HasPhoto)
+    {
+        <img src="@Url.Action("Photo", "Patients", new { id = Model.PatientId })" alt="@Model.Name" loading="lazy" />
+    }
+    else
+    {
+        @Model.Name.Initials()
+    }
+</span>

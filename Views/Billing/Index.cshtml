@@ -1,100 +1,142 @@
-@model PaginatedList<Invoice>
+@model DentistDB.ViewModels.BillingIndexViewModel
 @{
     ViewData["Title"] = "Faturalar";
-    var statusFilter = ViewBag.StatusFilter as string;
-    var statuses = ViewBag.Statuses as InvoiceStatus[] ?? Array.Empty<InvoiceStatus>();
-    var canViewFinancials = Context.CanViewFinancials();
+    var isAdmin = Context.IsAdmin();
+    var list = Model.Invoices;
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Finans Takibi</div>
-        <h2 class="page-title">Faturalari, vadeleri ve tahsilat durumlarini izleyin.</h2>
+        <h2 class="page-title">Faturalar</h2>
+        <p class="page-subtitle">@list.TotalCount kayıt</p>
     </div>
-    <a asp-action="Create" class="btn btn-primary">Yeni Fatura</a>
+    <div class="page-actions">
+        @if (isAdmin)
+        {
+            <a asp-action="DailyReport" class="btn btn-outline-secondary"><svg class="icon"><use href="#i-coins"/></svg> Gün Sonu</a>
+            <a asp-action="Create" class="btn btn-primary"><svg class="icon"><use href="#i-plus"/></svg> Yeni Fatura</a>
+        }
+    </div>
 </div>
 
-<div class="card mb-4">
-    <div class="card-body">
-        <div class="filter-strip">
-            <a asp-action="Index" class="btn btn-sm @(string.IsNullOrEmpty(statusFilter) ? "btn-primary" : "btn-outline-secondary")">Tumu</a>
-            @foreach (var status in statuses)
-            {
-                <a asp-action="Index" asp-route-status="@status" class="btn btn-sm @(statusFilter == status.ToString() ? "btn-primary" : "btn-outline-secondary")">@status.GetDisplayName()</a>
-            }
+@if (Model.ShowFinancials)
+{
+    <div class="stat-grid">
+        <div class="stat @(Model.OutstandingTotal > 0 ? "stat-warn" : "")">
+            <span class="stat-label">Bekleyen Alacak</span>
+            <span class="stat-value money">@Model.OutstandingTotal.ToMoney()</span>
+            <span class="stat-hint">@Model.OpenInvoiceCount açık fatura</span>
+        </div>
+        <div class="stat @(Model.OverdueTotal > 0 ? "stat-danger" : "")">
+            <span class="stat-label">Vadesi Geçmiş</span>
+            <span class="stat-value money">@Model.OverdueTotal.ToMoney()</span>
+            <span class="stat-hint"><a asp-action="Index" asp-route-overdue="true">Listele</a></span>
+        </div>
+        <div class="stat stat-success">
+            <span class="stat-label">Bu Ay Tahsilat</span>
+            <span class="stat-value money">@Model.CollectedThisMonth.ToMoney()</span>
+            <span class="stat-hint">@DateTime.Today.ToMonthHeading()</span>
         </div>
     </div>
-</div>
-
-@await Html.PartialAsync("_Pagination", new PaginationViewModel
-{
-    PageIndex = Model.PageIndex,
-    TotalPages = Model.TotalPages,
-    TotalCount = Model.TotalCount,
-    PageSize = Model.PageSize,
-    FirstItemNumber = Model.FirstItemNumber,
-    LastItemNumber = Model.LastItemNumber
-})
-
-@if (!Model.Any())
-{
-    <div class="alert alert-info">Fatura bulunamadi.</div>
 }
 else
 {
-    <div class="card">
+    <div class="alert alert-info mb-3"><svg class="icon"><use href="#i-info"/></svg><div>Çalışan hesabı fatura tutarlarını ve ödemeleri görüntüleyemez; yalnızca fatura varlığı ve durumu gösterilir.</div></div>
+}
+
+<div class="card">
+    <div class="card-body py-3">
+        <form method="get" class="filter-bar">
+            <div class="quick-search" style="width:min(340px,100%)">
+                <svg class="icon"><use href="#i-search"/></svg>
+                <input type="search" name="search" value="@Model.Search" class="form-control" placeholder="Hasta adı veya fatura no" />
+            </div>
+            <select name="status" class="form-select" style="width:170px" data-autosubmit>
+                <option value="">Tüm durumlar</option>
+                @foreach (var status in Enum.GetValues<InvoiceStatus>())
+                {
+                    <option value="@status" selected="@(Model.StatusFilter == status)">@status.GetDisplayName()</option>
+                }
+            </select>
+            <div class="form-check m-0">
+                <input type="checkbox" name="overdue" value="true" class="form-check-input" id="chkOverdue" @(Model.OnlyOverdue ? "checked" : "") data-autosubmit />
+                <label class="form-check-label" for="chkOverdue">Yalnızca vadesi geçmiş</label>
+            </div>
+            @if (Model.PatientId.HasValue)
+            {
+                <input type="hidden" name="patientId" value="@Model.PatientId" />
+            }
+            <button type="submit" class="btn btn-outline-primary">Ara</button>
+            @if (!string.IsNullOrEmpty(Model.Search) || Model.StatusFilter.HasValue || Model.OnlyOverdue || Model.PatientId.HasValue)
+            {
+                <a asp-action="Index" class="btn btn-ghost">Temizle</a>
+            }
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    @if (!list.Any())
+    {
+        <div class="empty-state"><svg class="icon"><use href="#i-receipt"/></svg><p>Bu filtreye uygun fatura yok.</p></div>
+    }
+    else
+    {
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="table-light">
+            <table class="table table-hover">
+                <thead>
                     <tr>
                         <th>No</th>
                         <th>Hasta</th>
-                        <th>Fatura Tarihi</th>
+                        <th>Tarih</th>
                         <th>Vade</th>
-                        @if (canViewFinancials)
+                        @if (Model.ShowFinancials)
                         {
-                            <th>Toplam</th>
-                            <th>Kalan</th>
-                            <th>Planli Tahsilat</th>
+                            <th class="text-end">Toplam</th>
+                            <th class="text-end">Kalan</th>
+                            <th>Taksit</th>
                         }
                         <th>Durum</th>
-                        <th class="text-end">Islem</th>
+                        <th class="row-actions"></th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach (var inv in Model)
+                    @foreach (var inv in list)
                     {
+                        var pending = inv.PlannedPayments.Count(p => !p.IsSettled);
+                        var totalPlanned = inv.PlannedPayments.Count();
                         <tr>
-                            <td>#@inv.Id</td>
-                            <td><a asp-controller="Patients" asp-action="Details" asp-route-id="@inv.PatientId" class="text-decoration-none">@inv.Patient?.FullName</a></td>
-                            <td>@inv.InvoiceDate.ToString("d")</td>
-                            <td class="@(inv.DueDate < DateOnly.FromDateTime(DateTime.Today) && inv.Status != InvoiceStatus.Paid ? "text-danger fw-semibold" : string.Empty)">
-                                @(inv.DueDate?.ToString("d") ?? "-")
-                            </td>
-                            @if (canViewFinancials)
+                            <td class="num">#@inv.Id</td>
+                            <td><a asp-controller="Patients" asp-action="Details" asp-route-id="@inv.PatientId" asp-route-tab="invoices" class="row-link">@inv.Patient?.FullName</a></td>
+                            <td>@inv.InvoiceDate.ToShortDate()</td>
+                            <td class="@(inv.IsOverdue ? "text-danger fw-600" : "")">@inv.DueDate.ToShortDate()@(inv.IsOverdue ? " ⚠" : "")</td>
+                            @if (Model.ShowFinancials)
                             {
-                                <td>@inv.TotalAmount.ToString("C")</td>
-                                <td class="@(inv.Balance > 0 ? "text-danger fw-semibold" : "text-success fw-semibold")">@inv.Balance.ToString("C")</td>
-                                <td>@inv.PlannedPayments.Count(p => !p.IsSettled)</td>
+                                <td class="text-end money">@inv.TotalAmount.ToMoney()</td>
+                                <td class="text-end money @(inv.Balance > 0 && inv.Status != InvoiceStatus.Cancelled ? "text-danger fw-600" : "text-success")">@inv.Balance.ToMoney()</td>
+                                <td>@(totalPlanned > 0 ? $"{totalPlanned - pending}/{totalPlanned}" : "—")</td>
                             }
-                            <td><span class="badge-soft @(inv.Status == InvoiceStatus.Paid ? "success" : inv.Status == InvoiceStatus.Cancelled ? "neutral" : inv.Status == InvoiceStatus.PartiallyPaid ? "warning" : "info")">@inv.Status.GetDisplayName()</span></td>
-                            <td class="text-end">
+                            <td><span class="badge-soft @inv.Status.ToBadgeClass()">@inv.Status.GetDisplayName()</span></td>
+                            <td class="row-actions">
                                 <a asp-action="Details" asp-route-id="@inv.Id" class="btn btn-sm btn-outline-secondary">Detay</a>
+                                @if (isAdmin && inv.Status is InvoiceStatus.Issued or InvoiceStatus.PartiallyPaid)
+                                {
+                                    <a asp-action="AddPayment" asp-route-invoiceId="@inv.Id" class="btn btn-sm btn-outline-primary">Tahsilat</a>
+                                }
                             </td>
                         </tr>
                     }
                 </tbody>
             </table>
         </div>
-    </div>
-}
-
-@await Html.PartialAsync("_Pagination", new PaginationViewModel
-{
-    PageIndex = Model.PageIndex,
-    TotalPages = Model.TotalPages,
-    TotalCount = Model.TotalCount,
-    PageSize = Model.PageSize,
-    FirstItemNumber = Model.FirstItemNumber,
-    LastItemNumber = Model.LastItemNumber
-})
+        <partial name="_Pagination" model="new PaginationViewModel
+        {
+            PageIndex = list.PageIndex,
+            TotalPages = list.TotalPages,
+            TotalCount = list.TotalCount,
+            PageSize = list.PageSize,
+            FirstItemNumber = list.FirstItemNumber,
+            LastItemNumber = list.LastItemNumber
+        }" />
+    }
+</div>

@@ -1,0 +1,139 @@
+@model DentistDB.ViewModels.PatientFormViewModel
+
+<div asp-validation-summary="ModelOnly" class="alert alert-danger"></div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="FullName" class="form-label">Ad Soyad <span class="req">*</span></label>
+        <input asp-for="FullName" class="form-control" autocomplete="off" autofocus />
+        <span asp-validation-for="FullName" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Tckn" class="form-label">TCKN <span class="req">*</span></label>
+        <input asp-for="Tckn" class="form-control num" maxlength="11" inputmode="numeric" autocomplete="off" placeholder="11 haneli" />
+        <span asp-validation-for="Tckn" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Phone" class="form-label"></label>
+        <input asp-for="Phone" class="form-control num" inputmode="tel" placeholder="05xx xxx xx xx" autocomplete="off" />
+        <span asp-validation-for="Phone" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-3">
+        <label asp-for="BirthDate" class="form-label"></label>
+        <input asp-for="BirthDate" class="form-control" type="date" asp-format="{0:yyyy-MM-dd}" max="@DateTime.Today.ToString("yyyy-MM-dd")" />
+        <span asp-validation-for="BirthDate" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="ArrivalDate" class="form-label"></label>
+        <input asp-for="ArrivalDate" class="form-control" type="date" asp-format="{0:yyyy-MM-dd}" />
+        <span asp-validation-for="ArrivalDate" class="text-danger small"></span>
+    </div>
+    <div class="col-md-6">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control" type="email" autocomplete="off" />
+        <span asp-validation-for="Email" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Address" class="form-label"></label>
+        <input asp-for="Address" class="form-control" autocomplete="off" />
+        <span asp-validation-for="Address" class="text-danger small"></span>
+    </div>
+
+    <div class="col-md-5">
+        <label asp-for="EmergencyContactName" class="form-label"></label>
+        <input asp-for="EmergencyContactName" class="form-control" autocomplete="off" placeholder="Yakını, eş, çocuk…" />
+        <span asp-validation-for="EmergencyContactName" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="EmergencyContactPhone" class="form-label"></label>
+        <input asp-for="EmergencyContactPhone" class="form-control num" inputmode="tel" autocomplete="off" />
+        <span asp-validation-for="EmergencyContactPhone" class="text-danger small"></span>
+    </div>
+    <div class="col-md-4">
+        <label asp-for="GuardianName" class="form-label"></label>
+        <input asp-for="GuardianName" class="form-control" autocomplete="off" placeholder="Çocuk hastalar için" />
+        <span asp-validation-for="GuardianName" class="text-danger small"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="Notes" class="form-label"></label>
+        <textarea asp-for="Notes" class="form-control" rows="3" placeholder="Genel notlar, tercihler…"></textarea>
+        <span asp-validation-for="Notes" class="text-danger small"></span>
+    </div>
+</div>
+
+<div class="form-section">
+    <div class="form-section-title">Anamnez (Sağlık Geçmişi)</div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="Allergies" class="form-label"></label>
+            <input asp-for="Allergies" class="form-control" placeholder="Penisilin, lateks, lokal anestezik…" autocomplete="off" />
+            <span asp-validation-for="Allergies" class="text-danger small"></span>
+        </div>
+        <div class="col-md-6">
+            <label asp-for="Medications" class="form-label"></label>
+            <input asp-for="Medications" class="form-control" placeholder="Düzenli kullanılan ilaçlar" autocomplete="off" />
+            <span asp-validation-for="Medications" class="text-danger small"></span>
+        </div>
+        <div class="col-12">
+            <div class="anamnesis-grid">
+                <div class="form-check"><input asp-for="UsesAnticoagulant" class="form-check-input" /><label asp-for="UsesAnticoagulant" class="form-check-label"></label></div>
+                <div class="form-check"><input asp-for="HasBleedingDisorder" class="form-check-input" /><label asp-for="HasBleedingDisorder" class="form-check-label"></label></div>
+                <div class="form-check"><input asp-for="HasDiabetes" class="form-check-input" /><label asp-for="HasDiabetes" class="form-check-label"></label></div>
+                <div class="form-check"><input asp-for="HasHypertension" class="form-check-input" /><label asp-for="HasHypertension" class="form-check-label"></label></div>
+                <div class="form-check"><input asp-for="HasHeartDisease" class="form-check-input" /><label asp-for="HasHeartDisease" class="form-check-label"></label></div>
+                <div class="form-check"><input asp-for="IsPregnant" class="form-check-input" /><label asp-for="IsPregnant" class="form-check-label"></label></div>
+                <div class="form-check"><input asp-for="HasAsthma" class="form-check-input" /><label asp-for="HasAsthma" class="form-check-label"></label></div>
+                <div class="form-check"><input asp-for="HasEpilepsy" class="form-check-input" /><label asp-for="HasEpilepsy" class="form-check-label"></label></div>
+                <div class="form-check"><input asp-for="HasInfectiousDisease" class="form-check-input" /><label asp-for="HasInfectiousDisease" class="form-check-label"></label></div>
+                <div class="form-check"><input asp-for="IsSmoker" class="form-check-input" /><label asp-for="IsSmoker" class="form-check-label"></label></div>
+            </div>
+        </div>
+        <div class="col-12">
+            <label asp-for="AnamnesisNotes" class="form-label"></label>
+            <textarea asp-for="AnamnesisNotes" class="form-control" rows="2" placeholder="Geçirilmiş ameliyatlar, protez kalp kapağı, bifosfonat kullanımı, radyoterapi…"></textarea>
+            <span asp-validation-for="AnamnesisNotes" class="text-danger small"></span>
+        </div>
+        <div class="col-12">
+            <label asp-for="MedicalAlerts" class="form-label"></label>
+            <input asp-for="MedicalAlerts" class="form-control" placeholder="Hekimin her randevuda görmesi gereken serbest uyarı" autocomplete="off" />
+            <div class="form-text">İşaretli riskler ve alerjiler otomatik olarak kırmızı uyarı şeridinde gösterilir; buraya yalnızca ek notlar yazın.</div>
+            <span asp-validation-for="MedicalAlerts" class="text-danger small"></span>
+        </div>
+    </div>
+</div>
+
+<div class="form-section">
+    <div class="form-section-title">Fotoğraf</div>
+    <div class="d-flex flex-wrap align-items-center gap-3">
+        @if (Model.HasExistingPhoto)
+        {
+            <partial name="_Avatar" model='new AvatarModel(Model.Id, Model.FullName, true, "avatar-lg")' />
+        }
+        <div class="flex-grow-1" style="min-width:240px">
+            <input asp-for="PhotoFile" class="form-control" type="file" accept="image/jpeg,image/png,image/webp" />
+            <div class="form-text">İsteğe bağlı. JPG, PNG veya WebP, en fazla 3 MB.</div>
+            <span asp-validation-for="PhotoFile" class="text-danger small"></span>
+            @if (Model.HasExistingPhoto)
+            {
+                <div class="form-check mt-2">
+                    <input asp-for="RemovePhoto" class="form-check-input" type="checkbox" />
+                    <label asp-for="RemovePhoto" class="form-check-label"></label>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@if (Model.Id > 0)
+{
+    <div class="form-section">
+        <div class="form-check">
+            <input asp-for="IsArchived" class="form-check-input" type="checkbox" />
+            <label asp-for="IsArchived" class="form-check-label"></label>
+            <div class="form-text">Arşivdeki hastalar listelerde ve randevu formlarında görünmez; kayıtları silinmez.</div>
+        </div>
+    </div>
+}

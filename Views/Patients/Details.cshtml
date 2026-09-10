@@ -1,141 +1,536 @@
-@model DentistDB.Models.Patient
+@model DentistDB.ViewModels.PatientDetailsViewModel
 @{
-    ViewData["Title"] = Model.FullName;
-    var canViewFinancials = Context.CanViewFinancials();
+    var p = Model.Patient;
+    ViewData["Title"] = p.FullName;
+    var isAdmin = Context.IsAdmin();
+    var returnUrl = Url.Action("Details", "Patients", new { id = p.Id });
+    var tab = Model.ActiveTab;
+
+    string TabClass(string name) => tab == name ? "active" : "";
+    string TabUrl(string name) => Url.Action("Details", "Patients", new { id = p.Id, tab = name })!;
 }
 
 <div class="page-header">
-    <div>
-        <div class="eyebrow">Hasta Dosyasi</div>
-        <h2 class="page-title">@Model.FullName</h2>
-        <p class="page-subtitle">
-            Gelis tarihi @(Model.ArrivalDate?.ToString("D") ?? "belirtilmemis")
-            <span class="badge-soft @(Model.IsArchived ? "neutral" : "success") ms-2">@(Model.IsArchived ? "Arsivde" : "Aktif")</span>
-        </p>
+    <div class="person" style="gap:16px">
+        <partial name="_Avatar" model='new AvatarModel(p.Id, p.FullName, p.HasPhoto, "avatar-lg")' />
+        <div>
+            <div class="topbar-crumb mb-1"><a asp-action="Index">Hastalar</a> / Hasta Kartı</div>
+            <h2 class="page-title d-flex align-items-center gap-2 flex-wrap">
+                @p.FullName
+                <span class="badge-soft @(p.IsArchived ? "neutral" : "success")">@(p.IsArchived ? "Arşivde" : "Aktif")</span>
+            </h2>
+            <p class="page-subtitle">
+                @if (p.Age is { } age) { <text>@age yaşında · </text> }
+                @if (!string.IsNullOrEmpty(p.Phone)) { <a href="tel:@SearchNormalizer.DigitsOnly(p.Phone)">@p.Phone.FormatPhone()</a><text> · </text> }
+                <span class="num">TCKN @p.Tckn</span>
+                @if (!string.IsNullOrEmpty(p.GuardianName)) { <text> · Veli: @p.GuardianName</text> }
+            </p>
+        </div>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
-        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Duzenle</a>
-        <a asp-controller="PreviousOperations" asp-action="Index" asp-route-patientId="@Model.Id" class="btn btn-outline-secondary">Onceki Islemler</a>
-        @if (!Model.IsArchived)
+    <div class="page-actions">
+        <a asp-controller="Appointments" asp-action="Create" asp-route-patientId="@p.Id" asp-route-returnUrl="@returnUrl" class="btn btn-primary"><svg class="icon"><use href="#i-calendar-plus"/></svg> Randevu Ver</a>
+        <a asp-controller="PreviousOperations" asp-action="Create" asp-route-patientId="@p.Id" asp-route-returnUrl="@TabUrl("treatments")" class="btn btn-outline-secondary"><svg class="icon"><use href="#i-clipboard"/></svg> Tedavi Ekle</a>
+        <a asp-controller="Scans" asp-action="Upload" asp-route-patientId="@p.Id" class="btn btn-outline-secondary"><svg class="icon"><use href="#i-upload"/></svg> Görüntü Yükle</a>
+        @if (isAdmin)
         {
-            <form asp-action="Archive" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Bu hastayi arsive tasimak istiyor musunuz?')">
-                @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-outline-secondary">Arsivle</button>
-            </form>
+            <a asp-controller="Billing" asp-action="Create" asp-route-patientId="@p.Id" class="btn btn-outline-secondary"><svg class="icon"><use href="#i-receipt"/></svg> Fatura Kes</a>
         }
-        else
-        {
-            <form asp-action="Restore" asp-route-id="@Model.Id" method="post">
-                @Html.AntiForgeryToken()
-                <button type="submit" class="btn btn-success">Geri Yukle</button>
-            </form>
-        }
+        <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-outline-secondary"><svg class="icon"><use href="#i-edit"/></svg> Düzenle</a>
     </div>
 </div>
 
-@if (!string.IsNullOrEmpty(Model.MedicalAlerts))
+@if (p.HasMedicalRisk)
 {
-    <div class="alert alert-danger">
-        <strong>Tibbi Uyarilar:</strong> @Model.MedicalAlerts
+    <div class="medical-alert mb-3">
+        <svg class="icon"><use href="#i-alert"/></svg>
+        <div>
+            <strong>Tıbbi uyarı:</strong>
+            @if (!string.IsNullOrWhiteSpace(p.MedicalAlerts)) { <span>@p.MedicalAlerts</span> }
+            @if (p.RiskFlags.Count > 0)
+            {
+                <div class="risk-flags">
+                    @foreach (var flag in p.RiskFlags) { <span class="badge-soft danger">@flag</span> }
+                </div>
+            }
+        </div>
     </div>
 }
 
-<div class="row g-4 mb-4">
-    <div class="col-lg-4">
-        <div class="card h-100">
-            <div class="card-header"><h3 class="section-title">Kimlik ve Fotograf</h3></div>
-            <div class="card-body text-center">
-                @if (!string.IsNullOrWhiteSpace(Model.PhotoBase64) && !string.IsNullOrWhiteSpace(Model.PhotoContentType))
+<nav class="tabs">
+    <a href="@TabUrl("overview")" class="@TabClass("overview")">Genel Bakış</a>
+    <a href="@TabUrl("odontogram")" class="@TabClass("odontogram")">Diş Şeması <span class="count">@Model.Teeth.Count</span></a>
+    <a href="@TabUrl("plan")" class="@TabClass("plan")">Tedavi Planı <span class="count">@Model.OpenPlan.Count()</span></a>
+    <a href="@TabUrl("appointments")" class="@TabClass("appointments")">Randevular <span class="count">@Model.Appointments.Count</span></a>
+    <a href="@TabUrl("treatments")" class="@TabClass("treatments")">Tedaviler <span class="count">@Model.Operations.Count</span></a>
+    <a href="@TabUrl("scans")" class="@TabClass("scans")">Görüntüler <span class="count">@Model.Scans.Count</span></a>
+    <a href="@TabUrl("invoices")" class="@TabClass("invoices")">Faturalar <span class="count">@Model.Invoices.Count</span></a>
+    <a href="@TabUrl("forms")" class="@TabClass("forms")">Formlar <span class="count">@Model.Consents.Count</span></a>
+</nav>
+
+@if (tab == "overview")
+{
+    <div class="row g-3">
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header"><h3 class="card-title">Kimlik ve İletişim</h3></div>
+                <div class="card-body">
+                    <dl class="kv">
+                        <dt>TCKN</dt><dd class="num">@p.Tckn</dd>
+                        <dt>Telefon</dt><dd class="num">@(p.Phone.FormatPhone() ?? "—")</dd>
+                        <dt>E-posta</dt><dd>@(string.IsNullOrEmpty(p.Email) ? "—" : p.Email)</dd>
+                        <dt>Doğum Tarihi</dt><dd>@(p.BirthDate.HasValue ? $"{p.BirthDate.Value.ToShortDate()} ({p.Age} yaş)" : "—")</dd>
+                        <dt>İlk Geliş</dt><dd>@p.ArrivalDate.ToShortDate()</dd>
+                        <dt>Adres</dt><dd>@(string.IsNullOrEmpty(p.Address) ? "—" : p.Address)</dd>
+                        <dt>Acil Durum</dt><dd>@(string.IsNullOrEmpty(p.EmergencyContactName) ? "—" : $"{p.EmergencyContactName} {p.EmergencyContactPhone.FormatPhone()}")</dd>
+                        @if (!string.IsNullOrEmpty(p.GuardianName)) { <dt>Veli / Vasi</dt><dd>@p.GuardianName</dd> }
+                        <dt>Kayıt</dt><dd>@p.CreatedAt.ToLocalTime().ToShortDate()</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header"><h3 class="card-title">Anamnez</h3><a asp-action="Edit" asp-route-id="@p.Id" asp-fragment="Allergies" class="btn btn-sm btn-ghost"><svg class="icon"><use href="#i-edit"/></svg></a></div>
+                <div class="card-body">
+                    @if (p.AnamnesisUpdatedAt is null && p.RiskFlags.Count == 0 && string.IsNullOrWhiteSpace(p.AnamnesisNotes))
+                    {
+                        <p class="text-muted mb-2">Anamnez henüz alınmadı.</p>
+                        <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">Anamnez Gir</a>
+                    }
+                    else
+                    {
+                        <dl class="kv">
+                            <dt>Alerji</dt><dd class="@(string.IsNullOrWhiteSpace(p.Allergies) ? "" : "text-danger fw-600")">@(string.IsNullOrWhiteSpace(p.Allergies) ? "Bilinen alerji yok" : p.Allergies)</dd>
+                            <dt>İlaçlar</dt><dd>@(string.IsNullOrWhiteSpace(p.Medications) ? "—" : p.Medications)</dd>
+                            <dt>Durumlar</dt>
+                            <dd>
+                                @{
+                                    var conditions = p.RiskFlags.Where(f => !f.StartsWith("Alerji") && !f.StartsWith("İlaç")).ToList();
+                                    if (p.IsSmoker) conditions.Add("Sigara");
+                                }
+                                @if (conditions.Count == 0) { <span class="text-muted">Bilinen sistemik hastalık yok</span> }
+                                else { <span class="risk-flags">@foreach (var c in conditions) { <span class="badge-soft @(c == "Sigara" ? "neutral" : "danger")">@c</span> }</span> }
+                            </dd>
+                            @if (!string.IsNullOrWhiteSpace(p.AnamnesisNotes)) { <dt>Notlar</dt><dd class="pre-wrap">@p.AnamnesisNotes</dd> }
+                            <dt>Güncelleme</dt><dd class="text-muted">@(p.AnamnesisUpdatedAt?.ToLocalTime().ToShortDate() ?? "—")</dd>
+                        </dl>
+                    }
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card h-100">
+                <div class="card-header"><h3 class="card-title">Ziyaret Özeti</h3></div>
+                <div class="card-body">
+                    <dl class="kv">
+                        <dt>Sonraki Randevu</dt>
+                        <dd>
+                            @if (Model.NextAppointment is { } next)
+                            {
+                                <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@next.Id" asp-route-returnUrl="@returnUrl">@next.AppointmentDate.ToDateTimeText()</a>
+                                <span class="text-muted"> · @next.Purpose</span>
+                            }
+                            else
+                            {
+                                <span class="text-muted">Planlı randevu yok</span>
+                            }
+                        </dd>
+                        <dt>Son Ziyaret</dt><dd>@(Model.LastVisit?.ToShortDate() ?? "—")</dd>
+                        <dt>Randevular</dt><dd class="num">@Model.Appointments.Count(a => a.Status == AppointmentStatus.Completed) tamamlandı · @Model.Appointments.Count(a => a.Status == AppointmentStatus.NoShow) gelmedi</dd>
+                        <dt>Açık Plan</dt><dd class="num">@Model.OpenPlan.Count() kalem@(Model.ShowFinancials && Model.OpenPlanTotal > 0 ? $" · {Model.OpenPlanTotal.ToMoney()}" : "")</dd>
+                        <dt>Tedavi Kaydı</dt><dd class="num">@Model.Operations.Count</dd>
+                        <dt>Görüntü</dt><dd class="num">@Model.Scans.Count</dd>
+                        @if (Model.ShowFinancials)
+                        {
+                            <dt>Toplam Fatura</dt><dd class="money">@Model.TotalBilled.ToMoney()</dd>
+                            <dt>Bekleyen Bakiye</dt><dd class="money @(Model.OutstandingBalance > 0 ? "text-danger fw-600" : "text-success")">@Model.OutstandingBalance.ToMoney()</dd>
+                        }
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header"><h3 class="card-title">Notlar</h3><a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-ghost"><svg class="icon"><use href="#i-edit"/></svg></a></div>
+                <div class="card-body">
+                    @if (string.IsNullOrWhiteSpace(p.Notes)) { <p class="text-muted mb-0">Bu hasta için not eklenmemiş.</p> }
+                    else { <p class="pre-wrap mb-0">@p.Notes</p> }
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card h-100">
+                <div class="card-header"><h3 class="card-title">Son Tedaviler</h3><a href="@TabUrl("treatments")" class="btn btn-sm btn-outline-secondary">Tümü</a></div>
+                @if (!Model.Operations.Any())
                 {
-                    <img src="data:@Model.PhotoContentType;base64,@Model.PhotoBase64" alt="@Model.FullName" class="patient-photo-preview__img patient-photo-preview__img--large mb-3" />
+                    <div class="empty-state"><p>Henüz tedavi kaydı yok.</p></div>
                 }
                 else
                 {
-                    <div class="patient-photo-placeholder mb-3">Fotograf yok</div>
+                    <ul class="list">
+                        @foreach (var op in Model.Operations.Take(5))
+                        {
+                            var teeth = TeethSelectionSerializer.Parse(op.SelectedTeethData);
+                            <li class="list-item">
+                                <span class="time" style="min-width:90px">@op.Date.ToShortDate()</span>
+                                <div class="grow">
+                                    <div class="title">@op.Title</div>
+                                    <div class="meta">@(string.IsNullOrWhiteSpace(op.Procedures) ? op.Diagnosis : op.Procedures)</div>
+                                </div>
+                                @if (teeth.Any()) { <span class="tooth-chips">@foreach (var t in teeth) { <span class="tooth-chip">@t</span> }</span> }
+                            </li>
+                        }
+                    </ul>
                 }
-                <div class="small text-muted">TCKN</div>
-                <div class="fs-5 fw-semibold">@Model.Tckn</div>
             </div>
         </div>
     </div>
-    <div class="col-lg-4">
-        <div class="card h-100">
-            <div class="card-header"><h3 class="section-title">Iletisim Bilgileri</h3></div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-4">Telefon</dt>
-                    <dd class="col-sm-8">@(Model.Phone ?? "-")</dd>
-                    <dt class="col-sm-4">TCKN</dt>
-                    <dd class="col-sm-8">@Model.Tckn</dd>
-                    <dt class="col-sm-4">E-posta</dt>
-                    <dd class="col-sm-8">@(Model.Email ?? "-")</dd>
-                    <dt class="col-sm-4">Dogum Tarihi</dt>
-                    <dd class="col-sm-8">@(Model.BirthDate?.ToString("D") ?? "-")</dd>
-                    <dt class="col-sm-4">Gelis Tarihi</dt>
-                    <dd class="col-sm-8">@(Model.ArrivalDate?.ToString("D") ?? "-")</dd>
-                    <dt class="col-sm-4">Adres</dt>
-                    <dd class="col-sm-8">@(Model.Address ?? "-")</dd>
-                </dl>
-            </div>
-        </div>
-    </div>
-    <div class="col-lg-4">
-        <div class="card h-100">
-            <div class="card-header"><h3 class="section-title">Klinik Notlar</h3></div>
-            <div class="card-body">
-                <p class="mb-0">@(string.IsNullOrWhiteSpace(Model.Notes) ? "Bu hasta icin not eklenmemis." : Model.Notes)</p>
-            </div>
-        </div>
-    </div>
-</div>
 
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="section-title">Randevular</h3>
-        <a asp-controller="Appointments" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Yeni Randevu</a>
+    <div class="mt-4 d-flex gap-2 no-print">
+        @if (!p.IsArchived)
+        {
+            <form asp-action="Archive" asp-route-id="@p.Id" method="post" data-confirm="Bu hasta arşive taşınsın mı? Kayıtlar silinmez, hasta listelerde gizlenir.">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-outline-secondary btn-sm"><svg class="icon"><use href="#i-archive"/></svg> Arşive Taşı</button>
+            </form>
+        }
+        else
+        {
+            <form asp-action="Restore" asp-route-id="@p.Id" method="post">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-success btn-sm"><svg class="icon"><use href="#i-refresh"/></svg> Arşivden Çıkar</button>
+            </form>
+        }
     </div>
-    <div class="card-body p-0">
+}
+else if (tab == "odontogram")
+{
+    var statusJson = System.Text.Json.JsonSerializer.Serialize(Model.Teeth.ToDictionary(t => t.ToothNumber.ToString(), t => new { condition = t.Condition.ToString(), note = t.Note }));
+    var historyJson = System.Text.Json.JsonSerializer.Serialize(Model.ToothHistory.ToDictionary(k => k.Key.ToString(), v => v.Value.Select(h => new { date = h.Date.ToShortDate(), title = h.Title, source = h.Source })));
+    var labelsJson = System.Text.Json.JsonSerializer.Serialize(Enum.GetValues<ToothCondition>().ToDictionary(c => c.ToString(), c => c.GetDisplayName()));
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Diş Şeması</h3>
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-muted small">Bir dişe tıklayın: durumu ve geçmişi sağda açılır.</span>
+                <div class="btn-group-seg btn-group-seg--sm">
+                    <button type="button" data-dentition="permanent" title="Kalıcı dişler (11–48)">Kalıcı</button>
+                    <button type="button" data-dentition="deciduous" title="Süt dişleri (51–85)">Süt</button>
+                </div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="odontogram" data-odontogram data-svg-url="@Url.Content("~/images/teethSelection.svg")" data-statuses="@statusJson" data-history="@historyJson" data-labels="@labelsJson">
+                <div>
+                    <div class="tooth-selector-stage" data-odo-stage>
+                        <div class="tooth-selector-loading">Diş şeması yükleniyor…</div>
+                    </div>
+                    <div class="odo-legend">
+                        @foreach (var c in Enum.GetValues<ToothCondition>().Where(c => c != ToothCondition.Healthy))
+                        {
+                            <span><i class="cond-@c"></i>@c.GetDisplayName()</span>
+                        }
+                    </div>
+                </div>
+                <div>
+                    <p class="text-muted" data-odo-empty>
+                        @if (Model.Teeth.Count == 0) { <text>Henüz diş durumu kaydedilmedi. Şemadan bir diş seçerek başlayın.</text> }
+                        else { <text>@Model.Teeth.Count dişte kayıt var. Düzenlemek için şemadan seçin.</text> }
+                    </p>
+                    <div class="card" data-odo-panel hidden>
+                        <div class="card-header"><h3 class="card-title" data-odo-title></h3></div>
+                        <div class="card-body">
+                            <form asp-action="SetTooth" method="post" data-odo-form>
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="PatientId" value="@p.Id" />
+                                <input type="hidden" name="ToothNumber" value="" />
+                                <div class="row g-2 align-items-end">
+                                    <div class="col-sm-5">
+                                        <label class="form-label">Durum</label>
+                                        <select name="Condition" class="form-select">
+                                            @foreach (var c in Enum.GetValues<ToothCondition>()) { <option value="@c">@c.GetDisplayName()</option> }
+                                        </select>
+                                    </div>
+                                    <div class="col-sm-7">
+                                        <label class="form-label">Not</label>
+                                        <input type="text" name="Note" class="form-control" maxlength="300" placeholder="Örn. MO kompozit, 2024" autocomplete="off" />
+                                    </div>
+                                    <div class="col-12 d-flex gap-2 mt-2">
+                                        <button type="submit" class="btn btn-primary btn-sm"><svg class="icon"><use href="#i-check"/></svg> Kaydet</button>
+                                        <a asp-controller="PreviousOperations" asp-action="Create" asp-route-patientId="@p.Id" asp-route-returnUrl="@TabUrl("odontogram")" class="btn btn-outline-secondary btn-sm">Tedavi Kaydı Ekle</a>
+                                    </div>
+                                </div>
+                            </form>
+                            <div class="form-section">
+                                <div class="form-section-title">Bu dişin geçmişi</div>
+                                <ul class="odo-history" data-odo-history></ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (Model.Teeth.Count > 0)
+                    {
+                        <div class="card mt-3">
+                            <div class="card-header"><h3 class="card-title">Kayıtlı Dişler</h3></div>
+                            <div class="table-responsive">
+                                <table class="table">
+                                    <thead><tr><th>Diş</th><th>Durum</th><th>Not</th><th>Güncelleme</th></tr></thead>
+                                    <tbody>
+                                        @foreach (var t in Model.Teeth)
+                                        {
+                                            <tr>
+                                                <td><span class="tooth-chip">@t.ToothNumber</span></td>
+                                                <td>@t.Condition.GetDisplayName()</td>
+                                                <td>@(t.Note ?? "—")</td>
+                                                <td class="text-muted small">@t.UpdatedAt.ToLocalTime().ToShortDate()</td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="~/js/tooth-chart.js" asp-append-version="true" defer></script>
+    <script src="~/js/odontogram.js" asp-append-version="true" defer></script>
+}
+else if (tab == "plan")
+{
+    var planReturn = TabUrl("plan");
+    var unbilled = Model.UnbilledDone.ToList();
+    <div class="row g-3">
+        <div class="col-xl-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Tedavi Planı</h3>
+                    @if (Model.ShowFinancials && Model.OpenPlanTotal > 0)
+                    {
+                        <span class="badge-soft primary money">Açık plan: @Model.OpenPlanTotal.ToMoney()</span>
+                    }
+                </div>
+                @if (!Model.Plan.Any())
+                {
+                    <div class="empty-state"><svg class="icon"><use href="#i-list"/></svg><p>Henüz planlanmış işlem yok. Sağdaki formdan ekleyin.</p></div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table plan-table">
+                            <thead><tr><th style="width:32px"></th><th>İşlem</th><th>Dişler</th>@if (Model.ShowFinancials) { <th class="text-end">Ücret</th> }<th>Durum</th><th class="row-actions"></th></tr></thead>
+                            <tbody>
+                                @foreach (var item in Model.Plan)
+                                {
+                                    var teeth = TeethSelectionSerializer.Parse(item.ToothNumbers);
+                                    var open = item.Status is TreatmentPlanStatus.Planned or TreatmentPlanStatus.Scheduled;
+                                    <tr class="plan-status-@item.Status">
+                                        <td>
+                                            @if (open)
+                                            {
+                                                <div class="d-flex flex-column">
+                                                    <form asp-controller="TreatmentPlan" asp-action="Move" asp-route-id="@item.Id" asp-route-direction="-1" method="post" class="m-0">@Html.AntiForgeryToken()<button class="btn btn-ghost btn-icon p-0" title="Yukarı">▲</button></form>
+                                                    <form asp-controller="TreatmentPlan" asp-action="Move" asp-route-id="@item.Id" asp-route-direction="1" method="post" class="m-0">@Html.AntiForgeryToken()<button class="btn btn-ghost btn-icon p-0" title="Aşağı">▼</button></form>
+                                                </div>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="fw-600">@item.Description</div>
+                                            @if (!string.IsNullOrWhiteSpace(item.Notes)) { <div class="sub">@item.Notes</div> }
+                                            @if (item.Appointment != null && item.Status == TreatmentPlanStatus.Scheduled) { <div class="sub">Randevu: <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@item.AppointmentId" asp-route-returnUrl="@planReturn">@item.Appointment.AppointmentDate.ToDateTimeText()</a></div> }
+                                            @if (item.Status == TreatmentPlanStatus.Done) { <div class="sub">Tamamlandı @item.CompletedAt?.ToLocalTime().ToShortDate()@(item.IsBilled ? $" · Fatura #{item.InvoiceId}" : " · faturalanmadı")</div> }
+                                        </td>
+                                        <td>@if (teeth.Any()) { <span class="tooth-chips">@foreach (var t in teeth) { <span class="tooth-chip">@t</span> }</span> } else { <span class="text-faint">—</span> }</td>
+                                        @if (Model.ShowFinancials) { <td class="text-end money">@item.EstimatedPrice.ToMoney()</td> }
+                                        <td><span class="badge-soft @(item.Status switch { TreatmentPlanStatus.Done => "success", TreatmentPlanStatus.Scheduled => "info", TreatmentPlanStatus.Cancelled => "neutral", _ => "warning" })">@item.Status.GetDisplayName()</span></td>
+                                        <td class="row-actions">
+                                            @if (open)
+                                            {
+                                                @if (item.Status == TreatmentPlanStatus.Planned)
+                                                {
+                                                    <a asp-controller="Appointments" asp-action="Create" asp-route-planItemId="@item.Id" asp-route-returnUrl="@planReturn" class="btn btn-sm btn-outline-primary" title="Randevu ver"><svg class="icon"><use href="#i-calendar-plus"/></svg></a>
+                                                }
+                                                <form asp-controller="TreatmentPlan" asp-action="Complete" asp-route-id="@item.Id" method="post" class="d-inline" data-confirm="“@item.Description” tamamlandı olarak işaretlenip tedavi kaydı oluşturulsun mu?">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Tamamlandı"><svg class="icon"><use href="#i-check"/></svg></button>
+                                                </form>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary js-plan-edit" title="Düzenle"
+                                                        data-id="@item.Id" data-procedure="@item.ProcedureId" data-description="@item.Description" data-teeth="@item.ToothNumbers" data-price="@item.EstimatedPrice.ToString("0.00")" data-notes="@item.Notes"><svg class="icon"><use href="#i-edit"/></svg></button>
+                                                <form asp-controller="TreatmentPlan" asp-action="SetStatus" asp-route-id="@item.Id" asp-route-status="Cancelled" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="İptal"><svg class="icon"><use href="#i-x"/></svg></button>
+                                                </form>
+                                            }
+                                            else if (item.Status == TreatmentPlanStatus.Cancelled)
+                                            {
+                                                <form asp-controller="TreatmentPlan" asp-action="SetStatus" asp-route-id="@item.Id" asp-route-status="Planned" method="post" class="d-inline">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Yeniden aç"><svg class="icon"><use href="#i-refresh"/></svg></button>
+                                                </form>
+                                            }
+                                            @if (isAdmin)
+                                            {
+                                                <form asp-controller="TreatmentPlan" asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" data-confirm="Plan kalemi silinsin mi?">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Sil"><svg class="icon"><use href="#i-trash"/></svg></button>
+                                                </form>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+
+            @if (isAdmin && unbilled.Count > 0)
+            {
+                <div class="alert alert-warning mt-3">
+                    <svg class="icon"><use href="#i-receipt"/></svg>
+                    <div class="flex-grow-1">
+                        <strong>@unbilled.Count tamamlanmış işlem henüz faturalanmadı</strong>
+                        <div class="small">@string.Join(", ", unbilled.Select(u => u.Description))</div>
+                    </div>
+                    <a asp-controller="Billing" asp-action="Create" asp-route-planItems="@string.Join(",", unbilled.Select(u => u.Id))" class="btn btn-sm btn-primary">Fatura Oluştur</a>
+                </div>
+            }
+        </div>
+
+        <div class="col-xl-4">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title" data-plan-form-title>Plana Ekle</h3></div>
+                <div class="card-body">
+                    <form asp-controller="TreatmentPlan" asp-action="Save" method="post" data-plan-form data-procedures='@System.Text.Json.JsonSerializer.Serialize(Model.Procedures.Select(x => new { id = x.Id, name = x.Name, price = x.DefaultPrice }))'>
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="PatientId" value="@p.Id" />
+                        <input type="hidden" name="Id" value="0" />
+                        <div class="mb-2">
+                            <label class="form-label">Fiyat Listesinden</label>
+                            <select name="ProcedureId" class="form-select" data-plan-procedure>
+                                <option value="">— Serbest —</option>
+                                @foreach (var proc in Model.Procedures) { <option value="@proc.Id">@proc.Name</option> }
+                            </select>
+                        </div>
+                        <div class="mb-2">
+                            <label class="form-label">İşlem <span class="req">*</span></label>
+                            <input type="text" name="Description" class="form-control" maxlength="200" required autocomplete="off" data-plan-description />
+                        </div>
+                        <div class="row g-2 mb-2">
+                            <div class="col-6">
+                                <label class="form-label">Dişler</label>
+                                <input type="text" name="ToothNumbers" class="form-control num" maxlength="200" placeholder="16, 17" autocomplete="off" data-plan-teeth />
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label">Tahmini Ücret</label>
+                                <div class="input-group"><input type="text" name="EstimatedPrice" class="form-control num text-end" inputmode="decimal" value="0,00" data-plan-price /><span class="input-group-text">₺</span></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Notlar</label>
+                            <input type="text" name="Notes" class="form-control" maxlength="500" autocomplete="off" data-plan-notes />
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="submit" class="btn btn-primary" data-plan-submit><svg class="icon"><use href="#i-plus"/></svg> Ekle</button>
+                            <button type="button" class="btn btn-outline-secondary d-none" data-plan-cancel>Vazgeç</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function () {
+            var form = document.querySelector("[data-plan-form]");
+            if (!form) return;
+            var procedures = JSON.parse(form.dataset.procedures || "[]");
+            var sel = form.querySelector("[data-plan-procedure]");
+            var desc = form.querySelector("[data-plan-description]");
+            var price = form.querySelector("[data-plan-price]");
+            var teeth = form.querySelector("[data-plan-teeth]");
+            var notes = form.querySelector("[data-plan-notes]");
+            var idInput = form.querySelector("[name='Id']");
+            var title = document.querySelector("[data-plan-form-title]");
+            var submit = form.querySelector("[data-plan-submit]");
+            var cancel = form.querySelector("[data-plan-cancel]");
+
+            sel.addEventListener("change", function () {
+                var proc = procedures.find(function (p) { return String(p.id) === sel.value; });
+                if (!proc) return;
+                if (!desc.value.trim() || desc.dataset.auto === "true") { desc.value = proc.name; desc.dataset.auto = "true"; }
+                price.value = proc.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false });
+            });
+            desc.addEventListener("input", function () { desc.dataset.auto = "false"; });
+
+            var reset = function () {
+                idInput.value = "0"; sel.value = ""; desc.value = ""; teeth.value = ""; price.value = "0,00"; notes.value = "";
+                title.textContent = "Plana Ekle"; submit.innerHTML = submit.innerHTML.replace("Kaydet", "Ekle"); cancel.classList.add("d-none");
+            };
+            cancel.addEventListener("click", reset);
+
+            document.querizeAll = null;
+            document.querySelectorAll(".js-plan-edit").forEach(function (btn) {
+                btn.addEventListener("click", function () {
+                    idInput.value = btn.dataset.id;
+                    sel.value = btn.dataset.procedure || "";
+                    desc.value = btn.dataset.description || "";
+                    teeth.value = btn.dataset.teeth || "";
+                    price.value = (btn.dataset.price || "0.00").replace(".", ",");
+                    notes.value = btn.dataset.notes || "";
+                    title.textContent = "Plan Kalemini Düzenle";
+                    submit.innerHTML = submit.innerHTML.replace("Ekle", "Kaydet");
+                    cancel.classList.remove("d-none");
+                    desc.focus();
+                    form.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                });
+            });
+        })();
+    </script>
+}
+else if (tab == "appointments")
+{
+    var apptReturn = TabUrl("appointments");
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Randevular</h3>
+            <a asp-controller="Appointments" asp-action="Create" asp-route-patientId="@p.Id" asp-route-returnUrl="@apptReturn" class="btn btn-sm btn-primary"><svg class="icon"><use href="#i-plus"/></svg> Randevu</a>
+        </div>
         @if (!Model.Appointments.Any())
         {
-            <p class="empty-state mb-0">Bu hastaya ait randevu bulunmuyor.</p>
+            <div class="empty-state"><svg class="icon"><use href="#i-calendar"/></svg><p>Bu hastaya ait randevu yok.</p></div>
         }
         else
         {
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Tarih</th>
-                            <th>Konu</th>
-                            <th>Durum</th>
-                            <th class="text-end">Islem</th>
-                        </tr>
-                    </thead>
+                <table class="table table-hover">
+                    <thead><tr><th>Tarih</th><th>Saat</th><th>Süre</th><th>Neden</th><th>Dişler</th><th>Durum</th><th class="row-actions"></th></tr></thead>
                     <tbody>
-                        @foreach (var appt in Model.Appointments)
+                        @foreach (var a in Model.Appointments)
                         {
-                            var selectedTeeth = TeethSelectionSerializer.Parse(appt.SelectedTeethData);
+                            var teeth = TeethSelectionSerializer.Parse(a.SelectedTeethData);
                             <tr>
-                                <td>@appt.AppointmentDate.ToString("f")</td>
-                                <td>
-                                    @(string.IsNullOrWhiteSpace(appt.Purpose) ? "Belirtilmedi" : appt.Purpose)
-                                    @if (selectedTeeth.Any())
+                                <td>@a.AppointmentDate.ToShortDate() <span class="sub">@a.AppointmentDate.ToString("dddd")</span></td>
+                                <td class="num">@a.AppointmentDate.ToTimeText()–@a.EndDate.ToTimeText()</td>
+                                <td>@a.DurationMinutes.ToDurationText()</td>
+                                <td>@a.Purpose @if (!string.IsNullOrWhiteSpace(a.Notes)) { <span class="sub">@a.Notes</span> }</td>
+                                <td>@if (teeth.Any()) { <span class="tooth-chips">@foreach (var t in teeth) { <span class="tooth-chip">@t</span> }</span> } else { <span class="text-faint">—</span> }</td>
+                                <td><span class="badge-soft @a.Status.ToBadgeClass()">@a.Status.GetDisplayName()</span></td>
+                                <td class="row-actions">
+                                    @if (a.Status == AppointmentStatus.Scheduled)
                                     {
-                                        <div class="operation-teeth mt-2">
-                                            @foreach (var tooth in selectedTeeth)
-                                            {
-                                                <span class="badge-soft info">@tooth</span>
-                                            }
-                                        </div>
+                                        <form asp-controller="Appointments" asp-action="SetStatus" asp-route-id="@a.Id" asp-route-status="Completed" asp-route-returnUrl="@apptReturn" method="post" class="d-inline">
+                                            @Html.AntiForgeryToken()
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Tamamlandı"><svg class="icon"><use href="#i-check"/></svg></button>
+                                        </form>
                                     }
-                                    @if (!string.IsNullOrWhiteSpace(appt.Notes))
+                                    else if (a.Status == AppointmentStatus.Completed)
                                     {
-                                        <div class="text-muted small mt-1">@appt.Notes</div>
+                                        <partial name="~/Views/Appointments/_FollowUpMenu.cshtml" model="a" view-data='new ViewDataDictionary(ViewData) { { "ReturnUrl", apptReturn } }' />
                                     }
-                                </td>
-                                <td><span class="badge-soft @(appt.Status == AppointmentStatus.Completed ? "success" : appt.Status == AppointmentStatus.Cancelled ? "neutral" : appt.Status == AppointmentStatus.NoShow ? "warning" : "info")">@appt.Status.GetDisplayName()</span></td>
-                                <td class="text-end">
-                                    <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@appt.Id" class="btn btn-sm btn-outline-secondary">Duzenle</a>
+                                    <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@a.Id" asp-route-returnUrl="@apptReturn" class="btn btn-sm btn-outline-secondary" title="Düzenle"><svg class="icon"><use href="#i-edit"/></svg></a>
                                 </td>
                             </tr>
                         }
@@ -144,95 +539,91 @@
             </div>
         }
     </div>
-</div>
-
-<div class="card mb-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="section-title">Goruntuler ve Taramalar</h3>
-        <a asp-controller="Scans" asp-action="Upload" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Tarama Yukle</a>
+}
+else if (tab == "treatments")
+{
+    var opReturn = TabUrl("treatments");
+    <div class="page-actions mb-3">
+        <a asp-controller="PreviousOperations" asp-action="Create" asp-route-patientId="@p.Id" asp-route-returnUrl="@opReturn" class="btn btn-primary"><svg class="icon"><use href="#i-plus"/></svg> Tedavi Kaydı Ekle</a>
     </div>
-    <div class="card-body p-0">
-        @if (!Model.Scans.Any())
+    @if (!Model.Operations.Any())
+    {
+        <div class="card"><div class="empty-state"><svg class="icon"><use href="#i-clipboard"/></svg><p>Bu hasta için tedavi kaydı yok.</p></div></div>
+    }
+    else
+    {
+        foreach (var op in Model.Operations)
         {
-            <p class="empty-state mb-0">Yuklenmis tarama bulunmuyor.</p>
+            <partial name="~/Views/PreviousOperations/_OperationCard.cshtml" model="op" view-data='new ViewDataDictionary(ViewData) { { "ReturnUrl", opReturn }, { "ShowPatient", false } }' />
         }
-        else
-        {
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Tarih</th>
-                            <th>Dosya</th>
-                            <th>Tur</th>
-                            <th>Boyut</th>
-                            <th class="text-end">Islem</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var scan in Model.Scans)
-                        {
-                            <tr>
-                                <td>@scan.ScanDate.ToString("d")</td>
-                                <td>@scan.FileName</td>
-                                <td><span class="badge-soft info">@scan.ScanType.GetDisplayName()</span></td>
-                                <td>@((scan.FileSize / 1024.0).ToString("F1")) KB</td>
-                                <td class="text-end">
-                                    <a asp-controller="Scans" asp-action="View" asp-route-id="@scan.Id" class="btn btn-sm btn-outline-primary">Incele</a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-        }
+    }
+}
+else if (tab == "scans")
+{
+    <div class="page-actions mb-3">
+        <a asp-controller="Scans" asp-action="Upload" asp-route-patientId="@p.Id" class="btn btn-primary"><svg class="icon"><use href="#i-upload"/></svg> Görüntü Yükle</a>
     </div>
-</div>
-
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h3 class="section-title">Faturalar</h3>
-        <a asp-controller="Billing" asp-action="Create" asp-route-patientId="@Model.Id" class="btn btn-sm btn-outline-primary">Yeni Fatura</a>
-    </div>
-    <div class="card-body p-0">
+    @if (!Model.Scans.Any())
+    {
+        <div class="card"><div class="empty-state"><svg class="icon"><use href="#i-image"/></svg><p>Yüklenmiş röntgen veya görüntü yok.</p></div></div>
+    }
+    else
+    {
+        <div class="scan-grid">
+            @foreach (var s in Model.Scans)
+            {
+                <a asp-controller="Scans" asp-action="View" asp-route-id="@s.Id" class="scan-card text-decoration-none">
+                    <div class="scan-thumb">
+                        @if (s.IsImage) { <img src="@Url.Action("ContentFile", "Scans", new { id = s.Id })" alt="@s.FileName" loading="lazy" /> }
+                        else { <svg class="icon"><use href="#i-file"/></svg> }
+                    </div>
+                    <div class="scan-meta">
+                        <div class="name text-body">@s.ScanType.GetDisplayName()</div>
+                        <div class="text-muted">@s.ScanDate.ToShortDate() · @s.FileSizeDisplay</div>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+}
+else if (tab == "invoices")
+{
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Faturalar</h3>
+            @if (isAdmin) { <a asp-controller="Billing" asp-action="Create" asp-route-patientId="@p.Id" class="btn btn-sm btn-primary"><svg class="icon"><use href="#i-plus"/></svg> Fatura</a> }
+        </div>
         @if (!Model.Invoices.Any())
         {
-            <p class="empty-state mb-0">Fatura kaydi bulunmuyor.</p>
+            <div class="empty-state"><svg class="icon"><use href="#i-receipt"/></svg><p>Fatura kaydı yok.</p></div>
         }
         else
         {
             <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
+                <table class="table table-hover">
+                    <thead>
                         <tr>
-                            <th>Tarih</th>
-                            @if (canViewFinancials)
-                            {
-                                <th>Toplam</th>
-                                <th>Odenen</th>
-                                <th>Kalan</th>
-                                <th>Plan</th>
-                            }
-                            <th>Durum</th>
-                            <th class="text-end">Islem</th>
+                            <th>No</th><th>Tarih</th><th>Vade</th><th>İçerik</th>
+                            @if (Model.ShowFinancials) { <th class="text-end">Toplam</th><th class="text-end">Ödenen</th><th class="text-end">Kalan</th> }
+                            <th>Durum</th><th class="row-actions"></th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach (var inv in Model.Invoices)
                         {
                             <tr>
-                                <td>@inv.InvoiceDate.ToString("d")</td>
-                                @if (canViewFinancials)
+                                <td class="num">#@inv.Id</td>
+                                <td>@inv.InvoiceDate.ToShortDate()</td>
+                                <td class="@(inv.IsOverdue ? "text-danger fw-600" : "")">@inv.DueDate.ToShortDate()</td>
+                                <td class="truncate" style="max-width:260px">@string.Join(", ", inv.Items.OrderBy(i => i.SortOrder).Select(i => i.Description))</td>
+                                @if (Model.ShowFinancials)
                                 {
-                                    <td>@inv.TotalAmount.ToString("C")</td>
-                                    <td>@inv.TotalPaid.ToString("C")</td>
-                                    <td>@inv.Balance.ToString("C")</td>
-                                    <td>@inv.PlannedPayments.Count(p => !p.IsSettled)</td>
+                                    <td class="text-end money">@inv.TotalAmount.ToMoney()</td>
+                                    <td class="text-end money">@inv.TotalPaid.ToMoney()</td>
+                                    <td class="text-end money @(inv.Balance > 0 && inv.Status != InvoiceStatus.Cancelled ? "text-danger fw-600" : "")">@inv.Balance.ToMoney()</td>
                                 }
-                                <td><span class="badge-soft @(inv.Status == InvoiceStatus.Paid ? "success" : inv.Status == InvoiceStatus.Cancelled ? "neutral" : inv.Status == InvoiceStatus.PartiallyPaid ? "warning" : "info")">@inv.Status.GetDisplayName()</span></td>
-                                <td class="text-end">
-                                    <a asp-controller="Billing" asp-action="Details" asp-route-id="@inv.Id" class="btn btn-sm btn-outline-secondary">Detay</a>
-                                </td>
+                                <td><span class="badge-soft @inv.Status.ToBadgeClass()">@inv.Status.GetDisplayName()</span></td>
+                                <td class="row-actions"><a asp-controller="Billing" asp-action="Details" asp-route-id="@inv.Id" class="btn btn-sm btn-outline-secondary">Detay</a></td>
                             </tr>
                         }
                     </tbody>
@@ -240,4 +631,83 @@
             </div>
         }
     </div>
-</div>
+}
+else if (tab == "forms")
+{
+    <div class="row g-3">
+        <div class="col-lg-5">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Formları Yazdır</h3></div>
+                <div class="card-body">
+                    <p class="text-muted">Hastanın bilgileri forma otomatik yazılır. Yazdırıp imzalattıktan sonra aşağıdan “imzalandı” olarak kaydedin.</p>
+                    <div class="d-grid gap-2">
+                        @foreach (var type in Enum.GetValues<ConsentType>())
+                        {
+                            var last = Model.Consents.FirstOrDefault(c => c.Type == type);
+                            <div class="d-flex align-items-center gap-2 flex-wrap">
+                                <a asp-action="Consent" asp-route-id="@p.Id" asp-route-type="@type" target="_blank" class="btn btn-outline-primary"><svg class="icon"><use href="#i-print"/></svg> @type.GetDisplayName()</a>
+                                @if (last != null) { <span class="badge-soft success">İmzalandı @last.SignedOn.ToShortDate()</span> }
+                                else { <span class="badge-soft warning">İmza yok</span> }
+                            </div>
+                        }
+                    </div>
+                    <div class="form-section">
+                        <div class="form-section-title">İmzalandı olarak kaydet</div>
+                        <form asp-action="RecordConsent" method="post" class="row g-2 align-items-end">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="patientId" value="@p.Id" />
+                            <div class="col-sm-6">
+                                <label class="form-label">Form</label>
+                                <select name="type" class="form-select">@foreach (var type in Enum.GetValues<ConsentType>()) { <option value="@type">@type.GetDisplayName()</option> }</select>
+                            </div>
+                            <div class="col-sm-6">
+                                <label class="form-label">İmza Tarihi</label>
+                                <input type="date" name="signedOn" class="form-control" value="@DateTime.Today.ToString("yyyy-MM-dd")" />
+                            </div>
+                            <div class="col-12">
+                                <input type="text" name="notes" class="form-control" placeholder="Not (isteğe bağlı)" maxlength="300" />
+                            </div>
+                            <div class="col-12"><button type="submit" class="btn btn-primary"><svg class="icon"><use href="#i-check"/></svg> Kaydet</button></div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-7">
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">İmza Kayıtları</h3></div>
+                @if (!Model.Consents.Any())
+                {
+                    <div class="empty-state"><p>Henüz imzalanmış form kaydı yok.</p></div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead><tr><th>Form</th><th>İmza Tarihi</th><th>Not</th><th class="row-actions"></th></tr></thead>
+                            <tbody>
+                                @foreach (var c in Model.Consents)
+                                {
+                                    <tr>
+                                        <td>@c.Type.GetDisplayName()</td>
+                                        <td>@c.SignedOn.ToShortDate()</td>
+                                        <td>@(c.Notes ?? "—")</td>
+                                        <td class="row-actions">
+                                            @if (isAdmin)
+                                            {
+                                                <form asp-action="DeleteConsent" asp-route-id="@c.Id" method="post" class="d-inline" data-confirm="Bu imza kaydı silinsin mi?">
+                                                    @Html.AntiForgeryToken()
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger btn-icon"><svg class="icon"><use href="#i-trash"/></svg></button>
+                                                </form>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+}

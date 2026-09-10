@@ -10,10 +10,12 @@ public static class HttpContextAccountExtensions
         return AppAccounts.Find(accountKey);
     }
 
-    public static bool CanViewFinancials(this HttpContext httpContext)
+    public static bool IsAdmin(this HttpContext httpContext)
     {
         return httpContext.GetCurrentAccount()?.Role == AppAccountRole.Admin;
     }
+
+    public static bool CanViewFinancials(this HttpContext httpContext) => httpContext.IsAdmin();
 
     public static void SignInAccount(this HttpContext httpContext, string accountKey)
     {
@@ -25,6 +27,11 @@ public static class HttpContextAccountExtensions
 
     public static void SignOutAccount(this HttpContext httpContext)
     {
-        httpContext.Session.Remove(AppAccounts.SessionKey);
+        httpContext.Session.Clear();
+    }
+
+    public static string GetClientKey(this HttpContext httpContext)
+    {
+        return httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
     }
 }

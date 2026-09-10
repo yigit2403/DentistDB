@@ -1,21 +1,21 @@
 @model DentistDB.ViewModels.PaymentFormViewModel
 @{
-    ViewData["Title"] = "Odeme Ekle";
-    var invoice = ViewBag.Invoice as DentistDB.Models.Invoice;
+    ViewData["Title"] = "Tahsilat Ekle";
+    var invoice = Model.Invoice;
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Tahsilat</div>
-        <h2 class="page-title">Fatura icin odeme kaydi ekleyin.</h2>
+        <div class="topbar-crumb"><a asp-action="Index">Faturalar</a> / <a asp-action="Details" asp-route-id="@Model.InvoiceId">#@Model.InvoiceId</a> / Tahsilat</div>
+        <h2 class="page-title">Tahsilat Ekle</h2>
         @if (invoice != null)
         {
-            <p class="page-subtitle">Fatura #@invoice.Id - @invoice.Patient?.FullName - Kalan bakiye: <strong class="text-danger">@invoice.Balance.ToString("C")</strong></p>
+            <p class="page-subtitle">@invoice.Patient?.FullName · Fatura #@invoice.Id · Kalan <strong class="money @(invoice.Balance > 0 ? "text-danger" : "text-success")">@invoice.Balance.ToMoney()</strong></p>
         }
     </div>
 </div>
 
-<div class="card">
+<div class="card content--narrow">
     <div class="card-body p-4">
         <form asp-action="AddPayment" method="post">
             @Html.AntiForgeryToken()
@@ -25,23 +25,24 @@
             <div class="row g-3">
                 @if (Model.PlannedPayments.Any())
                 {
-                    <div class="col-md-12">
-                        <label asp-for="PlannedPaymentId" class="form-label"></label>
-                        <select asp-for="PlannedPaymentId" asp-items="Model.PlannedPayments" class="form-select">
-                            <option value="">Plan disi manuel odeme</option>
+                    <div class="col-12">
+                        <label asp-for="PlannedPaymentId" class="form-label">Hangi taksit tahsil ediliyor?</label>
+                        <select asp-for="PlannedPaymentId" asp-items="Model.PlannedPayments" class="form-select" data-installments='@System.Text.Json.JsonSerializer.Serialize(invoice?.PlannedPayments.Where(p => !p.IsSettled).Select(p => new { id = p.Id, amount = p.Amount.ToString("0.00") }))'>
+                            <option value="">Plan dışı / serbest tahsilat</option>
                         </select>
                         <span asp-validation-for="PlannedPaymentId" class="text-danger small"></span>
                     </div>
                 }
-                <div class="col-md-3">
+                <div class="col-md-4">
                     <label asp-for="PaymentDate" class="form-label"></label>
-                    <input asp-for="PaymentDate" class="form-control" type="date" />
+                    <input asp-for="PaymentDate" class="form-control" type="date" asp-format="{0:yyyy-MM-dd}" />
+                    <span asp-validation-for="PaymentDate" class="text-danger small"></span>
                 </div>
-                <div class="col-md-3">
-                    <label asp-for="Amount" class="form-label"></label>
+                <div class="col-md-4">
+                    <label asp-for="Amount" class="form-label">Tutar <span class="req">*</span></label>
                     <div class="input-group">
-                        <span class="input-group-text">TL</span>
-                        <input asp-for="Amount" class="form-control" type="number" step="0.01" min="0.01" />
+                        <input asp-for="Amount" class="form-control num text-end" type="text" inputmode="decimal" asp-format="{0:0.00}" autofocus />
+                        <span class="input-group-text">₺</span>
                     </div>
                     <span asp-validation-for="Amount" class="text-danger small"></span>
                 </div>
@@ -49,20 +50,33 @@
                     <label asp-for="PaymentMethod" class="form-label"></label>
                     <select asp-for="PaymentMethod" asp-items="Html.GetEnumSelectList<PaymentMethod>()" class="form-select"></select>
                 </div>
-                <div class="col-md-12">
+                <div class="col-12">
                     <label asp-for="Notes" class="form-label"></label>
-                    <input asp-for="Notes" class="form-control" />
+                    <input asp-for="Notes" class="form-control" placeholder="Makbuz no, açıklama…" autocomplete="off" />
+                    <span asp-validation-for="Notes" class="text-danger small"></span>
                 </div>
             </div>
 
-            <div class="mt-4 d-flex gap-2">
-                <button type="submit" class="btn btn-success">Odemeyi Kaydet</button>
-                <a asp-action="Details" asp-route-id="@Model.InvoiceId" class="btn btn-outline-secondary">Vazgec</a>
+            <div class="form-actions">
+                <button type="submit" class="btn btn-success"><svg class="icon"><use href="#i-check"/></svg> Tahsilatı Kaydet</button>
+                <a asp-action="Details" asp-route-id="@Model.InvoiceId" class="btn btn-outline-secondary">Vazgeç</a>
             </div>
         </form>
     </div>
 </div>
 
 @section Scripts {
-    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var select = document.querySelector("[data-installments]");
+            var amount = document.getElementById("Amount");
+            if (!select || !amount) return;
+            var items = JSON.parse(select.dataset.installments || "[]");
+            select.addEventListener("change", function () {
+                var match = items.find(function (i) { return String(i.id) === select.value; });
+                if (match) amount.value = match.amount.replace(".", ",");
+            });
+        })();
+    </script>
 }

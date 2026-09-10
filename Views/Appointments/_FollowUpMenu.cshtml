@@ -1,0 +1,28 @@
+@model DentistDB.Models.Appointment
+@{
+    var returnUrl = ViewData["ReturnUrl"] as string;
+    var menuId = $"followup-{Model.Id}";
+}
+<div class="dropdown d-inline-block">
+    <button type="button" class="btn btn-sm btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false" title="Kontrol randevusu ver" id="@menuId">
+        <svg class="icon"><use href="#i-calendar-plus"/></svg> Kontrol
+    </button>
+    <ul class="dropdown-menu" aria-labelledby="@menuId">
+        <li><h6 class="dropdown-header">Kontrol randevusu</h6></li>
+        @foreach (var option in AppointmentPurposeCatalog.FollowUpOptions)
+        {
+            var target = Model.AppointmentDate.Date.AddDays(option.Days).Add(Model.AppointmentDate.TimeOfDay);
+            <li>
+                <a class="dropdown-item" asp-controller="Appointments" asp-action="Create"
+                   asp-route-patientId="@Model.PatientId"
+                   asp-route-date="@target.ToString("yyyy-MM-ddTHH:mm")"
+                   asp-route-purpose="Kontrol"
+                   asp-route-teeth="@Model.SelectedTeethData"
+                   asp-route-duration="15"
+                   asp-route-returnUrl="@returnUrl">@option.Label sonra <span class="text-muted">· @target.ToShortDate()</span></a>
+            </li>
+        }
+        <li><hr class="dropdown-divider" /></li>
+        <li><a class="dropdown-item" asp-controller="Appointments" asp-action="Create" asp-route-patientId="@Model.PatientId" asp-route-purpose="@Model.Purpose" asp-route-teeth="@Model.SelectedTeethData" asp-route-duration="@Model.DurationMinutes" asp-route-returnUrl="@returnUrl">Aynı işlem için devam seansı</a></li>
+    </ul>
+</div>

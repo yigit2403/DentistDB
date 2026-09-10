@@ -1,0 +1,185 @@
+@model DentistDB.ViewModels.SettingsIndexViewModel
+@{
+    ViewData["Title"] = "Ayarlar";
+    var pinRole = ViewData["PinRole"] as AppAccountRole?;
+    var backup = Model.BackupStatus;
+}
+
+<div class="page-header">
+    <div>
+        <h2 class="page-title">Ayarlar</h2>
+        <p class="page-subtitle">Klinik bilgileri, erişim PIN'leri, fiyat listesi, form metinleri, yedekleme ve işlem günlüğü.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="PriceList" class="btn btn-outline-secondary"><svg class="icon"><use href="#i-tag"/></svg> Fiyat Listesi <span class="badge-soft neutral ms-1">@Model.ActiveProcedureCount</span></a>
+        <a asp-action="Consents" class="btn btn-outline-secondary"><svg class="icon"><use href="#i-file"/></svg> Form Metinleri</a>
+        <a asp-action="AuditLog" class="btn btn-outline-secondary"><svg class="icon"><use href="#i-list"/></svg> İşlem Günlüğü</a>
+        <a asp-action="Connect" class="btn btn-primary"><svg class="icon"><use href="#i-phone"/></svg> Cihaz Bağlantısı</a>
+    </div>
+</div>
+
+<div class="settings-grid">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Klinik ve Hekim Bilgileri</h3></div>
+        <div class="card-body">
+            <form asp-action="SaveClinic" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="Clinic.ClinicName" class="form-label"></label>
+                        <input asp-for="Clinic.ClinicName" class="form-control" />
+                        <span asp-validation-for="Clinic.ClinicName" class="text-danger small"></span>
+                    </div>
+                    <div class="col-3">
+                        <label asp-for="Clinic.DentistTitle" class="form-label"></label>
+                        <input asp-for="Clinic.DentistTitle" class="form-control" placeholder="Dt." />
+                    </div>
+                    <div class="col-9">
+                        <label asp-for="Clinic.DentistName" class="form-label"></label>
+                        <input asp-for="Clinic.DentistName" class="form-control" />
+                    </div>
+                    <div class="col-6">
+                        <label asp-for="Clinic.DiplomaNo" class="form-label"></label>
+                        <input asp-for="Clinic.DiplomaNo" class="form-control" />
+                    </div>
+                    <div class="col-6">
+                        <label asp-for="Clinic.TaxNo" class="form-label"></label>
+                        <input asp-for="Clinic.TaxNo" class="form-control" />
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Clinic.Address" class="form-label"></label>
+                        <input asp-for="Clinic.Address" class="form-control" />
+                    </div>
+                    <div class="col-12">
+                        <label asp-for="Clinic.Phone" class="form-label"></label>
+                        <input asp-for="Clinic.Phone" class="form-control" />
+                        <div class="form-text">Bu bilgiler reçete, onam formu ve günlük listelerin başlığında yazdırılır.</div>
+                    </div>
+                    <div class="col-6">
+                        <label asp-for="Clinic.DayStart" class="form-label"></label>
+                        <input asp-for="Clinic.DayStart" class="form-control" type="time" asp-format="{0:HH:mm}" step="900" />
+                        <span asp-validation-for="Clinic.DayStart" class="text-danger small"></span>
+                    </div>
+                    <div class="col-6">
+                        <label asp-for="Clinic.DayEnd" class="form-label"></label>
+                        <input asp-for="Clinic.DayEnd" class="form-control" type="time" asp-format="{0:HH:mm}" step="900" />
+                        <span asp-validation-for="Clinic.DayEnd" class="text-danger small"></span>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">Otomatik Yedekleme</h3>
+            @if (backup != null)
+            {
+                <span class="badge-soft @(backup.LastFailed ? "danger" : backup.IsStale ? "warning" : "success")">
+                    @(backup.LastRunAt is null ? "Henüz yedek alınmadı" : backup.LastFailed ? "Son yedek başarısız" : $"Son yedek {backup.LastRunAt.Value.ToLocalTime().ToDateTimeText()}")
+                </span>
+            }
+        </div>
+        <div class="card-body">
+            <p class="text-muted">Her gün belirtilen saatte veritabanı kopyalanır ve yeni röntgen dosyaları yedek klasörüne alınır. Klasörü ikinci bir diske, ağ paylaşımına veya bulut senkron klasörüne (OneDrive, Google Drive) verin.</p>
+            @if (backup?.LastResult != null)
+            {
+                <div class="alert @(backup.LastFailed ? "alert-danger" : "alert-light") mb-3"><svg class="icon"><use href="#@(backup.LastFailed ? "i-alert" : "i-check")"/></svg><div class="small">@backup.LastResult</div></div>
+            }
+            <form asp-action="SaveBackup" method="post">
+                @Html.AntiForgeryToken()
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label asp-for="Backup.Folder" class="form-label"></label>
+                        <input asp-for="Backup.Folder" class="form-control" />
+                        <span asp-validation-for="Backup.Folder" class="text-danger small"></span>
+                    </div>
+                    <div class="col-6">
+                        <label asp-for="Backup.Time" class="form-label"></label>
+                        <input asp-for="Backup.Time" class="form-control" type="time" asp-format="{0:HH:mm}" step="900" />
+                    </div>
+                    <div class="col-6">
+                        <label asp-for="Backup.KeepCount" class="form-label"></label>
+                        <input asp-for="Backup.KeepCount" class="form-control" type="number" min="1" max="365" />
+                        <span asp-validation-for="Backup.KeepCount" class="text-danger small"></span>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Kaydet</button>
+                    <button type="submit" class="btn btn-outline-primary" formaction="@Url.Action("RunBackup")" formnovalidate><svg class="icon"><use href="#i-refresh"/></svg> Şimdi Yedekle</button>
+                    <button type="submit" class="btn btn-outline-secondary ms-auto" formaction="@Url.Action("Backup")" formnovalidate><svg class="icon"><use href="#i-download"/></svg> Yedeği İndir</button>
+                </div>
+            </form>
+            <dl class="kv mt-3 small">
+                <dt>Veritabanı</dt><dd class="text-break">@Model.DatabasePath <span class="text-muted">(@((Model.DatabaseSizeBytes / 1024.0 / 1024.0).ToString("0.0")) MB)</span></dd>
+                <dt>Görüntü klasörü</dt><dd class="text-break">@Model.ScanStoragePath</dd>
+                <dt>Sürüm</dt><dd>DentistDB @Model.AppVersion</dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">Erişim PIN'leri</h3></div>
+        <div class="card-body">
+            <p class="text-muted">PIN değiştirmek için mevcut yönetici PIN'i gerekir. PIN'ler veritabanında şifrelenmiş (hash) olarak saklanır.</p>
+            <div class="mb-3 d-flex flex-wrap gap-2">
+                <span class="badge-soft @(Model.AdminPinIsCustom ? "success" : "warning")">Yönetici: @(Model.AdminPinIsCustom ? "özel PIN tanımlı" : "yapılandırma dosyasındaki PIN kullanılıyor")</span>
+                <span class="badge-soft @(Model.WorkerPinIsCustom ? "success" : "warning")">Çalışan: @(Model.WorkerPinIsCustom ? "özel PIN tanımlı" : "yapılandırma dosyasındaki PIN kullanılıyor")</span>
+            </div>
+
+            <div class="btn-group-seg mb-3" role="tablist">
+                <button type="button" class="@(pinRole != AppAccountRole.Worker ? "active" : "")" data-pin-tab="admin">Yönetici PIN'i</button>
+                <button type="button" class="@(pinRole == AppAccountRole.Worker ? "active" : "")" data-pin-tab="worker">Çalışan PIN'i</button>
+            </div>
+
+            @foreach (var role in new[] { AppAccountRole.Admin, AppAccountRole.Worker })
+            {
+                var isActive = (pinRole ?? AppAccountRole.Admin) == role;
+                var key = role == AppAccountRole.Admin ? "admin" : "worker";
+                var showErrors = pinRole == role;
+                <form asp-action="ChangePin" method="post" data-pin-panel="@key" class="@(isActive ? "" : "d-none")" autocomplete="off">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="Role" value="@role" />
+                    @if (showErrors)
+                    {
+                        <div asp-validation-summary="All" class="alert alert-danger"></div>
+                    }
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label" for="CurrentAdminPin_@key">Mevcut Yönetici PIN'i</label>
+                            <input type="password" name="CurrentAdminPin" id="CurrentAdminPin_@key" class="form-control" inputmode="numeric" autocomplete="off" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label" for="NewPin_@key">Yeni @(role == AppAccountRole.Admin ? "Yönetici" : "Çalışan") PIN'i</label>
+                            <input type="password" name="NewPin" id="NewPin_@key" class="form-control" inputmode="numeric" autocomplete="new-password" placeholder="4–12 rakam" />
+                        </div>
+                        <div class="col-6">
+                            <label class="form-label" for="ConfirmPin_@key">Tekrar</label>
+                            <input type="password" name="ConfirmPin" id="ConfirmPin_@key" class="form-control" inputmode="numeric" autocomplete="new-password" />
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary"><svg class="icon"><use href="#i-lock"/></svg> PIN'i Değiştir</button>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.querySelectorAll("[data-pin-tab]").forEach(function (button) {
+            button.addEventListener("click", function () {
+                document.querySelectorAll("[data-pin-tab]").forEach(function (b) { b.classList.toggle("active", b === button); });
+                document.querySelectorAll("[data-pin-panel]").forEach(function (panel) {
+                    panel.classList.toggle("d-none", panel.dataset.pinPanel !== button.dataset.pinTab);
+                });
+            });
+        });
+    </script>
+}

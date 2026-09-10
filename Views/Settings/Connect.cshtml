@@ -1,0 +1,122 @@
+@model DentistDB.ViewModels.ConnectViewModel
+@{
+    ViewData["Title"] = "Cihaz Bağlantısı";
+    var info = Model.Info;
+    var lanUrl = info.LanUrls.Skip(1).FirstOrDefault() ?? info.LanUrls.FirstOrDefault() ?? "";
+    var tailscaleCalendar = info.TailscaleUrl != null ? info.TailscaleUrl + Model.CalendarPath : null;
+    var lanCalendar = lanUrl + Model.CalendarPath;
+}
+
+<div class="page-header">
+    <div>
+        <div class="topbar-crumb"><a asp-action="Index">Ayarlar</a> / Cihaz Bağlantısı</div>
+        <h2 class="page-title">Cihaz Bağlantısı</h2>
+        <p class="page-subtitle">Diğer bilgisayarı ve telefonu bu sunucuya bağlamak için gereken adresler. Kodları telefon kamerasıyla okutun.</p>
+    </div>
+    <div class="page-actions">
+        <a asp-action="Connect" class="btn btn-outline-secondary"><svg class="icon"><use href="#i-refresh"/></svg> Yenile</a>
+    </div>
+</div>
+
+<div class="settings-grid">
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">1 · Klinik içi (aynı ağ)</h3><span class="badge-soft success">Yerel ağ</span></div>
+        <div class="card-body">
+            <p class="text-muted">Klinikteki ikinci bilgisayar veya kliniğin Wi-Fi ağındaki telefon bu adreslerden birini tarayıcıya yazar. Şifreleme yok; yalnızca klinik ağı içinde kullanın.</p>
+            @foreach (var url in info.LanUrls)
+            {
+                <div class="connect-url"><code>@url</code><button type="button" class="btn btn-sm btn-ghost js-copy" data-copy="@url" title="Kopyala">Kopyala</button></div>
+            }
+            <div class="qr-wrap"><div class="qr" data-qr="@lanUrl"></div><div class="small text-muted">Yerel ağ adresi</div></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h3 class="card-title">2 · Her yerden (Tailscale)</h3>
+            @if (!info.TailscaleInstalled) { <span class="badge-soft neutral">Kurulu değil</span> }
+            else if (info.TailscaleOnline) { <span class="badge-soft success">Bağlı</span> }
+            else { <span class="badge-soft warning">Çevrimdışı</span> }
+        </div>
+        <div class="card-body">
+            @if (!info.TailscaleInstalled)
+            {
+                <p class="text-muted">Bu bilgisayarda Tailscale bulunamadı. Kurulum betiği (<code>scripts\Install-DentistDB.ps1</code>) Tailscale'i kurar ve HTTPS adresini otomatik açar; ya da <a href="https://tailscale.com/download/windows" target="_blank" rel="noopener">tailscale.com</a> adresinden kurup aynı hesapla giriş yapın.</p>
+            }
+            else if (!info.TailscaleOnline)
+            {
+                <div class="alert alert-warning"><svg class="icon"><use href="#i-alert"/></svg><div>@(info.TailscaleError ?? "Tailscale bağlı değil.")</div></div>
+            }
+            else
+            {
+                <p class="text-muted">Telefonda <strong>Tailscale</strong> uygulamasını kurun, klinik bilgisayarındaki <strong>aynı hesapla</strong> giriş yapın ve bağlantıyı açın. Ardından bu kodu okutun; HTTPS ile güvenli çalışır, evden ve mobil veriden ulaşır.</p>
+                @if (info.TailscaleUrl != null)
+                {
+                    <div class="connect-url"><code>@info.TailscaleUrl</code><button type="button" class="btn btn-sm btn-ghost js-copy" data-copy="@info.TailscaleUrl">Kopyala</button></div>
+                    <div class="qr-wrap"><div class="qr" data-qr="@info.TailscaleUrl"></div><div class="small text-muted">Tailscale adresi (HTTPS)</div></div>
+                    <div class="form-text mt-2">Bu adres yalnızca <code>tailscale serve</code> açıkken çalışır; kurulum betiği bunu yapar. Kapalıysa yönetici olarak çalıştırın: <code>tailscale serve --bg http://localhost:@info.Port</code></div>
+                }
+                @if (info.TailscaleIps.Count > 0)
+                {
+                    <div class="form-text">Alternatif: <code>http://@info.TailscaleIps[0]:@info.Port</code></div>
+                }
+            }
+            <div class="form-section">
+                <div class="form-section-title">Telefonda ana ekrana ekle</div>
+                <ol class="small text-muted mb-0 ps-3">
+                    <li>Adresi telefonun tarayıcısında açın ve PIN ile giriş yapın.</li>
+                    <li><strong>iPhone:</strong> Paylaş → “Ana Ekrana Ekle”. <strong>Android:</strong> menü → “Ana ekrana ekle” / “Uygulamayı yükle”.</li>
+                    <li>Artık uygulama simgesiyle açılır; giriş 12 saat hatırlanır.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h3 class="card-title">3 · Telefon takvimine randevular</h3></div>
+        <div class="card-body">
+            <p class="text-muted">Bu adresi telefonun takvim uygulamasına <strong>abonelik</strong> olarak eklerseniz randevular hasta adı ve işlemle birlikte otomatik görünür ve her 30 dakikada güncellenir. Adres gizli bir anahtar içerir; kimseyle paylaşmayın.</p>
+            @if (tailscaleCalendar != null)
+            {
+                <div class="connect-url"><code class="text-break">@tailscaleCalendar</code><button type="button" class="btn btn-sm btn-ghost js-copy" data-copy="@tailscaleCalendar">Kopyala</button></div>
+                <div class="qr-wrap"><div class="qr" data-qr="@tailscaleCalendar"></div><div class="small text-muted">Takvim bağlantısı (Tailscale üzerinden)</div></div>
+            }
+            else
+            {
+                <div class="connect-url"><code class="text-break">@lanCalendar</code><button type="button" class="btn btn-sm btn-ghost js-copy" data-copy="@lanCalendar">Kopyala</button></div>
+                <div class="form-text">Tailscale bağlandığında burada her yerden çalışan HTTPS adres görünür.</div>
+            }
+            <ol class="small text-muted ps-3 mt-3">
+                <li><strong>iPhone:</strong> Ayarlar → Takvim → Hesaplar → Hesap Ekle → Diğer → Abone Olunan Takvim Ekle → adresi yapıştırın.</li>
+                <li><strong>Android (Google Takvim):</strong> bilgisayarda calendar.google.com → Diğer takvimler “+” → URL'den → adresi yapıştırın; telefondaki Google Takvim'de görünür.</li>
+            </ol>
+            <form asp-action="RotateCalendarToken" method="post" data-confirm="Takvim bağlantısı yenilensin mi? Telefondaki mevcut abonelik çalışmayı durdurur.">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="btn btn-sm btn-outline-danger"><svg class="icon"><use href="#i-refresh"/></svg> Bağlantıyı Yenile (eskisini iptal et)</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/lib/qrcode/qrcode.min.js"></script>
+    <script>
+        document.querySelectorAll("[data-qr]").forEach(function (el) {
+            var text = el.dataset.qr;
+            if (!text) return;
+            try {
+                var qr = qrcode(0, "M");
+                qr.addData(text);
+                qr.make();
+                el.innerHTML = qr.createSvgTag({ cellSize: 4, margin: 2, scalable: true });
+            } catch (e) { el.textContent = text; }
+        });
+        document.querySelectorAll(".js-copy").forEach(function (btn) {
+            btn.addEventListener("click", function () {
+                navigator.clipboard.writeText(btn.dataset.copy).then(function () {
+                    var old = btn.textContent; btn.textContent = "Kopyalandı"; setTimeout(function () { btn.textContent = old; }, 1500);
+                });
+            });
+        });
+    </script>
+}

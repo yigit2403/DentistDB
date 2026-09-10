@@ -1,0 +1,33 @@
+@model DentistDB.ViewModels.InvoiceItemInputModel
+@{
+    var i = (int)(ViewData["Index"] ?? 0);
+    var procedureItems = ViewData["ProcedureItems"] as List<SelectListItem> ?? new List<SelectListItem>();
+    var prefix = $"Items[{i}]";
+    var idPrefix = $"Items_{i}__";
+    var priceText = Model.UnitPrice == 0 && Model.IsEmpty ? string.Empty : Model.UnitPrice.ToString("0.00");
+}
+<tr data-item-row>
+    <td class="num text-muted align-middle" data-row-number>@(i + 1)</td>
+    <td>
+        <input type="hidden" name="@(prefix).Id" value="@Model.Id" />
+        <select name="@(prefix).ProcedureId" id="@(idPrefix)ProcedureId" class="form-select" data-procedure>
+            <option value="">— Serbest kalem —</option>
+            @foreach (var option in procedureItems)
+            {
+                <option value="@option.Value" selected="@(Model.ProcedureId?.ToString() == option.Value)">@option.Text</option>
+            }
+        </select>
+    </td>
+    <td>
+        <input type="text" name="@(prefix).Description" id="@(idPrefix)Description" class="form-control" value="@Model.Description" maxlength="200" data-description autocomplete="off" placeholder="İşlem adı" />
+        <span class="text-danger small field-validation-valid" data-valmsg-for="@(prefix).Description" data-valmsg-replace="true"></span>
+    </td>
+    <td><input type="text" name="@(prefix).ToothNumbers" id="@(idPrefix)ToothNumbers" class="form-control num" value="@Model.ToothNumbers" maxlength="100" placeholder="26, 27" autocomplete="off" /></td>
+    <td><input type="number" name="@(prefix).Quantity" id="@(idPrefix)Quantity" class="form-control num" value="@Model.Quantity" min="1" max="999" data-qty /></td>
+    <td>
+        <input type="text" name="@(prefix).UnitPrice" id="@(idPrefix)UnitPrice" class="form-control num text-end" value="@priceText" inputmode="decimal" placeholder="0,00" data-price autocomplete="off" />
+        <span class="text-danger small field-validation-valid" data-valmsg-for="@(prefix).UnitPrice" data-valmsg-replace="true"></span>
+    </td>
+    <td class="line-total align-middle" data-line-total>@((Model.Quantity * Model.UnitPrice).ToMoney())</td>
+    <td class="align-middle"><button type="button" class="btn btn-sm btn-ghost btn-icon text-danger" data-remove-item title="Satırı kaldır"><svg class="icon"><use href="#i-x"/></svg></button></td>
+</tr>

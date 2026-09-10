@@ -1,142 +1,241 @@
 @model DentistDB.Models.Invoice
 @{
     ViewData["Title"] = $"Fatura #{Model.Id}";
-    var canViewFinancials = Context.CanViewFinancials();
+    var isAdmin = Context.IsAdmin();
+    var showFinancials = Context.CanViewFinancials();
+    var isOpen = Model.Status is InvoiceStatus.Issued or InvoiceStatus.PartiallyPaid;
+    var items = Model.Items.OrderBy(i => i.SortOrder).ToList();
+    var planned = Model.PlannedPayments.ToList();
+    var settled = Model.SettledPayments.ToList();
 }
 
 <div class="page-header">
     <div>
-        <div class="eyebrow">Fatura Detayi</div>
-        <h2 class="page-title">Fatura #@Model.Id</h2>
+        <div class="topbar-crumb"><a asp-action="Index">Faturalar</a> / #@Model.Id</div>
+        <h2 class="page-title d-flex align-items-center gap-2 flex-wrap">
+            Fatura #@Model.Id
+            <span class="badge-soft @Model.Status.ToBadgeClass()">@Model.Status.GetDisplayName()</span>
+            @if (Model.IsOverdue) { <span class="badge-soft danger">Vadesi geçti</span> }
+        </h2>
         <p class="page-subtitle">
-            <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" class="text-decoration-none">@Model.Patient?.FullName</a>
-            <span class="badge-soft @(Model.Status == InvoiceStatus.Paid ? "success" : Model.Status == InvoiceStatus.Cancelled ? "neutral" : Model.Status == InvoiceStatus.PartiallyPaid ? "warning" : "info") ms-2">@Model.Status.GetDisplayName()</span>
+            <a asp-controller="Patients" asp-action="Details" asp-route-id="@Model.PatientId" asp-route-tab="invoices">@Model.Patient?.FullName</a>
+            · @Model.InvoiceDate.ToShortDate()
+            @if (Model.DueDate.HasValue) { <text>· vade @Model.DueDate.ToShortDate()</text> }
         </p>
     </div>
-    <div class="d-flex gap-2 flex-wrap">
-        @if (canViewFinancials)
+    <div class="page-actions">
+        <button type="button" class="btn btn-outline-secondary" onclick="window.print()"><svg class="icon"><use href="#i-print"/></svg> Yazdır</button>
+        @if (isAdmin)
         {
-            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary">Duzenle</a>
-            @if (Model.Status != InvoiceStatus.Paid && Model.Status != InvoiceStatus.Cancelled)
+            @if (isOpen)
             {
-                <a asp-action="AddPayment" asp-route-invoiceId="@Model.Id" class="btn btn-success">Odeme Ekle</a>
+                <a asp-action="AddPayment" asp-route-invoiceId="@Model.Id" class="btn btn-success"><svg class="icon"><use href="#i-coins"/></svg> Tahsilat Ekle</a>
+            }
+            <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-secondary"><svg class="icon"><use href="#i-edit"/></svg> Düzenle</a>
+            @if (Model.Status == InvoiceStatus.Cancelled)
+            {
+                <form asp-action="Reopen" asp-route-id="@Model.Id" method="post" class="m-0">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-secondary"><svg class="icon"><use href="#i-refresh"/></svg> Yeniden Aç</button>
+                </form>
+            }
+            else if (Model.TotalPaid == 0)
+            {
+                <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" class="m-0" data-confirm="Fatura iptal edilsin mi? İptal edilen fatura alacak toplamına dahil edilmez.">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-danger"><svg class="icon"><use href="#i-x"/></svg> İptal Et</button>
+                </form>
             }
         }
     </div>
 </div>
 
-@if (canViewFinancials)
+@if (showFinancials)
 {
-    <section class="summary-grid mb-4">
-        <article class="stats-card glass-card text-center">
-            <div class="label">Toplam Tutar</div>
-            <div class="value">@Model.TotalAmount.ToString("C")</div>
-        </article>
-        <article class="stats-card glass-card text-center">
-            <div class="label">Odenen</div>
-            <div class="value text-success">@Model.TotalPaid.ToString("C")</div>
-        </article>
-        <article class="stats-card glass-card text-center">
-            <div class="label">Kalan Bakiye</div>
-            <div class="value @(Model.Balance > 0 ? "text-danger" : "text-success")">@Model.Balance.ToString("C")</div>
-        </article>
-    </section>
+    <div class="invoice-summary mb-3">
+        <div class="stat">
+            <span class="stat-label">Toplam</span>
+            <span class="stat-value money">@Model.TotalAmount.ToMoney()</span>
+            <span class="stat-hint">@items.Count kalem</span>
+        </div>
+        <div class="stat stat-success">
+            <span class="stat-label">Tahsil Edilen</span>
+            <span class="stat-value money">@Model.TotalPaid.ToMoney()</span>
+            <span class="stat-hint">@settled.Count ödeme</span>
+        </div>
+        <div class="stat @(Model.Balance > 0 && isOpen ? "stat-danger" : "")">
+            <span class="stat-label">Kalan</span>
+            <span class="stat-value money">@Model.Balance.ToMoney()</span>
+            <span class="stat-hint">@(planned.Count > 0 ? $"{planned.Count(p => !p.IsSettled)} taksit bekliyor" : "taksit planı yok")</span>
+        </div>
+    </div>
 }
 else
 {
-    <div class="alert alert-info mb-4">Calisan hesabi tutarlari, odemeleri ve bakiyeleri goremez.</div>
+    <div class="alert alert-info mb-3"><svg class="icon"><use href="#i-info"/></svg><div>Tutarlar ve ödemeler yalnızca yönetici hesabında görüntülenir.</div></div>
 }
 
-<div class="row g-4">
-    <div class="col-lg-6">
-        <div class="card h-100">
-            <div class="card-header"><h3 class="section-title">Fatura Bilgileri</h3></div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-5">Fatura Tarihi</dt>
-                    <dd class="col-sm-7">@Model.InvoiceDate.ToString("D")</dd>
-                    <dt class="col-sm-5">Son Odeme Tarihi</dt>
-                    <dd class="col-sm-7">@(Model.DueDate?.ToString("D") ?? "-")</dd>
-                    <dt class="col-sm-5">Notlar</dt>
-                    <dd class="col-sm-7">@(string.IsNullOrWhiteSpace(Model.Notes) ? "-" : Model.Notes)</dd>
-                </dl>
-            </div>
+<div class="row g-3">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header"><h3 class="card-title">Fatura Kalemleri</h3></div>
+            @if (!items.Any())
+            {
+                <div class="empty-state"><p>Bu faturada kalem yok.</p></div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table invoice-lines">
+                        <thead>
+                            <tr>
+                                <th style="width:32px">#</th>
+                                <th>İşlem</th>
+                                <th>Diş</th>
+                                @if (showFinancials) { <th class="text-end">Adet</th><th class="text-end">Birim</th><th class="text-end">Tutar</th> }
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (var i = 0; i < items.Count; i++)
+                            {
+                                var item = items[i];
+                                <tr>
+                                    <td class="num text-muted">@(i + 1)</td>
+                                    <td>@item.Description</td>
+                                    <td>
+                                        @if (!string.IsNullOrWhiteSpace(item.ToothNumbers))
+                                        {
+                                            <span class="tooth-chips">@foreach (var t in item.ToothNumbers.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)) { <span class="tooth-chip">@t</span> }</span>
+                                        }
+                                        else { <span class="text-faint">—</span> }
+                                    </td>
+                                    @if (showFinancials)
+                                    {
+                                        <td class="text-end num">@item.Quantity</td>
+                                        <td class="text-end money">@item.UnitPrice.ToMoney()</td>
+                                        <td class="text-end money fw-600">@item.LineTotal.ToMoney()</td>
+                                    }
+                                </tr>
+                            }
+                        </tbody>
+                        @if (showFinancials)
+                        {
+                            <tfoot>
+                                <tr>
+                                    <td colspan="5" class="text-end fw-600">Genel Toplam</td>
+                                    <td class="text-end money fw-600" style="font-size:1rem">@Model.TotalAmount.ToMoney()</td>
+                                </tr>
+                            </tfoot>
+                        }
+                    </table>
+                </div>
+            }
         </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.Notes))
+        {
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Notlar</h3></div>
+                <div class="card-body pre-wrap">@Model.Notes</div>
+            </div>
+        }
     </div>
 
-    @if (canViewFinancials)
+    @if (showFinancials)
     {
-        <div class="col-lg-6">
-            <div class="card h-100">
-                <div class="card-header"><h3 class="section-title">Odeme Gecmisi</h3></div>
-                <div class="card-body p-0">
-                    @if (!Model.Payments.Any(p => !p.IsPlanned || p.IsSettled))
-                    {
-                        <p class="empty-state mb-0">Bu fatura icin kayitli odeme yok.</p>
-                    }
-                    else
-                    {
-                        <ul class="list-group list-group-flush">
-                            @foreach (var pay in Model.Payments.Where(p => !p.IsPlanned || p.IsSettled).OrderByDescending(p => p.SettledDate ?? p.PaymentDate))
-                            {
-                                <li class="list-group-item">
-                                    <div class="d-flex justify-content-between gap-3">
-                                        <div>
-                                            <div class="fw-semibold">@pay.Amount.ToString("C")</div>
-                                            <div class="text-muted small">@((pay.SettledDate ?? pay.PaymentDate).ToString("D"))</div>
-                                            @if (!string.IsNullOrWhiteSpace(pay.Notes))
-                                            {
-                                                <div class="text-muted small">@pay.Notes</div>
-                                            }
-                                        </div>
-                                        <span class="badge-soft info">@pay.PaymentMethod.GetDisplayName()</span>
-                                    </div>
-                                </li>
-                            }
-                        </ul>
-                    }
-                </div>
-            </div>
-        </div>
-
-        <div class="col-12">
+        <div class="col-lg-5">
             <div class="card">
-                <div class="card-header"><h3 class="section-title">Odeme Plani</h3></div>
-                <div class="card-body p-0">
-                    @if (!Model.PlannedPayments.Any())
+                <div class="card-header">
+                    <h3 class="card-title">Ödemeler</h3>
+                    @if (isAdmin && isOpen)
                     {
-                        <p class="empty-state mb-0">Bu fatura icin tanimli odeme plani yok.</p>
-                    }
-                    else
-                    {
-                        <div class="table-responsive">
-                            <table class="table table-hover mb-0">
-                                <thead class="table-light">
-                                    <tr>
-                                        <th>Taksit</th>
-                                        <th>Planlanan Tarih</th>
-                                        <th>Tutar</th>
-                                        <th>Durum</th>
-                                        <th>Tahsil Tarihi</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach (var item in Model.PlannedPayments)
-                                    {
-                                        <tr>
-                                            <td>@(item.InstallmentNumber ?? 0)</td>
-                                            <td>@item.PaymentDate.ToString("D")</td>
-                                            <td>@item.Amount.ToString("C")</td>
-                                            <td><span class="badge-soft @(item.IsSettled ? "success" : "warning")">@(item.IsSettled ? "Tahsil edildi" : "Bekliyor")</span></td>
-                                            <td>@(item.SettledDate?.ToString("D") ?? "-")</td>
-                                        </tr>
-                                    }
-                                </tbody>
-                            </table>
-                        </div>
+                        <a asp-action="AddPayment" asp-route-invoiceId="@Model.Id" class="btn btn-sm btn-outline-primary"><svg class="icon"><use href="#i-plus"/></svg> Tahsilat</a>
                     }
                 </div>
+                @if (!settled.Any())
+                {
+                    <div class="empty-state"><p>Henüz ödeme alınmadı.</p></div>
+                }
+                else
+                {
+                    <ul class="list">
+                        @foreach (var pay in settled)
+                        {
+                            <li class="list-item">
+                                <div class="grow">
+                                    <div class="title money">@pay.Amount.ToMoney()</div>
+                                    <div class="meta">
+                                        @((pay.SettledDate ?? pay.PaymentDate).ToShortDate()) · @pay.PaymentMethod.GetDisplayName()
+                                        @if (pay.IsPlanned) { <text>· @pay.InstallmentNumber. taksit</text> }
+                                        @if (!string.IsNullOrWhiteSpace(pay.Notes)) { <text>· @pay.Notes</text> }
+                                    </div>
+                                </div>
+                                @if (isAdmin)
+                                {
+                                    <form asp-action="DeletePayment" asp-route-id="@pay.Id" method="post" class="m-0" data-confirm="@(pay.IsPlanned ? "Bu taksitin tahsilatı geri alınsın mı?" : "Bu ödeme kaydı silinsin mi?")">
+                                        @Html.AntiForgeryToken()
+                                        <button type="submit" class="btn btn-sm btn-ghost btn-icon text-danger" title="@(pay.IsPlanned ? "Tahsilatı geri al" : "Sil")"><svg class="icon"><use href="#i-trash"/></svg></button>
+                                    </form>
+                                }
+                            </li>
+                        }
+                    </ul>
+                }
             </div>
+
+            <div class="card">
+                <div class="card-header"><h3 class="card-title">Taksit Planı</h3></div>
+                @if (!planned.Any())
+                {
+                    <div class="empty-state"><p>Bu fatura için taksit planı yok.</p></div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead><tr><th>#</th><th>Vade</th><th class="text-end">Tutar</th><th>Durum</th><th class="row-actions"></th></tr></thead>
+                            <tbody>
+                                @foreach (var p in planned)
+                                {
+                                    <tr>
+                                        <td class="num">@p.InstallmentNumber</td>
+                                        <td class="@(p.IsOverdue ? "text-danger fw-600" : "")">@p.PaymentDate.ToShortDate()</td>
+                                        <td class="text-end money">@p.Amount.ToMoney()</td>
+                                        <td>
+                                            @if (p.IsSettled)
+                                            {
+                                                <span class="badge-soft success">Ödendi @p.SettledDate.ToShortDate()</span>
+                                            }
+                                            else if (p.IsOverdue)
+                                            {
+                                                <span class="badge-soft danger">Gecikti</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge-soft warning">Bekliyor</span>
+                                            }
+                                        </td>
+                                        <td class="row-actions">
+                                            @if (isAdmin && !p.IsSettled && isOpen)
+                                            {
+                                                <a asp-action="AddPayment" asp-route-invoiceId="@Model.Id" asp-route-plannedPaymentId="@p.Id" class="btn btn-sm btn-outline-primary">Tahsil Et</a>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+
+            @if (isAdmin && Model.TotalPaid == 0)
+            {
+                <form asp-action="Delete" asp-route-id="@Model.Id" method="post" class="mt-3 no-print" data-confirm="Fatura #@Model.Id kalıcı olarak silinsin mi? Bu işlem geri alınamaz.">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-sm btn-outline-danger"><svg class="icon"><use href="#i-trash"/></svg> Faturayı Sil</button>
+                </form>
+            }
         </div>
     }
 </div>

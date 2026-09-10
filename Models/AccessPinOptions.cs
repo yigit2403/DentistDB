@@ -6,29 +6,23 @@ public sealed class AccessPinOptions
     public const string AdminPlaceholder = "CHANGE_ME_ADMIN_PIN";
     public const string WorkerPlaceholder = "CHANGE_ME_WORKER_PIN";
 
+    private static readonly string[] WeakPins = { "1234", "5678", "0000", "1111", "123456", "12345678" };
+
     public string Admin { get; set; } = AdminPlaceholder;
     public string Worker { get; set; } = WorkerPlaceholder;
 
-    public string? GetPinFor(string accountKey)
+    public string? GetPinFor(AppAccountRole role) => role switch
     {
-        return accountKey.ToLowerInvariant() switch
-        {
-            "admin" => Admin,
-            "worker" => Worker,
-            _ => null
-        };
-    }
+        AppAccountRole.Admin => Admin,
+        AppAccountRole.Worker => Worker,
+        _ => null
+    };
 
-    public bool UsesSecurePins()
-    {
-        return IsConfiguredPin(Admin, AdminPlaceholder) && IsConfiguredPin(Worker, WorkerPlaceholder);
-    }
-
-    private static bool IsConfiguredPin(string? value, string placeholder)
+    public static bool IsSecurePin(string? value)
     {
         return !string.IsNullOrWhiteSpace(value)
-            && !string.Equals(value, placeholder, StringComparison.Ordinal)
-            && !string.Equals(value, "1234", StringComparison.Ordinal)
-            && !string.Equals(value, "5678", StringComparison.Ordinal);
+            && !string.Equals(value, AdminPlaceholder, StringComparison.Ordinal)
+            && !string.Equals(value, WorkerPlaceholder, StringComparison.Ordinal)
+            && !WeakPins.Contains(value, StringComparer.Ordinal);
     }
 }

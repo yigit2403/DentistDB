@@ -1,42 +1,51 @@
 @model DentistDB.ViewModels.AccessSelectionViewModel
 @{
-    ViewData["Title"] = "Hesap Seçimi";
+    ViewData["Title"] = "Giriş";
 }
 
-<section class="hero-panel glass-card access-hero">
-    <div class="page-header mb-0">
+<div class="auth-card">
+    <div class="auth-brand">
+        <span class="brand-logo">@Model.ClinicName.Initials()</span>
         <div>
-            <div class="eyebrow">Hızlı Giriş</div>
-            <h2 class="page-title">Çalışacağınız hesabı seçin.</h2>
+            <div class="brand-name" style="font-size:1.2rem">@Model.ClinicName</div>
+            <div class="brand-sub">Klinik Yönetimi</div>
         </div>
     </div>
-</section>
 
-<div class="account-grid">
-    @foreach (var account in Model.Accounts)
-    {
-        var isAdmin = account.Role == AppAccountRole.Admin;
-        <div class="account-card glass-card">
-            <div class="eyebrow">@(isAdmin ? "Yönetici" : "Çalışan")</div>
-            <h3 class="section-title mt-2">@account.Name</h3>
-
-            <form asp-action="Select" method="post" class="mt-4">
+    <div class="card">
+        <div class="card-body p-4">
+            <form asp-action="Select" method="post" novalidate>
                 @Html.AntiForgeryToken()
                 <input type="hidden" asp-for="ReturnUrl" />
-                <input type="hidden" asp-for="AccountKey" value="@account.Key" />
 
-                <div class="mb-3">
-                    <label asp-for="Pin" class="form-label">@(isAdmin ? "Yönetici PIN'i" : "Çalışan PIN'i")</label>
-                    <input asp-for="Pin" class="form-control" inputmode="numeric" autocomplete="current-password" placeholder="PIN girin" />
-                    <span asp-validation-for="Pin" class="text-danger small"></span>
+                <div class="form-label mb-2">Hesap</div>
+                <div class="role-switch mb-4">
+                    @foreach (var account in Model.Accounts)
+                    {
+                        var isAdmin = account.Role == AppAccountRole.Admin;
+                        var id = $"role-{account.Key}";
+                        <input type="radio" name="AccountKey" id="@id" value="@account.Key" @(Model.AccountKey == account.Key ? "checked" : "") />
+                        <label for="@id">
+                            <svg class="icon icon-lg"><use href="#@(isAdmin ? "i-lock" : "i-user")"/></svg>
+                            @account.Name
+                            <small>@(isAdmin ? "Tüm yetkiler" : "Hasta ve randevu işlemleri")</small>
+                        </label>
+                    }
                 </div>
 
-                <button type="submit" class="btn @(isAdmin ? "btn-primary" : "btn-outline-primary") w-100">Bu Hesapla Devam Et</button>
+                <label asp-for="Pin" class="form-label"></label>
+                <input asp-for="Pin" class="form-control pin-input" inputmode="numeric" autocomplete="off" autofocus placeholder="••••" disabled="@(Model.LockoutSeconds.HasValue)" />
+                <span asp-validation-for="Pin" class="text-danger small"></span>
+                <span asp-validation-for="AccountKey" class="text-danger small"></span>
+
+                <button type="submit" class="btn btn-primary w-100 mt-4" disabled="@(Model.LockoutSeconds.HasValue)">Giriş Yap</button>
             </form>
         </div>
-    }
+    </div>
+
+    <p class="text-center text-faint small mt-3 mb-0">PIN'ler yönetici tarafından Ayarlar sayfasından değiştirilebilir.</p>
 </div>
 
 @section Scripts {
-    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+    <partial name="_ValidationScriptsPartial" />
 }

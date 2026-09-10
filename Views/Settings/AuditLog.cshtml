@@ -1,0 +1,72 @@
+@model DentistDB.ViewModels.AuditLogViewModel
+@{
+    ViewData["Title"] = "İşlem Günlüğü";
+    var list = Model.Entries;
+}
+
+<div class="page-header">
+    <div>
+        <div class="topbar-crumb"><a asp-action="Index">Ayarlar</a> / İşlem Günlüğü</div>
+        <h2 class="page-title">İşlem Günlüğü</h2>
+        <p class="page-subtitle">Kim, ne zaman, neyi değiştirdi. Girişler ve hatalı PIN denemeleri de kaydedilir.</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body py-3">
+        <form method="get" class="filter-bar">
+            <div class="quick-search" style="width:min(320px,100%)">
+                <svg class="icon"><use href="#i-search"/></svg>
+                <input type="search" name="search" value="@Model.Search" class="form-control" placeholder="Hasta adı, işlem…" />
+            </div>
+            <select name="account" class="form-select" style="width:150px" data-autosubmit>
+                <option value="">Tüm hesaplar</option>
+                <option value="admin" selected="@(Model.Account == "admin")">Yönetici</option>
+                <option value="worker" selected="@(Model.Account == "worker")">Çalışan</option>
+                <option value="system" selected="@(Model.Account == "system")">Sistem</option>
+            </select>
+            <select name="entityType" class="form-select" style="width:170px" data-autosubmit>
+                <option value="">Tüm kayıt türleri</option>
+                @foreach (var t in Model.EntityTypes) { <option value="@t" selected="@(Model.EntityType == t)">@t</option> }
+            </select>
+            <input type="date" name="from" value="@Model.From?.ToString("yyyy-MM-dd")" class="form-control" style="width:160px" data-autosubmit />
+            <input type="date" name="to" value="@Model.To?.ToString("yyyy-MM-dd")" class="form-control" style="width:160px" data-autosubmit />
+            <button type="submit" class="btn btn-outline-primary">Filtrele</button>
+            <a asp-action="AuditLog" class="btn btn-ghost">Temizle</a>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    @if (!list.Any())
+    {
+        <div class="empty-state"><p>Kayıt bulunamadı.</p></div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th style="width:150px">Zaman</th><th style="width:90px">Hesap</th><th style="width:110px">İşlem</th><th>Özet</th></tr></thead>
+                <tbody>
+                    @foreach (var e in list)
+                    {
+                        <tr>
+                            <td class="num text-muted">@e.At.ToLocalTime().ToDateTimeText()</td>
+                            <td><span class="badge-soft @(e.Account == "admin" ? "primary" : e.Account == "worker" ? "info" : "neutral")">@AuditService.Label(e.Account)</span></td>
+                            <td><span class="badge-soft @(e.Action switch { "Silindi" => "danger", "Oluşturuldu" => "success", "HatalıGiriş" => "warning", _ => "neutral" })">@e.Action</span></td>
+                            <td>
+                                @if (e.PatientId.HasValue) { <a asp-controller="Patients" asp-action="Details" asp-route-id="@e.PatientId" class="row-link">@e.Summary</a> }
+                                else { @e.Summary }
+                                @if (!string.IsNullOrEmpty(e.Details))
+                                {
+                                    <details class="mt-1"><summary class="small text-muted" style="cursor:pointer">Değişiklikler</summary><div class="audit-details">@e.Details</div></details>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <partial name="_Pagination" model="new PaginationViewModel { PageIndex = list.PageIndex, TotalPages = list.TotalPages, TotalCount = list.TotalCount, PageSize = list.PageSize, FirstItemNumber = list.FirstItemNumber, LastItemNumber = list.LastItemNumber }" />
+    }
+</div>
