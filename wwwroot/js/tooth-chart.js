@@ -70,20 +70,41 @@
     function deciduousLayout() {
         const upper = ["55", "54", "53", "52", "51", "61", "62", "63", "64", "65"];
         const lower = ["85", "84", "83", "82", "81", "71", "72", "73", "74", "75"];
+        const RX = 178, RY = 245, CX = 225;
+
+        // Sample the half ellipse (angle π → 2π = viewer's left to right; sin ≤ 0 there) so the
+        // teeth can be spaced by arc length instead of by angle, which bunches them near the canines.
+        const samples = [];
+        let length = 0;
+        for (let i = 0; i <= 400; i++) {
+            const angle = Math.PI * (1 + i / 400);
+            const point = { angle, x: RX * Math.cos(angle), y: RY * Math.sin(angle) };
+            if (i > 0) length += Math.hypot(point.x - samples[i - 1].x, point.y - samples[i - 1].y);
+            point.s = length;
+            samples.push(point);
+        }
+        const pointAt = fraction => samples.find(p => p.s >= fraction * length) || samples[samples.length - 1];
+
         const teeth = [];
-        // angle runs π → 2π, i.e. viewer's left to right; sin is ≤ 0 on that range,
-        // so cy + ry·sin puts the upper arch above its centre and cy − ry·sin the lower arch below.
-        const place = (list, cy, upper) => {
+        const place = (list, cy, isUpper) => {
             list.forEach((number, i) => {
-                const angle = Math.PI + ((i + 0.5) / list.length) * Math.PI;
-                const x = 225 + 172 * Math.cos(angle);
-                const y = upper ? cy + 205 * Math.sin(angle) : cy - 205 * Math.sin(angle);
+                const p = pointAt((i + 0.5) / list.length);
                 const molar = i <= 1 || i >= 8;
-                teeth.push({ number, x, y, w: molar ? 62 : 50, h: molar ? 66 : 58 });
+                // The tooth's long axis follows the ellipse normal so neighbours stay parallel and never overlap.
+                const normalDeg = Math.atan2(Math.sin(p.angle) / RY, Math.cos(p.angle) / RX) * 180 / Math.PI;
+                const rotate = isUpper ? normalDeg + 90 : -(normalDeg + 90);
+                teeth.push({
+                    number,
+                    x: CX + p.x,
+                    y: isUpper ? cy + p.y : cy - p.y,
+                    w: molar ? 54 : 46,
+                    h: molar ? 62 : 56,
+                    rotate
+                });
             });
         };
-        place(upper, 345, true);
-        place(lower, 405, false);
+        place(upper, 330, true);
+        place(lower, 420, false);
         return teeth;
     }
 
@@ -156,7 +177,11 @@
 
         _renderDeciduous(svg) {
             for (const t of deciduousLayout()) {
-                const shape = el("rect", { x: t.x - t.w / 2, y: t.y - t.h / 2, width: t.w, height: t.h, rx: t.w / 2.6, class: "tc-shape" });
+                const shape = el("rect", {
+                    x: (t.x - t.w / 2).toFixed(1), y: (t.y - t.h / 2).toFixed(1), width: t.w, height: t.h, rx: t.w / 2.6,
+                    transform: `rotate(${t.rotate.toFixed(1)} ${t.x.toFixed(1)} ${t.y.toFixed(1)})`,
+                    class: "tc-shape"
+                });
                 this._addTooth(svg, t.number, shape, t.x, t.y);
             }
         }
@@ -191,20 +216,27 @@
                 }
                 // Drag paints: first tooth decides whether we are selecting or deselecting.
                 const adding = !this.selected.has(number);
-                this._drag = { adding, touched: new Set([number]) };
+                this._drag = { adding, touched: new Set([number]), last: { x: e.clientX, y: e.clientY } };
                 this._set(number, adding);
                 svg.setPointerCapture?.(e.pointerId);
             });
 
             svg.addEventListener("pointermove", e => {
                 if (!this._drag) return;
-                const hit = document.elementFromPoint(e.clientX, e.clientY);
-                const g = hit ? toothOf(hit) : null;
-                if (!g) return;
-                const number = g.dataset.tooth;
-                if (this._drag.touched.has(number)) return;
-                this._drag.touched.add(number);
-                this._set(number, this._drag.adding);
+                // Sample along the path since the last event so a fast swipe cannot skip a small tooth.
+                const from = this._drag.last;
+                const to = { x: e.clientX, y: e.clientY };
+                this._drag.last = to;
+                const steps = Math.max(1, Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / 6));
+                for (let i = 1; i <= steps; i++) {
+                    const hit = document.elementFromPoint(from.x + (to.x - from.x) * i / steps, from.y + (to.y - from.y) * i / steps);
+                    const g = hit ? toothOf(hit) : null;
+                    if (!g) continue;
+                    const number = g.dataset.tooth;
+                    if (this._drag.touched.has(number)) continue;
+                    this._drag.touched.add(number);
+                    this._set(number, this._drag.adding);
+                }
             });
 
             const end = () => { if (this._drag) { this._drag = null; this._emit(null); } };

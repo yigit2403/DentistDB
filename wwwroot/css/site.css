@@ -732,6 +732,8 @@ td .sub { display: block; font-size: 0.78rem; color: var(--text-muted); }
 .tc-tooth.cond-Caries .tc-label { fill: #8a1c1c; }
 
 .tooth-selector-tools { display: grid; gap: 8px; margin-top: 10px; }
+.tooth-selector-tools .chip-group { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; max-width: 360px; }
+.tooth-selector-tools .chip-group .chip { text-align: center; padding: 4px 6px; white-space: nowrap; }
 .tooth-typed .form-control { max-width: 360px; }
 .tooth-chips { display: flex; flex-wrap: wrap; gap: 4px; min-height: 22px; }
 .tooth-chip--removable { border: 0; cursor: pointer; padding-right: 18px; position: relative; }
