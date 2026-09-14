@@ -23,6 +23,8 @@ public class FullSweepTests : IClassFixture<SweepFactory>
         _factory = factory;
     }
 
+    private static readonly byte[] TinyBmp = Convert.FromBase64String("Qk1GAAAAAAAAADYAAAAoAAAAAgAAAAIAAAABABgAAAAAABAAAAATCwAAEwsAAAAAAAAAAAAA////AAAAAAD///8AAAAAAA==");
+
     private static readonly byte[] TinyPng = Convert.FromBase64String(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==");
 
@@ -468,10 +470,22 @@ public class FullSweepTests : IClassFixture<SweepFactory>
         }
 
         var bad = await UploadAsync(client, new byte[] { 1, 2 }, "x.exe", "application/octet-stream");
-        Assert.Contains("JPG, PNG, WebP ve PDF", await bad.ReadAsync());
+        Assert.Contains("JPG, PNG, WebP, BMP ve PDF", await bad.ReadAsync());
 
+        // Extension decides the type; the header must match it.
         var mismatch = await UploadAsync(client, TinyPng, "x.pdf", "image/png");
-        Assert.Contains("JPG, PNG, WebP ve PDF", await mismatch.ReadAsync());
+        Assert.Contains("uzantısıyla uyuşmuyor", await mismatch.ReadAsync());
+
+        var dicom = await UploadAsync(client, new byte[] { 1, 2, 3, 4 }, "pano.dcm", "application/dicom");
+        Assert.Contains("DICOM", await dicom.ReadAsync());
+
+        // BMP exported by panoramic device software is accepted and served as image/bmp regardless of the browser's content type.
+        var bmpOk = await UploadAsync(client, TinyBmp, "PANO.BMP", "application/octet-stream");
+        Assert.Equal(HttpStatusCode.Redirect, bmpOk.StatusCode);
+        var bmpScan = _factory.WithDb(db => db.Scans.Single(s => s.PatientId == patientId && s.FileName == "PANO.BMP"));
+        Assert.Equal("image/bmp", bmpScan.ContentType);
+        var bmpContent = await client.GetAsync($"/Scans/ContentFile/{bmpScan.Id}");
+        Assert.Equal("image/bmp", bmpContent.Content.Headers.ContentType!.MediaType);
 
         var empty = await client.PostFormAsync("/Scans/Upload", $"/Scans/Upload?patientId={patientId}", ("PatientId", patientId.ToString()), ("ScanType", "Panoramic"), ("ScanDate", "2026-09-10"));
         Assert.Contains("bir dosya seçin", await empty.ReadAsync());

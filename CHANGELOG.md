@@ -31,6 +31,7 @@ Clinical workflow release. The schema is upgraded automatically at startup (migr
 - Empty required text fields (patient name, backup folder) crashed with a 500 instead of a validation message.
 - Agenda keyboard shortcuts navigated to HTML-encoded URLs (`&amp;`), dropping the date parameter.
 - Edit forms now bind the record id from the route so a tampered form id cannot redirect the update.
+- Scan upload: BMP files (the common export of panoramic device software such as Genoray Papaya / Triana) are accepted; the file type is decided by the extension and verified against the file header instead of trusting the browser, and DICOM/TIFF uploads get a message explaining to export as JPG/BMP.
 - Tooth selector: a fast drag skipped small teeth because only the pointer's sampled positions were hit-tested; the path between events is now sampled. Deciduous chart teeth are spaced by arc length and aligned to the arch (no more overlapping shapes), and the quadrant shortcuts sit in a tidy 3-column grid.
 
 ## [0.3.0] - 2026-09-10

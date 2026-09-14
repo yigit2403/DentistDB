@@ -20,8 +20,8 @@
             <div class="row g-3">
                 <div class="col-12">
                     <label asp-for="File" class="form-label">Dosya <span class="req">*</span></label>
-                    <input asp-for="File" class="form-control" type="file" accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf" required />
-                    <div class="form-text">JPG, PNG, WebP veya PDF · en fazla 20 MB.</div>
+                    <input asp-for="File" class="form-control" type="file" accept=".jpg,.jpeg,.png,.webp,.bmp,.pdf,image/jpeg,image/png,image/webp,image/bmp,application/pdf" required />
+                    <div class="form-text">JPG, PNG, WebP, BMP veya PDF · en fazla 20 MB. Panoramik cihaz yazılımından (Papaya / Triana) JPG veya BMP olarak dışa aktarın; DICOM (.dcm) doğrudan açılamaz.</div>
                     <span asp-validation-for="File" class="text-danger small"></span>
                 </div>
                 <div class="col-md-6">
