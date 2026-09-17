@@ -88,15 +88,77 @@
   /* ---------------------------------------------------------------------
      Sidebar (mobile)
      --------------------------------------------------------------------- */
+  var setSidebar = function (open) {
+    document.body.classList.toggle("sidebar-open", open);
+    document.querySelectorAll("[data-sidebar-toggle]").forEach(function (b) { b.setAttribute("aria-expanded", open ? "true" : "false"); });
+    if (open) {
+      var sidebar = document.getElementById("sidebar");
+      var first = sidebar && sidebar.querySelector("a, button");
+      if (first) first.focus();
+    }
+  };
+
   document.addEventListener("click", function (event) {
     if (event.target.closest("[data-sidebar-toggle]")) {
-      document.body.classList.toggle("sidebar-open");
+      setSidebar(!document.body.classList.contains("sidebar-open"));
       return;
     }
     if (event.target.closest("[data-sidebar-close]")) {
-      document.body.classList.remove("sidebar-open");
+      setSidebar(false);
     }
   });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key === "Escape" && document.body.classList.contains("sidebar-open")) {
+      setSidebar(false);
+      var toggle = document.querySelector("[data-sidebar-toggle]");
+      if (toggle) toggle.focus();
+    }
+  });
+
+  /* ---------------------------------------------------------------------
+     Clickable table rows: <tr data-href="…">. Clicks on real controls inside
+     the row (links, buttons, inputs) keep their own behaviour.
+     --------------------------------------------------------------------- */
+  document.addEventListener("click", function (event) {
+    var row = event.target.closest("tr[data-href]");
+    if (!row || event.target.closest("a, button, input, select, label, form")) return;
+    if (event.ctrlKey || event.metaKey || event.button === 1) {
+      window.open(row.dataset.href, "_blank");
+    } else {
+      window.location.href = row.dataset.href;
+    }
+  });
+
+  /* ---------------------------------------------------------------------
+     Unsaved-changes guard: <form data-unsaved-guard>. Warns before leaving
+     the page once a field has been edited; cleared on submit.
+     --------------------------------------------------------------------- */
+  var dirtyForm = null;
+  var markDirty = function (event) {
+    // Widgets (tooth selector, invoice rows) dispatch synthetic change events while initialising;
+    // only real user input counts as an edit.
+    if (!event.isTrusted) return;
+    var form = event.target.closest("form[data-unsaved-guard]");
+    if (form) dirtyForm = form;
+  };
+  document.addEventListener("input", markDirty);
+  document.addEventListener("change", markDirty);
+  document.addEventListener("submit", function () { dirtyForm = null; });
+  window.addEventListener("beforeunload", function (event) {
+    if (!dirtyForm) return;
+    event.preventDefault();
+    event.returnValue = "";
+  });
+
+  /* ---------------------------------------------------------------------
+     Desktop-only autofocus: [data-autofocus] focuses on fine-pointer devices,
+     so phones do not get the keyboard thrown at them on list pages.
+     --------------------------------------------------------------------- */
+  var autofocusTarget = document.querySelector("[data-autofocus]");
+  if (autofocusTarget && window.matchMedia && window.matchMedia("(pointer: fine)").matches && !document.querySelector(".input-validation-error")) {
+    autofocusTarget.focus();
+  }
 
   /* ---------------------------------------------------------------------
      Generic helpers: quick-fill chips, native picker buttons, confirm forms

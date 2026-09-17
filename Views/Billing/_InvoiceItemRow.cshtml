@@ -29,5 +29,5 @@
         <span class="text-danger small field-validation-valid" data-valmsg-for="@(prefix).UnitPrice" data-valmsg-replace="true"></span>
     </td>
     <td class="line-total align-middle" data-line-total>@((Model.Quantity * Model.UnitPrice).ToMoney())</td>
-    <td class="align-middle"><button type="button" class="btn btn-sm btn-ghost btn-icon text-danger" data-remove-item title="Satırı kaldır"><svg class="icon"><use href="#i-x"/></svg></button></td>
+    <td class="align-middle"><button type="button" class="btn btn-sm btn-ghost btn-icon text-danger" data-remove-item title="Satırı kaldır" aria-label="Satırı kaldır"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button></td>
 </tr>

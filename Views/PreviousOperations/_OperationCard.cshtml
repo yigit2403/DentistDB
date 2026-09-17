@@ -26,7 +26,7 @@
             {
                 <form asp-controller="PreviousOperations" asp-action="Delete" asp-route-id="@Model.Id" asp-route-returnUrl="@returnUrl" method="post" class="m-0" data-confirm="Bu tedavi kaydı kalıcı olarak silinsin mi?">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Sil"><svg class="icon"><use href="#i-trash"/></svg></button>
+                    <button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Sil" aria-label="Sil"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg></button>
                 </form>
             }
         </div>

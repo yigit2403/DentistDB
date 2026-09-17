@@ -3,8 +3,8 @@
 <div class="tooth-selector-card">
     <div class="tooth-selector-head">
         <div>
-            <label class="form-label mb-0">@Model.Label</label>
-            <div id="@Model.SummaryId" class="tooth-selector-summary">Diş seçilmedi</div>
+            <span class="form-label mb-0 d-block" id="@(Model.InputId)-label">@Model.Label</span>
+            <div id="@Model.SummaryId" class="tooth-selector-summary" aria-live="polite">Diş seçilmedi</div>
         </div>
         <div class="d-flex align-items-center gap-2">
             <div class="btn-group-seg btn-group-seg--sm">
@@ -23,7 +23,7 @@
          data-mode="multiple">
         <input type="hidden" id="@Model.InputId" name="@Model.InputName" value="@Model.SelectedTeethCsv" />
 
-        <div class="tooth-selector-stage" data-tooth-stage>
+        <div class="tooth-selector-stage" data-tooth-stage role="group" aria-labelledby="@(Model.InputId)-label">
             <div class="tooth-selector-loading">Diş şeması yükleniyor…</div>
         </div>
 

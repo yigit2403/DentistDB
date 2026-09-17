@@ -69,14 +69,14 @@
                             <td><span class="badge-soft @(p.IsActive ? "success" : "neutral")">@(p.IsActive ? "Aktif" : "Pasif")</span></td>
                             <td class="row-actions">
                                 <form asp-action="SaveProcedure" asp-route-showInactive="@Model.ShowInactive" method="post" class="d-inline" id="edit-@p.Id"></form>
-                                <a asp-action="PriceList" asp-route-showInactive="@Model.ShowInactive" asp-fragment="Name" class="btn btn-sm btn-outline-secondary js-edit-procedure" data-id="@p.Id" data-name="@p.Name" data-price="@p.DefaultPrice.ToString("0.00")" data-active="@(p.IsActive ? "true" : "false")" title="Düzenle"><svg class="icon"><use href="#i-edit"/></svg></a>
+                                <a asp-action="PriceList" asp-route-showInactive="@Model.ShowInactive" asp-fragment="Name" class="btn btn-sm btn-outline-secondary js-edit-procedure" data-id="@p.Id" data-name="@p.Name" data-price="@p.DefaultPrice.ToString("0.00")" data-active="@(p.IsActive ? "true" : "false")" title="Düzenle" aria-label="Düzenle"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg></a>
                                 <form asp-action="ToggleProcedure" asp-route-id="@p.Id" asp-route-showInactive="@Model.ShowInactive" method="post" class="d-inline">
                                     @Html.AntiForgeryToken()
                                     <button type="submit" class="btn btn-sm btn-outline-secondary" title="@(p.IsActive ? "Pasife al" : "Aktif et")">@(p.IsActive ? "Pasife Al" : "Aktif Et")</button>
                                 </form>
                                 <form asp-action="DeleteProcedure" asp-route-id="@p.Id" asp-route-showInactive="@Model.ShowInactive" method="post" class="d-inline" data-confirm="“@p.Name” silinsin mi? Faturalarda kullanılmışsa silinmez, pasife alınır.">
                                     @Html.AntiForgeryToken()
-                                    <button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Sil"><svg class="icon"><use href="#i-trash"/></svg></button>
+                                    <button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Sil" aria-label="Sil"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg></button>
                                 </form>
                             </td>
                         </tr>

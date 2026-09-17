@@ -19,7 +19,7 @@
         <form method="get" class="filter-bar">
             <div class="quick-search" style="width:min(420px,100%)">
                 <svg class="icon"><use href="#i-search"/></svg>
-                <input type="search" name="search" value="@Model.Search" class="form-control" placeholder="Ad, TCKN, telefon veya e-posta" autofocus />
+                <input type="search" name="search" value="@Model.Search" class="form-control" placeholder="Ad, TCKN, telefon veya e-posta…" aria-label="Hasta ara" autocomplete="off" data-autofocus />
             </div>
             <div class="form-check m-0">
                 <input type="checkbox" name="showArchived" value="true" class="form-check-input" id="chkArchived" @(Model.ShowArchived ? "checked" : "") data-autosubmit />
@@ -71,7 +71,7 @@
                             var today = DateOnly.FromDateTime(DateTime.Today);
                             age = today.Year - bd.Year - (bd > today.AddYears(-(today.Year - bd.Year)) ? 1 : 0);
                         }
-                        <tr>
+                        <tr data-href="@Url.Action("Details", new { id = p.Id })">
                             <td>
                                 <div class="person">
                                     <partial name="_Avatar" model="new AvatarModel(p.Id, p.FullName, p.HasPhoto)" />
@@ -106,8 +106,8 @@
                                 <span class="badge-soft @(p.IsArchived ? "neutral" : "success")">@(p.IsArchived ? "Arşivde" : "Aktif")</span>
                             </td>
                             <td class="row-actions">
-                                <a asp-controller="Appointments" asp-action="Create" asp-route-patientId="@p.Id" class="btn btn-sm btn-outline-secondary" title="Randevu ver"><svg class="icon"><use href="#i-calendar-plus"/></svg></a>
-                                <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary" title="Düzenle"><svg class="icon"><use href="#i-edit"/></svg></a>
+                                <a asp-controller="Appointments" asp-action="Create" asp-route-patientId="@p.Id" class="btn btn-sm btn-outline-secondary" title="Randevu ver" aria-label="Randevu ver"><svg class="icon" aria-hidden="true"><use href="#i-calendar-plus"/></svg></a>
+                                <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-secondary" title="Düzenle" aria-label="Düzenle"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg></a>
                             </td>
                         </tr>
                     }

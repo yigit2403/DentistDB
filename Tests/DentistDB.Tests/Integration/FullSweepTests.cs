@@ -363,6 +363,35 @@ public class FullSweepTests : IClassFixture<SweepFactory>
     }
 
     [Fact]
+    public async Task Appointment_Create_FromSlotLink_PrefillsDateAndTime()
+    {
+        var client = await AdminAsync();
+
+        // A slot link passes date=…T09:15; the raw query value must not leak into the type="date" input.
+        var html = await OkAsync(client, "/Appointments/Create?date=2026-09-10T09:15");
+        Assert.Matches("name=\"Date\"[^>]*value=\"2026-09-10\"", html);
+        Assert.Matches("name=\"Time\"[^>]*value=\"09:15\"", html);
+    }
+
+    [Fact]
+    public async Task Appointment_TimeGrid_RendersSlotsAndPlacesAppointments()
+    {
+        var client = await AdminAsync();
+        var appointment = _factory.WithDb(db => db.Appointments.OrderBy(a => a.Id).First());
+        var day = appointment.AppointmentDate.Date;
+
+        var daily = await OkAsync(client, $"/Appointments?view=Daily&date={day:yyyy-MM-dd}");
+        Assert.Contains("data-time-grid", daily);
+        Assert.Contains($"date={day:yyyy-MM-dd}T09%3A00", daily.Replace("&amp;", "&"));
+        Assert.Contains("class=\"tg-event tg-event--full", daily);
+        Assert.Contains("grid-row:", daily);
+
+        var weekly = await OkAsync(client, $"/Appointments?view=Weekly&date={day:yyyy-MM-dd}");
+        Assert.Equal(7, Regex.Matches(weekly, "class=\"tg-day").Count);
+        Assert.Contains($"data-tg-day=\"{day:yyyy-MM-dd}\"", weekly);
+    }
+
+    [Fact]
     public async Task Appointment_Create_ValidationErrors_RenderForm()
     {
         var client = await AdminAsync();

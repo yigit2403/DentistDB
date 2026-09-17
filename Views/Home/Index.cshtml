@@ -17,49 +17,22 @@
         </p>
     </div>
     <div class="page-actions">
-        <a asp-controller="Appointments" asp-action="PrintDay" asp-route-date="@todayIso" target="_blank" class="btn btn-outline-secondary" title="Bugünün listesini yazdır"><svg class="icon"><use href="#i-print"/></svg> Günlük Liste</a>
+        <a asp-controller="Appointments" asp-action="PrintDay" asp-route-date="@todayIso" target="_blank" class="btn btn-outline-secondary" title="Bugünün listesini yazdır"><svg class="icon" aria-hidden="true"><use href="#i-print"/></svg> Günlük Liste</a>
         @if (Model.ShowFinancials)
         {
-            <a asp-controller="Billing" asp-action="DailyReport" class="btn btn-outline-secondary"><svg class="icon"><use href="#i-coins"/></svg> Gün Sonu</a>
+            <a asp-controller="Billing" asp-action="DailyReport" class="btn btn-outline-secondary"><svg class="icon" aria-hidden="true"><use href="#i-coins"/></svg> Gün Sonu</a>
         }
-        <a asp-controller="Appointments" asp-action="Create" class="btn btn-primary"><svg class="icon"><use href="#i-calendar-plus"/></svg> Randevu Ekle</a>
-        <a asp-controller="Patients" asp-action="Create" class="btn btn-outline-secondary"><svg class="icon"><use href="#i-user-plus"/></svg> Yeni Hasta</a>
+        <a asp-controller="Appointments" asp-action="Create" class="btn btn-primary"><svg class="icon" aria-hidden="true"><use href="#i-calendar-plus"/></svg> Randevu Ekle</a>
+        <a asp-controller="Patients" asp-action="Create" class="btn btn-outline-secondary"><svg class="icon" aria-hidden="true"><use href="#i-user-plus"/></svg> Yeni Hasta</a>
     </div>
 </div>
 
-<div class="stat-grid">
-    <div class="stat">
-        <span class="stat-label">Aktif Hasta</span>
-        <span class="stat-value">@Model.TotalPatients</span>
-        <span class="stat-hint">Bu ay @Model.NewPatientsThisMonth yeni kayıt</span>
-    </div>
-    <div class="stat">
-        <span class="stat-label">Bu Hafta</span>
-        <span class="stat-value">@Model.AppointmentsThisWeek</span>
-        <span class="stat-hint">randevu</span>
-    </div>
-    <div class="stat">
-        <span class="stat-label">Bu Ay</span>
-        <span class="stat-value">@Model.AppointmentsThisMonth</span>
-        <span class="stat-hint">randevu</span>
-    </div>
-    @if (Model.ShowFinancials)
-    {
-        <div class="stat @(Model.OutstandingBalance > 0 ? "stat-warn" : "")">
-            <span class="stat-label">Bekleyen Alacak</span>
-            <span class="stat-value money">@Model.OutstandingBalance.ToMoney()</span>
-            <span class="stat-hint">@Model.OverdueInvoices.Count vadesi geçmiş fatura</span>
-        </div>
-        <div class="stat stat-success">
-            <span class="stat-label">Bu Ay Tahsilat</span>
-            <span class="stat-value money">@Model.CollectedThisMonth.ToMoney()</span>
-            <span class="stat-hint">@Model.Today.ToMonthHeading()</span>
-        </div>
-    }
-</div>
-
-<div class="row g-3">
-    <div class="col-xl-7">
+@*
+    Desktop: stats span the top, today's list sits under them on the left, the side cards on the right.
+    Phone: DOM order wins, so today's appointments come first and the stats collapse into a compact 2-column strip.
+*@
+<div class="dash">
+    <div class="dash-today">
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">Bugünün Randevuları</h3>
@@ -68,7 +41,7 @@
             @if (!Model.TodaysAppointments.Any())
             {
                 <div class="empty-state">
-                    <svg class="icon"><use href="#i-calendar"/></svg>
+                    <svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>
                     <p>Bugün için planlanmış randevu yok.</p>
                     <a asp-controller="Appointments" asp-action="Create" class="btn btn-sm btn-primary">Randevu Ekle</a>
                 </div>
@@ -96,25 +69,58 @@
                                 {
                                     <form asp-controller="Appointments" asp-action="SetStatus" asp-route-id="@appt.Id" asp-route-status="Completed" asp-route-returnUrl="@returnUrl" method="post" class="m-0">
                                         @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-outline-primary" title="Tamamlandı"><svg class="icon"><use href="#i-check"/></svg></button>
+                                        <button type="submit" class="btn btn-sm btn-outline-primary" title="Tamamlandı" aria-label="Tamamlandı olarak işaretle"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></button>
                                     </form>
                                     <form asp-controller="Appointments" asp-action="SetStatus" asp-route-id="@appt.Id" asp-route-status="NoShow" asp-route-returnUrl="@returnUrl" method="post" class="m-0">
                                         @Html.AntiForgeryToken()
-                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Gelmedi"><svg class="icon"><use href="#i-x"/></svg></button>
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Gelmedi" aria-label="Gelmedi olarak işaretle"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
                                     </form>
                                 }
                                 @if (appt.Status == AppointmentStatus.Completed)
                                 {
                                     <partial name="~/Views/Appointments/_FollowUpMenu.cshtml" model="appt" view-data='new ViewDataDictionary(ViewData) { { "ReturnUrl", returnUrl } }' />
                                 }
-                                <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@appt.Id" asp-route-returnUrl="@returnUrl" class="btn btn-sm btn-outline-secondary" title="Düzenle"><svg class="icon"><use href="#i-edit"/></svg></a>
+                                <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@appt.Id" asp-route-returnUrl="@returnUrl" class="btn btn-sm btn-outline-secondary" title="Düzenle" aria-label="Randevuyu düzenle"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg></a>
                             </div>
                         </li>
                     }
                 </ul>
             }
         </div>
+    </div>
 
+    <div class="stat-grid dash-stats">
+        <div class="stat">
+            <span class="stat-label">Aktif Hasta</span>
+            <span class="stat-value">@Model.TotalPatients</span>
+            <span class="stat-hint">Bu ay @Model.NewPatientsThisMonth yeni kayıt</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Bu Hafta</span>
+            <span class="stat-value">@Model.AppointmentsThisWeek</span>
+            <span class="stat-hint">randevu</span>
+        </div>
+        <div class="stat">
+            <span class="stat-label">Bu Ay</span>
+            <span class="stat-value">@Model.AppointmentsThisMonth</span>
+            <span class="stat-hint">randevu</span>
+        </div>
+        @if (Model.ShowFinancials)
+        {
+            <div class="stat @(Model.OutstandingBalance > 0 ? "stat-warn" : "")">
+                <span class="stat-label">Bekleyen Alacak</span>
+                <span class="stat-value money">@Model.OutstandingBalance.ToMoney()</span>
+                <span class="stat-hint">@Model.OverdueInvoices.Count vadesi geçmiş fatura</span>
+            </div>
+            <div class="stat stat-success">
+                <span class="stat-label">Bu Ay Tahsilat</span>
+                <span class="stat-value money">@Model.CollectedThisMonth.ToMoney()</span>
+                <span class="stat-hint">@Model.Today.ToMonthHeading()</span>
+            </div>
+        }
+    </div>
+
+    <div class="dash-left">
         <div class="card">
             <div class="card-header">
                 <h3 class="card-title">Yaklaşan Randevular</h3>
@@ -135,7 +141,7 @@
                                 <div class="title"><a asp-controller="Patients" asp-action="Details" asp-route-id="@appt.PatientId" class="row-link">@appt.Patient?.FullName</a></div>
                                 <div class="meta">@appt.Purpose</div>
                             </div>
-                            <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@appt.Id" asp-route-returnUrl="@returnUrl" class="btn btn-sm btn-outline-secondary" title="Düzenle"><svg class="icon"><use href="#i-edit"/></svg></a>
+                            <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@appt.Id" asp-route-returnUrl="@returnUrl" class="btn btn-sm btn-outline-secondary" title="Düzenle" aria-label="Randevuyu düzenle"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg></a>
                         </li>
                     }
                 </ul>
@@ -143,7 +149,7 @@
         </div>
     </div>
 
-    <div class="col-xl-5">
+    <div class="dash-right">
         @if (Model.ShowFinancials)
         {
             <div class="card">

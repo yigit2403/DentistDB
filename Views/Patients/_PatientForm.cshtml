@@ -10,12 +10,12 @@
     </div>
     <div class="col-md-3">
         <label asp-for="Tckn" class="form-label">TCKN <span class="req">*</span></label>
-        <input asp-for="Tckn" class="form-control num" maxlength="11" inputmode="numeric" autocomplete="off" placeholder="11 haneli" />
+        <input asp-for="Tckn" class="form-control num" maxlength="11" inputmode="numeric" autocomplete="off" spellcheck="false" placeholder="11 hane, örn. 10000000146…" />
         <span asp-validation-for="Tckn" class="text-danger small"></span>
     </div>
     <div class="col-md-3">
         <label asp-for="Phone" class="form-label"></label>
-        <input asp-for="Phone" class="form-control num" inputmode="tel" placeholder="05xx xxx xx xx" autocomplete="off" />
+        <input asp-for="Phone" class="form-control num" inputmode="tel" placeholder="05xx xxx xx xx…" autocomplete="off" spellcheck="false" />
         <span asp-validation-for="Phone" class="text-danger small"></span>
     </div>
 
@@ -31,7 +31,7 @@
     </div>
     <div class="col-md-6">
         <label asp-for="Email" class="form-label"></label>
-        <input asp-for="Email" class="form-control" type="email" autocomplete="off" />
+        <input asp-for="Email" class="form-control" type="email" autocomplete="off" spellcheck="false" placeholder="ornek@eposta.com…" />
         <span asp-validation-for="Email" class="text-danger small"></span>
     </div>
 

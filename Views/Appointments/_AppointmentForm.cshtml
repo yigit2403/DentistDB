@@ -49,12 +49,12 @@
                         <option value="@option">@option.ToDurationText()</option>
                     }
                 </select>
-                <div class="form-text" data-end-time></div>
+                <div class="form-text" data-end-time aria-live="polite"></div>
                 <span asp-validation-for="DurationMinutes" class="text-danger small"></span>
             </div>
 
             <div class="col-12">
-                <div class="conflict-box" data-conflict-live hidden></div>
+                <div class="conflict-box" data-conflict-live role="status" aria-live="polite" hidden></div>
             </div>
 
             <div class="col-12">

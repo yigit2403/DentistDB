@@ -130,7 +130,7 @@
   text-overflow: ellipsis;
 }
 .scan-viewer .sv-select:hover { border-color: rgba(255, 255, 255, 0.2); }
-.scan-viewer .sv-select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-ring); }
+.scan-viewer .sv-select:focus-visible { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-ring); }
 .scan-viewer .sv-select option { background: var(--sv-bg-raised); color: var(--sv-fg); }
 
 /* Panes --------------------------------------------------------------------- */
@@ -292,4 +292,9 @@
 @media print {
   .scan-viewer .sv-toolbar,
   .scan-viewer .sv-footer { display: none !important; }
+}
+
+/* Reduced motion: the viewer animates transforms only; drop the easing entirely. */
+@media (prefers-reduced-motion: reduce) {
+  .scan-viewer *, .scan-viewer *::before, .scan-viewer *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }

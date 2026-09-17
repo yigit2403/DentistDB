@@ -85,6 +85,10 @@ public class AppointmentsController : ClinicControllerBase
 
     public async Task<IActionResult> Create(int? patientId, DateTime? date, string? returnUrl, string? purpose, string? teeth, int? duration, int? planItemId)
     {
+        // The query string binds into ModelState ("date" = "2026-09-10T09:15"), and the input tag helper
+        // prefers that raw value over the formatted model value, which leaves a type="date" field empty.
+        ModelState.Clear();
+
         var clinic = await _settings.GetClinicSettingsAsync();
         var start = date.HasValue
             ? AppointmentRules.RoundToSlot(date.Value)

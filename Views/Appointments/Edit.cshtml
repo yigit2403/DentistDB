@@ -31,7 +31,7 @@
 
 <div class="card">
     <div class="card-body p-4">
-        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" data-appointment-form data-conflicts-url="@Url.Action("Conflicts")" data-exclude-id="@Model.Id">
+        <form asp-action="Edit" asp-route-id="@Model.Id" method="post" data-appointment-form data-conflicts-url="@Url.Action("Conflicts")" data-exclude-id="@Model.Id" data-unsaved-guard>
             @Html.AntiForgeryToken()
             <input asp-for="Id" type="hidden" />
             <input type="hidden" asp-for="ReturnUrl" />

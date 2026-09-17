@@ -39,11 +39,12 @@
     @await RenderSectionAsync("Head", required: false)
 </head>
 <body>
+    <a class="skip-link" href="#main">İçeriğe geç</a>
     <partial name="_Icons" />
 
     @if (!isSignedIn)
     {
-        <main class="content content--auth">
+        <main class="content content--auth" id="main">
             @RenderBody()
         </main>
     }
@@ -104,7 +105,7 @@
                         </span>
                         <form asp-controller="Access" asp-action="Logout" method="post" class="m-0 ms-auto">
                             @Html.AntiForgeryToken()
-                            <button type="submit" class="btn btn-ghost btn-icon" title="Hesap değiştir / çıkış"><svg class="icon"><use href="#i-logout"/></svg></button>
+                            <button type="submit" class="btn btn-ghost btn-icon" title="Hesap değiştir / çıkış" aria-label="Hesap değiştir / çıkış"><svg class="icon" aria-hidden="true"><use href="#i-logout"/></svg></button>
                         </form>
                     </div>
                 </div>
@@ -112,7 +113,7 @@
 
             <div class="main">
                 <header class="topbar">
-                    <button type="button" class="btn btn-ghost btn-icon menu-toggle" data-sidebar-toggle aria-label="Menü"><svg class="icon icon-lg"><use href="#i-menu"/></svg></button>
+                    <button type="button" class="btn btn-ghost btn-icon menu-toggle" data-sidebar-toggle aria-label="Menü" aria-controls="sidebar" aria-expanded="false"><svg class="icon icon-lg" aria-hidden="true"><use href="#i-menu"/></svg></button>
                     <div class="topbar-title-wrap">
                         <h1 class="topbar-title">@title</h1>
                     </div>
@@ -120,11 +121,11 @@
                     <div class="quick-search" data-quick-search data-search-url="@Url.Action("Search", "Patients")" data-patient-url="@Url.Action("Details", "Patients", new { id = "__ID__" })">
                         <svg class="icon"><use href="#i-search"/></svg>
                         <input type="search" class="form-control" placeholder="Hasta ara: ad, TCKN, telefon…" autocomplete="off" aria-label="Hasta ara" />
-                        <div class="quick-search-results" hidden></div>
+                        <div class="quick-search-results" role="region" aria-live="polite" aria-label="Arama sonuçları" hidden></div>
                     </div>
                 </header>
 
-                <main class="content">
+                <main class="content" id="main">
                     @{
                         var flashes = new[]
                         {
@@ -141,7 +142,7 @@
                             {
                                 if (TempData[flash.Key] is string message && !string.IsNullOrWhiteSpace(message))
                                 {
-                                    <div class="alert @flash.Css alert-dismissible" role="alert">
+                                    <div class="alert @flash.Css alert-dismissible" role="status">
                                         <svg class="icon"><use href="#@flash.Icon"/></svg>
                                         <div>@message</div>
                                         <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Kapat"></button>

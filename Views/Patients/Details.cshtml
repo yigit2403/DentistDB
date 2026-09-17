@@ -90,9 +90,9 @@
         </div>
         <div class="col-lg-4">
             <div class="card h-100">
-                <div class="card-header"><h3 class="card-title">Anamnez</h3><a asp-action="Edit" asp-route-id="@p.Id" asp-fragment="Allergies" class="btn btn-sm btn-ghost"><svg class="icon"><use href="#i-edit"/></svg></a></div>
+                <div class="card-header"><h3 class="card-title">Anamnez</h3><a asp-action="Edit" asp-route-id="@p.Id" asp-fragment="Allergies" class="btn btn-sm btn-ghost" title="Anamnezi düzenle" aria-label="Anamnezi düzenle"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg></a></div>
                 <div class="card-body">
-                    @if (p.AnamnesisUpdatedAt is null && p.RiskFlags.Count == 0 && string.IsNullOrWhiteSpace(p.AnamnesisNotes))
+                    @if (p.AnamnesisUpdatedAt is null && p.RiskFlags.Count == 0 && string.IsNullOrWhiteSpace(p.AnamnesisNotes) && string.IsNullOrWhiteSpace(p.MedicalAlerts))
                     {
                         <p class="text-muted mb-2">Anamnez henüz alınmadı.</p>
                         <a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-outline-primary">Anamnez Gir</a>
@@ -100,6 +100,7 @@
                     else
                     {
                         <dl class="kv">
+                            @if (!string.IsNullOrWhiteSpace(p.MedicalAlerts)) { <dt>Uyarı</dt><dd class="text-danger fw-600">@p.MedicalAlerts</dd> }
                             <dt>Alerji</dt><dd class="@(string.IsNullOrWhiteSpace(p.Allergies) ? "" : "text-danger fw-600")">@(string.IsNullOrWhiteSpace(p.Allergies) ? "Bilinen alerji yok" : p.Allergies)</dd>
                             <dt>İlaçlar</dt><dd>@(string.IsNullOrWhiteSpace(p.Medications) ? "—" : p.Medications)</dd>
                             <dt>Durumlar</dt>
@@ -112,8 +113,12 @@
                                 else { <span class="risk-flags">@foreach (var c in conditions) { <span class="badge-soft @(c == "Sigara" ? "neutral" : "danger")">@c</span> }</span> }
                             </dd>
                             @if (!string.IsNullOrWhiteSpace(p.AnamnesisNotes)) { <dt>Notlar</dt><dd class="pre-wrap">@p.AnamnesisNotes</dd> }
-                            <dt>Güncelleme</dt><dd class="text-muted">@(p.AnamnesisUpdatedAt?.ToLocalTime().ToShortDate() ?? "—")</dd>
+                            <dt>Güncelleme</dt><dd class="text-muted">@(p.AnamnesisUpdatedAt?.ToLocalTime().ToShortDate() ?? "Anamnez formu henüz doldurulmadı")</dd>
                         </dl>
+                        @if (p.AnamnesisUpdatedAt is null)
+                        {
+                            <a asp-action="Edit" asp-route-id="@p.Id" asp-fragment="Allergies" class="btn btn-sm btn-outline-primary mt-2">Anamnez Gir</a>
+                        }
                     }
                 </div>
             </div>
@@ -152,7 +157,7 @@
 
         <div class="col-lg-6">
             <div class="card h-100">
-                <div class="card-header"><h3 class="card-title">Notlar</h3><a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-ghost"><svg class="icon"><use href="#i-edit"/></svg></a></div>
+                <div class="card-header"><h3 class="card-title">Notlar</h3><a asp-action="Edit" asp-route-id="@p.Id" class="btn btn-sm btn-ghost" title="Notları düzenle" aria-label="Notları düzenle"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg></a></div>
                 <div class="card-body">
                     @if (string.IsNullOrWhiteSpace(p.Notes)) { <p class="text-muted mb-0">Bu hasta için not eklenmemiş.</p> }
                     else { <p class="pre-wrap mb-0">@p.Notes</p> }
@@ -332,8 +337,8 @@ else if (tab == "plan")
                                             @if (open)
                                             {
                                                 <div class="d-flex flex-column">
-                                                    <form asp-controller="TreatmentPlan" asp-action="Move" asp-route-id="@item.Id" asp-route-direction="-1" method="post" class="m-0">@Html.AntiForgeryToken()<button class="btn btn-ghost btn-icon p-0" title="Yukarı">▲</button></form>
-                                                    <form asp-controller="TreatmentPlan" asp-action="Move" asp-route-id="@item.Id" asp-route-direction="1" method="post" class="m-0">@Html.AntiForgeryToken()<button class="btn btn-ghost btn-icon p-0" title="Aşağı">▼</button></form>
+                                                    <form asp-controller="TreatmentPlan" asp-action="Move" asp-route-id="@item.Id" asp-route-direction="-1" method="post" class="m-0">@Html.AntiForgeryToken()<button class="btn btn-ghost btn-icon p-0" title="Yukarı" aria-label="Yukarı taşı"><span aria-hidden="true">▲</span></button></form>
+                                                    <form asp-controller="TreatmentPlan" asp-action="Move" asp-route-id="@item.Id" asp-route-direction="1" method="post" class="m-0">@Html.AntiForgeryToken()<button class="btn btn-ghost btn-icon p-0" title="Aşağı" aria-label="Aşağı taşı"><span aria-hidden="true">▼</span></button></form>
                                                 </div>
                                             }
                                         </td>
@@ -351,31 +356,31 @@ else if (tab == "plan")
                                             {
                                                 @if (item.Status == TreatmentPlanStatus.Planned)
                                                 {
-                                                    <a asp-controller="Appointments" asp-action="Create" asp-route-planItemId="@item.Id" asp-route-returnUrl="@planReturn" class="btn btn-sm btn-outline-primary" title="Randevu ver"><svg class="icon"><use href="#i-calendar-plus"/></svg></a>
+                                                    <a asp-controller="Appointments" asp-action="Create" asp-route-planItemId="@item.Id" asp-route-returnUrl="@planReturn" class="btn btn-sm btn-outline-primary" title="Randevu ver" aria-label="Randevu ver"><svg class="icon" aria-hidden="true"><use href="#i-calendar-plus"/></svg></a>
                                                 }
                                                 <form asp-controller="TreatmentPlan" asp-action="Complete" asp-route-id="@item.Id" method="post" class="d-inline" data-confirm="“@item.Description” tamamlandı olarak işaretlenip tedavi kaydı oluşturulsun mu?">
                                                     @Html.AntiForgeryToken()
-                                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Tamamlandı"><svg class="icon"><use href="#i-check"/></svg></button>
+                                                    <button type="submit" class="btn btn-sm btn-outline-primary" title="Tamamlandı" aria-label="Tamamlandı"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></button>
                                                 </form>
                                                 <button type="button" class="btn btn-sm btn-outline-secondary js-plan-edit" title="Düzenle"
-                                                        data-id="@item.Id" data-procedure="@item.ProcedureId" data-description="@item.Description" data-teeth="@item.ToothNumbers" data-price="@(Model.ShowFinancials ? item.EstimatedPrice.ToString("0.00") : "0.00")" data-notes="@item.Notes"><svg class="icon"><use href="#i-edit"/></svg></button>
+                                                        data-id="@item.Id" data-procedure="@item.ProcedureId" data-description="@item.Description" data-teeth="@item.ToothNumbers" data-price="@(Model.ShowFinancials ? item.EstimatedPrice.ToString("0.00") : "0.00")" data-notes="@item.Notes" aria-label="Düzenle"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg></button>
                                                 <form asp-controller="TreatmentPlan" asp-action="SetStatus" asp-route-id="@item.Id" asp-route-status="Cancelled" method="post" class="d-inline">
                                                     @Html.AntiForgeryToken()
-                                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="İptal"><svg class="icon"><use href="#i-x"/></svg></button>
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="İptal" aria-label="İptal"><svg class="icon" aria-hidden="true"><use href="#i-x"/></svg></button>
                                                 </form>
                                             }
                                             else if (item.Status == TreatmentPlanStatus.Cancelled)
                                             {
                                                 <form asp-controller="TreatmentPlan" asp-action="SetStatus" asp-route-id="@item.Id" asp-route-status="Planned" method="post" class="d-inline">
                                                     @Html.AntiForgeryToken()
-                                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Yeniden aç"><svg class="icon"><use href="#i-refresh"/></svg></button>
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary" title="Yeniden aç" aria-label="Yeniden aç"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg></button>
                                                 </form>
                                             }
                                             @if (isAdmin)
                                             {
                                                 <form asp-controller="TreatmentPlan" asp-action="Delete" asp-route-id="@item.Id" method="post" class="d-inline" data-confirm="Plan kalemi silinsin mi?">
                                                     @Html.AntiForgeryToken()
-                                                    <button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Sil"><svg class="icon"><use href="#i-trash"/></svg></button>
+                                                    <button type="submit" class="btn btn-sm btn-outline-danger btn-icon" title="Sil" aria-label="Sil"><svg class="icon" aria-hidden="true"><use href="#i-trash"/></svg></button>
                                                 </form>
                                             }
                                         </td>
@@ -530,14 +535,14 @@ else if (tab == "appointments")
                                     {
                                         <form asp-controller="Appointments" asp-action="SetStatus" asp-route-id="@a.Id" asp-route-status="Completed" asp-route-returnUrl="@apptReturn" method="post" class="d-inline">
                                             @Html.AntiForgeryToken()
-                                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Tamamlandı"><svg class="icon"><use href="#i-check"/></svg></button>
+                                            <button type="submit" class="btn btn-sm btn-outline-primary" title="Tamamlandı" aria-label="Tamamlandı"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></button>
                                         </form>
                                     }
                                     else if (a.Status == AppointmentStatus.Completed)
                                     {
                                         <partial name="~/Views/Appointments/_FollowUpMenu.cshtml" model="a" view-data='new ViewDataDictionary(ViewData) { { "ReturnUrl", apptReturn } }' />
                                     }
-                                    <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@a.Id" asp-route-returnUrl="@apptReturn" class="btn btn-sm btn-outline-secondary" title="Düzenle"><svg class="icon"><use href="#i-edit"/></svg></a>
+                                    <a asp-controller="Appointments" asp-action="Edit" asp-route-id="@a.Id" asp-route-returnUrl="@apptReturn" class="btn btn-sm btn-outline-secondary" title="Düzenle" aria-label="Düzenle"><svg class="icon" aria-hidden="true"><use href="#i-edit"/></svg></a>
                                 </td>
                             </tr>
                         }

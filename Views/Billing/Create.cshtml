@@ -13,7 +13,7 @@
 
 <div class="card">
     <div class="card-body p-4">
-        <form asp-action="Create" method="post" data-invoice-form data-procedures="@proceduresJson">
+        <form asp-action="Create" method="post" data-invoice-form data-procedures="@proceduresJson" data-unsaved-guard>
             @Html.AntiForgeryToken()
             <partial name="_InvoiceForm" model="Model" />
             <div class="form-actions">

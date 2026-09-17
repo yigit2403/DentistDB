@@ -13,7 +13,7 @@
 
 <div class="card">
     <div class="card-body p-4">
-        <form asp-action="Create" method="post" data-appointment-form data-conflicts-url="@Url.Action("Conflicts")">
+        <form asp-action="Create" method="post" data-appointment-form data-conflicts-url="@Url.Action("Conflicts")" data-unsaved-guard>
             @Html.AntiForgeryToken()
             <input type="hidden" asp-for="ReturnUrl" />
             <partial name="_AppointmentForm" model="Model" />
