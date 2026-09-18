@@ -28,8 +28,9 @@ Bu rehber kliniğin bilgisayarına DentistDB'yi kurmak, ikinci bilgisayarı bağ
 1. `DentistDB-Setup-<sürüm>.exe` dosyasına çift tıklayın ve Windows'un yönetici sorusuna **Evet** deyin.
 2. Telefon erişimi için **“Tailscale kur ve ayarla”** kutusunu işaretleyin (isteğe bağlı). İşaretlerseniz kurulum sırasında tarayıcı açılır; **klinik için bir Tailscale hesabıyla** giriş yapın (Google/Microsoft/Apple ile ücretsiz). Telefonda da **aynı hesap** kullanılacak.
    Deneme verileriyle çalıştıktan sonra gerçek kullanıma geçiyorsanız **“Mevcut hasta verilerini SİL ve sıfırdan başla”** kutusunu işaretleyin; kurulum bir kez daha onay ister ve veritabanı ile görüntüleri siler (yedek klasörü kalır). Normal güncellemede bu kutuyu **işaretlemeyin**.
-3. Kurulum uygulamayı `C:\Program Files\DentistDB` altına yerleştirir, servisi başlatır, güvenlik duvarını açar ve gerekiyorsa Tailscale'i ayarlar.
-4. Sonunda **Kurulum Bilgileri** penceresi açılır: klinik içi adres ve **Yönetici / Çalışan PIN** buradadır. Not alın (dosya olarak da `C:\Program Files\DentistDB\KURULUM-BILGILERI.txt` içinde durur).
+3. **Ağ Portu** sayfasında varsayılan 5000'i bırakın; yalnızca başka bir program bu portu kullanıyorsa değiştirin. Güncellemede önceki kurulumun portu otomatik gelir.
+4. Kurulum uygulamayı `C:\Program Files\DentistDB` altına yerleştirir, servisi başlatır, güvenlik duvarını açar ve gerekiyorsa Tailscale'i ayarlar.
+5. Sonunda **Kurulum Bilgileri** penceresi açılır: klinik içi adres ve **Yönetici / Çalışan PIN** buradadır. Not alın (dosya olarak da `C:\Program Files\DentistDB\KURULUM-BILGILERI.txt` içinde durur).
 
 **Alternatif — betik:** zip'i bir klasöre çıkarın, klasörde **yönetici PowerShell** açın ve `Set-ExecutionPolicy -Scope Process Bypass -Force; .\Install-DentistDB.ps1` çalıştırın.
 

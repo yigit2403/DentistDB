@@ -54,15 +54,10 @@ public class PreviousOperationsController : ClinicControllerBase
         var searchTerm = search?.Trim();
         if (!string.IsNullOrWhiteSpace(searchTerm))
         {
-            var pattern = $"%{searchTerm}%";
+            // Both sides are Turkish-folded, so "çekim", "Çekim" and "cekim" all match.
             var normalizedPattern = $"%{SearchNormalizer.Normalize(searchTerm)}%";
             query = query.Where(o =>
-                EF.Functions.Like(o.Title, pattern) ||
-                (o.Diagnosis != null && EF.Functions.Like(o.Diagnosis, pattern)) ||
-                (o.Procedures != null && EF.Functions.Like(o.Procedures, pattern)) ||
-                (o.Prescriptions != null && EF.Functions.Like(o.Prescriptions, pattern)) ||
-                (o.Notes != null && EF.Functions.Like(o.Notes, pattern)) ||
-                (o.SelectedTeethData != null && EF.Functions.Like(o.SelectedTeethData, pattern)) ||
+                EF.Functions.Like(o.SearchIndex, normalizedPattern) ||
                 (o.Patient != null && EF.Functions.Like(o.Patient.SearchIndex, normalizedPattern)));
         }
 
@@ -94,6 +89,7 @@ public class PreviousOperationsController : ClinicControllerBase
     [HttpPost, ValidateAntiForgeryToken]
     public async Task<IActionResult> Create(PreviousOperationFormViewModel vm)
     {
+        await ValidateAsync(vm);
         if (!ModelState.IsValid)
         {
             await PopulateAsync(vm);
@@ -103,16 +99,9 @@ public class PreviousOperationsController : ClinicControllerBase
         var operation = new PreviousOperation
         {
             PatientId = vm.PatientId,
-            Date = vm.Date,
-            Title = vm.Title.Trim(),
-            Diagnosis = Clean(vm.Diagnosis),
-            Procedures = Clean(vm.Procedures),
-            Prescriptions = Clean(vm.Prescriptions),
-            Notes = Clean(vm.Notes),
-            SelectedTeethData = TeethSelectionSerializer.Normalize(vm.SelectedTeeth),
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow
         };
+        Apply(operation, vm);
 
         Db.PreviousOperations.Add(operation);
         await Db.SaveChangesAsync();
@@ -147,6 +136,7 @@ public class PreviousOperationsController : ClinicControllerBase
     public async Task<IActionResult> Edit([FromRoute] int id, PreviousOperationFormViewModel vm)
     {
         if (id != vm.Id) return BadRequest();
+        await ValidateAsync(vm);
         if (!ModelState.IsValid)
         {
             await PopulateAsync(vm);
@@ -157,14 +147,7 @@ public class PreviousOperationsController : ClinicControllerBase
         if (operation == null) return NotFound();
 
         operation.PatientId = vm.PatientId;
-        operation.Date = vm.Date;
-        operation.Title = vm.Title.Trim();
-        operation.Diagnosis = Clean(vm.Diagnosis);
-        operation.Procedures = Clean(vm.Procedures);
-        operation.Prescriptions = Clean(vm.Prescriptions);
-        operation.Notes = Clean(vm.Notes);
-        operation.SelectedTeethData = TeethSelectionSerializer.Normalize(vm.SelectedTeeth);
-        operation.UpdatedAt = DateTime.UtcNow;
+        Apply(operation, vm);
 
         await Db.SaveChangesAsync();
         Success("Tedavi kaydı güncellendi.");
@@ -198,6 +181,33 @@ public class PreviousOperationsController : ClinicControllerBase
         {
             vm.PatientName = await Db.Patients.Where(p => p.Id == vm.PatientId).Select(p => p.FullName).FirstOrDefaultAsync();
         }
+    }
+
+    /// <summary>Rules the data annotations cannot express: the patient must exist and the date cannot be in the future.</summary>
+    private async Task ValidateAsync(PreviousOperationFormViewModel vm)
+    {
+        if (vm.PatientId > 0 && !await Db.Patients.AnyAsync(p => p.Id == vm.PatientId))
+        {
+            ModelState.AddModelError(nameof(vm.PatientId), "Seçilen hasta bulunamadı.");
+        }
+
+        if (vm.Date > DateOnly.FromDateTime(DateTime.Today))
+        {
+            ModelState.AddModelError(nameof(vm.Date), "Tedavi tarihi gelecekte olamaz; ileri tarihli işler için randevu oluşturun.");
+        }
+    }
+
+    private static void Apply(PreviousOperation operation, PreviousOperationFormViewModel vm)
+    {
+        operation.Date = vm.Date;
+        operation.Title = vm.Title.Trim();
+        operation.Diagnosis = Clean(vm.Diagnosis);
+        operation.Procedures = Clean(vm.Procedures);
+        operation.Prescriptions = Clean(vm.Prescriptions);
+        operation.Notes = Clean(vm.Notes);
+        operation.SelectedTeethData = TeethSelectionSerializer.Normalize(vm.SelectedTeeth);
+        operation.SearchIndex = SearchNormalizer.BuildOperationIndex(operation);
+        operation.UpdatedAt = DateTime.UtcNow;
     }
 
     private static string? Clean(string? value) => string.IsNullOrWhiteSpace(value) ? null : value.Trim();

@@ -1,0 +1,42 @@
+name: CI
+
+# Builds the app and the import tool and runs the test suite on every push and
+# pull request. Windows runner so the tests exercise the same OS the clinic uses.
+
+on:
+  push:
+    branches: ["**"]
+    tags-ignore: ["v*"]   # tags are handled by release.yml
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore
+        run: dotnet restore DentistDB.csproj && dotnet restore tools/LegacyImport/LegacyImport.csproj && dotnet restore Tests/DentistDB.Tests/DentistDB.Tests.csproj
+
+      - name: Build app
+        run: dotnet build DentistDB.csproj -c Release --no-restore --nologo -warnaserror:CS8600,CS8602,CS8603
+
+      - name: Build import tool
+        run: dotnet build tools/LegacyImport/LegacyImport.csproj -c Release --no-restore --nologo
+
+      - name: Test
+        run: dotnet test Tests/DentistDB.Tests/DentistDB.Tests.csproj -c Release --no-restore --nologo --logger "trx;LogFileName=results.trx" --results-directory TestResults
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results
+          path: TestResults/*.trx
+          if-no-files-found: ignore

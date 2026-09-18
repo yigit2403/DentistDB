@@ -28,7 +28,7 @@
     <div class="kv-2col">
         <dl class="kv">
             <dt>Hasta</dt><dd>@Model.Patient.FullName</dd>
-            <dt>T.C. Kimlik No</dt><dd>@Model.Patient.Tckn</dd>
+            <dt>T.C. Kimlik No</dt><dd>@(string.IsNullOrWhiteSpace(Model.Patient.Tckn) ? "—" : Model.Patient.Tckn)</dd>
         </dl>
         <dl class="kv">
             <dt>Doğum Tarihi</dt><dd>@Model.Patient.BirthDate.ToShortDate()@(Model.Patient.Age is { } age ? $" ({age} yaş)" : "")</dd>

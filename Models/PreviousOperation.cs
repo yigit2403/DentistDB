@@ -42,6 +42,14 @@ public class PreviousOperation
     [Display(Name = "Seçilen Dişler")]
     public string? SelectedTeethData { get; set; }
 
+    /// <summary>
+    /// Lower-cased, diacritic-folded copy of the text fields so SQLite LIKE matches
+    /// "çekim" against "Çekim" (LIKE is only case-insensitive for ASCII). Maintained by
+    /// <see cref="Services.SearchNormalizer.BuildOperationIndex"/>.
+    /// </summary>
+    [MaxLength(600)]
+    public string SearchIndex { get; set; } = string.Empty;
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

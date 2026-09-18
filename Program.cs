@@ -110,6 +110,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
     await db.Database.MigrateAsync();
+    await SearchIndexMaintenance.BackfillAsync(db);
     await SeedData.SeedReferenceDataAsync(db);
 
     if (app.Environment.IsDevelopment())

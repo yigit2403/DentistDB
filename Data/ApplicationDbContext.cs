@@ -47,6 +47,7 @@ public class ApplicationDbContext : DbContext
         builder.Entity<PreviousOperation>(e =>
         {
             e.HasIndex(o => new { o.PatientId, o.Date });
+            e.HasIndex(o => o.SearchIndex);
             e.HasOne(o => o.Patient)
              .WithMany(p => p.PreviousOperations)
              .HasForeignKey(o => o.PatientId)

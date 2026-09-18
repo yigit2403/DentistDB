@@ -10,11 +10,16 @@ public static class TeethSelectionSerializer
         }
 
         return data
-            .Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Split(new[] { ',', ';', ' ' }, StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Where(IsFdiNumber) // drop typed garbage such as "abc" or "99"
             .Distinct(StringComparer.Ordinal)
             .OrderBy(value => value)
             .ToArray();
     }
+
+    /// <summary>Two digits, each 1–8: permanent quadrants 1–4 and deciduous 5–8.</summary>
+    public static bool IsFdiNumber(string value) =>
+        value.Length == 2 && value[0] is >= '1' and <= '8' && value[1] is >= '1' and <= '8';
 
     /// <summary>Cleans a comma-separated list typed or posted by the tooth selector ("17, 16,16" → "16,17").</summary>
     public static string? Normalize(string? csv) => Serialize(Parse(csv));

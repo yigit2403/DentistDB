@@ -62,6 +62,16 @@ tr.WipeDataTask=Mevcut hasta verilerini SİL ve sıfırdan başla (deneme verile
 en.WipeDataTask=DELETE existing patient data and start fresh (clears trial data; backups are kept)
 tr.WipeDataConfirm=DİKKAT: %1 altındaki veritabanı, görüntüler ve anahtarlar kalıcı olarak silinecek. Yedek klasörü korunur.%n%nDevam edilsin mi?
 en.WipeDataConfirm=WARNING: the database, images and keys under %1 will be permanently deleted. The backups folder is kept.%n%nContinue?
+tr.PortTitle=Ağ Portu
+en.PortTitle=Network Port
+tr.PortSubtitle=Uygulamanın yerel ağda dinleyeceği portu seçin
+en.PortSubtitle=Choose the port the application listens on
+tr.PortDesc=Diğer bilgisayarlar ve telefon bu porta bağlanır (örn. http://klinik-pc:5000). Başka bir program bu portu kullanmıyorsa varsayılanı bırakın.
+en.PortDesc=Other computers and the phone connect to this port (e.g. http://clinic-pc:5000). Keep the default unless another program already uses it.
+tr.PortLabel=Port (1024–65535):
+en.PortLabel=Port (1024–65535):
+tr.PortInvalid=Port 1024 ile 65535 arasında bir sayı olmalıdır.
+en.PortInvalid=The port must be a number between 1024 and 65535.
 
 [Tasks]
 Name: "tailscale"; Description: "{cm:TailscaleTask}"; Flags: unchecked
@@ -77,7 +87,7 @@ Source: "{#PublishDir}\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
 
 [INI]
 ; A Start-menu shortcut target that opens the local app in the default browser.
-Filename: "{app}\DentistDB.url"; Section: "InternetShortcut"; Key: "URL"; String: "http://localhost:{#AppPort}"
+Filename: "{app}\DentistDB.url"; Section: "InternetShortcut"; Key: "URL"; String: "http://localhost:{code:GetPort}"
 
 [Icons]
 Name: "{group}\DentistDB (Klinik)"; Filename: "{app}\DentistDB.url"
@@ -87,15 +97,15 @@ Name: "{group}\{cm:UninstallProgram,{#AppName}}"; Filename: "{uninstallexe}"
 [Run]
 ; 1) Configure without Tailscale (default), or 2) with Tailscale when the task is ticked.
 Filename: "powershell.exe"; \
-  Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Install-DentistDB.ps1"" -ConfigureOnly -InstallPath ""{app}"" -DataRoot ""{commonappdata}\DentistDB"" -Port {#AppPort} -SkipTailscale -SummaryFile ""{app}\KURULUM-BILGILERI.txt"""; \
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Install-DentistDB.ps1"" -ConfigureOnly -InstallPath ""{app}"" -DataRoot ""{commonappdata}\DentistDB"" -Port {code:GetPort} -SkipTailscale -SummaryFile ""{app}\KURULUM-BILGILERI.txt"""; \
   StatusMsg: "{cm:Configuring}"; Flags: runhidden waituntilterminated; Tasks: not tailscale
 Filename: "powershell.exe"; \
-  Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Install-DentistDB.ps1"" -ConfigureOnly -InstallPath ""{app}"" -DataRoot ""{commonappdata}\DentistDB"" -Port {#AppPort} -SummaryFile ""{app}\KURULUM-BILGILERI.txt"""; \
+  Parameters: "-NoProfile -ExecutionPolicy Bypass -File ""{app}\Install-DentistDB.ps1"" -ConfigureOnly -InstallPath ""{app}"" -DataRoot ""{commonappdata}\DentistDB"" -Port {code:GetPort} -SummaryFile ""{app}\KURULUM-BILGILERI.txt"""; \
   StatusMsg: "{cm:ConfiguringTs}"; Flags: waituntilterminated; Tasks: tailscale
 ; Post-install: show the details file and open the app.
 Filename: "notepad.exe"; Parameters: """{app}\KURULUM-BILGILERI.txt"""; \
   Description: "{cm:ShowInfo}"; Flags: postinstall nowait skipifsilent runasoriginaluser
-Filename: "http://localhost:{#AppPort}"; \
+Filename: "http://localhost:{code:GetPort}"; \
   Description: "{cm:OpenApp}"; Flags: postinstall shellexec nowait skipifsilent runasoriginaluser
 
 [UninstallRun]
@@ -111,6 +121,77 @@ Type: files; Name: "{app}\DentistDB.url"
 Type: dirifempty; Name: "{app}"
 
 [Code]
+var
+  PortPage: TInputQueryWizardPage;
+
+// Port previously configured in {app}\appsettings.Production.json ("Url": "http://0.0.0.0:5000"),
+// or the default when there is no earlier install.
+function PreviousPort: String;
+var
+  Text, Marker: AnsiString;
+  S: String;
+  P, E: Integer;
+begin
+  Result := '{#AppPort}';
+  try
+    if not LoadStringFromFile(ExpandConstant('{app}\appsettings.Production.json'), Text) then
+      Exit;
+  except
+    Exit;
+  end;
+  S := String(Text);
+  Marker := '"Url"';
+  P := Pos(String(Marker), S);
+  if P = 0 then Exit;
+  S := Copy(S, P, Length(S));            // from "Url" onwards
+  P := Pos('http://', S);
+  if P = 0 then Exit;
+  S := Copy(S, P + 7, Length(S));        // host:port"...
+  P := Pos(':', S);
+  if P = 0 then Exit;
+  S := Copy(S, P + 1, Length(S));        // port"...
+  E := 1;
+  while (E <= Length(S)) and (S[E] >= '0') and (S[E] <= '9') do E := E + 1;
+  if E > 1 then Result := Copy(S, 1, E - 1);
+end;
+
+procedure InitializeWizard;
+begin
+  PortPage := CreateInputQueryPage(wpSelectTasks,
+    CustomMessage('PortTitle'), CustomMessage('PortSubtitle'), CustomMessage('PortDesc'));
+  PortPage.Add(CustomMessage('PortLabel'), False);
+  PortPage.Values[0] := '{#AppPort}';
+end;
+
+procedure CurPageChanged(CurPageID: Integer);
+begin
+  // The install folder is known by now, so an earlier install's port can be offered as the default.
+  if (CurPageID = PortPage.ID) and (PortPage.Values[0] = '{#AppPort}') then
+    PortPage.Values[0] := PreviousPort();
+end;
+
+function NextButtonClick(CurPageID: Integer): Boolean;
+var
+  Port: Integer;
+begin
+  Result := True;
+  if CurPageID = PortPage.ID then
+  begin
+    Port := StrToIntDef(Trim(PortPage.Values[0]), 0);
+    if (Port < 1024) or (Port > 65535) then
+    begin
+      MsgBox(CustomMessage('PortInvalid'), mbError, MB_OK);
+      Result := False;
+    end;
+  end;
+end;
+
+// Used by [Run] and [INI] via {code:GetPort}.
+function GetPort(Param: String): String;
+begin
+  Result := Trim(PortPage.Values[0]);
+end;
+
 // Stop a running service before files are copied, so the self-contained exe/dlls
 // are not locked during an upgrade.
 procedure StopServiceIfRunning;

@@ -57,6 +57,23 @@ public static class SearchNormalizer
         return index.Length > 400 ? index[..400] : index;
     }
 
+    /// <summary>Searchable text of a treatment record: title, diagnosis, procedures, prescription, notes and teeth.</summary>
+    public static string BuildOperationIndex(PreviousOperation operation)
+    {
+        var parts = new[]
+        {
+            Normalize(operation.Title),
+            Normalize(operation.Diagnosis),
+            Normalize(operation.Procedures),
+            Normalize(operation.Prescriptions),
+            Normalize(operation.Notes),
+            Normalize(operation.SelectedTeethData?.Replace(',', ' '))
+        };
+
+        var index = string.Join(' ', parts.Where(p => p.Length > 0));
+        return index.Length > 600 ? index[..600] : index;
+    }
+
     public static string DigitsOnly(string? text)
     {
         if (string.IsNullOrEmpty(text)) return string.Empty;
