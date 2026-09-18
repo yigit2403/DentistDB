@@ -1,0 +1,61 @@
+name: Release installer
+
+# Builds DentistDB-Setup-<version>.exe and attaches it to a GitHub release.
+#
+# To ship a version:  bump <Version> in DentistDB.csproj, commit, then
+#   git tag v0.5.0 && git push origin v0.5.0
+# The app's "Ayarlar" page polls the latest release and shows a download link.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  installer:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Read version and check it matches the tag
+        id: ver
+        shell: pwsh
+        run: |
+          $v = ([xml](Get-Content DentistDB.csproj)).Project.PropertyGroup.Version | Select-Object -First 1
+          if ($env:GITHUB_REF -like 'refs/tags/*') {
+            $tag = $env:GITHUB_REF_NAME.TrimStart('v')
+            if ($tag -ne $v) { throw "Tag v$tag does not match <Version>$v</Version> in DentistDB.csproj" }
+          }
+          "version=$v" >> $env:GITHUB_OUTPUT
+          Write-Host "Version $v"
+
+      - name: Ensure Inno Setup is available
+        shell: pwsh
+        run: |
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup --no-progress -y }
+          if (-not (Test-Path $iscc)) { throw "ISCC.exe not found after install" }
+
+      - name: Build installer (tests + self-contained publish + Inno Setup)
+        shell: pwsh
+        run: ./installer/build-installer.ps1
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DentistDB-Setup-${{ steps.ver.outputs.version }}
+          path: publish/DentistDB-Setup-*.exe
+          if-no-files-found: error
+
+      - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: publish/DentistDB-Setup-*.exe
+          generate_release_notes: true

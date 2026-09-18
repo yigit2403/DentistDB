@@ -23,6 +23,7 @@ public class ClinicAppFactory : WebApplicationFactory<Program>
         builder.UseSetting("ConnectionStrings:DefaultConnection", $"Data Source={Path.Combine(_root, "test.db")}");
         builder.UseSetting("Storage:ScanStoragePath", Path.Combine(_root, "scans"));
         builder.UseSetting("Storage:DataProtectionKeysPath", Path.Combine(_root, "keys"));
+        builder.UseSetting("Updates:Enabled", "false"); // never call GitHub from tests
         builder.UseSetting("Logging:LogLevel:Default", "Warning");
         builder.UseSetting("Logging:LogLevel:Microsoft.EntityFrameworkCore.Database.Command", "Warning");
     }

@@ -27,6 +27,7 @@ Bu rehber kliniğin bilgisayarına DentistDB'yi kurmak, ikinci bilgisayarı bağ
 
 1. `DentistDB-Setup-<sürüm>.exe` dosyasına çift tıklayın ve Windows'un yönetici sorusuna **Evet** deyin.
 2. Telefon erişimi için **“Tailscale kur ve ayarla”** kutusunu işaretleyin (isteğe bağlı). İşaretlerseniz kurulum sırasında tarayıcı açılır; **klinik için bir Tailscale hesabıyla** giriş yapın (Google/Microsoft/Apple ile ücretsiz). Telefonda da **aynı hesap** kullanılacak.
+   Deneme verileriyle çalıştıktan sonra gerçek kullanıma geçiyorsanız **“Mevcut hasta verilerini SİL ve sıfırdan başla”** kutusunu işaretleyin; kurulum bir kez daha onay ister ve veritabanı ile görüntüleri siler (yedek klasörü kalır). Normal güncellemede bu kutuyu **işaretlemeyin**.
 3. Kurulum uygulamayı `C:\Program Files\DentistDB` altına yerleştirir, servisi başlatır, güvenlik duvarını açar ve gerekiyorsa Tailscale'i ayarlar.
 4. Sonunda **Kurulum Bilgileri** penceresi açılır: klinik içi adres ve **Yönetici / Çalışan PIN** buradadır. Not alın (dosya olarak da `C:\Program Files\DentistDB\KURULUM-BILGILERI.txt` içinde durur).
 
@@ -57,7 +58,9 @@ Randevuların telefonun takvimine düşmesi için aynı sayfadaki “Telefon tak
 
 ## 5. Güncelleme
 
-Yeni sürümün kurulum dosyasını (`DentistDB-Setup-<sürüm>.exe`) çalıştırmanız yeterli; eskisinin üzerine kurar. Betik yöntemini kullandıysanız zip'i açıp `Install-DentistDB.ps1`'i yeniden çalıştırın. Her iki yolda da veriler, PIN'ler ve ayarlar korunur (veriler `C:\ProgramData\DentistDB` altında, kurulumdan ayrı durur) ve veritabanı şeması otomatik güncellenir.
+Yeni bir sürüm yayımlandığında uygulama bunu kendisi fark eder: yönetici girişinde sol menünün altında **“Yeni sürüm: 0.x.y”** yazısı çıkar ve **Ayarlar** sayfasındaki *Sürüm* satırında **“Kurulum dosyasını indir”** düğmesi görünür (bilgisayar internete bağlıysa; kontrol günde iki kez yapılır, “Yeniden kontrol et” ile hemen bakabilirsiniz). İndirdiğiniz `DentistDB-Setup-<sürüm>.exe` dosyasını klinik bilgisayarında çalıştırmanız yeterli; eskisinin üzerine kurar ve eski sürümden kalan dosyaları temizler.
+
+Geliştirici tarafında yayımlama tek adımdır: `DentistDB.csproj` içindeki `<Version>` değerini artırın, `git tag v0.x.y && git push origin v0.x.y` deyin; GitHub Actions kurulum dosyasını derleyip sürüm sayfasına ekler (`.github/workflows/release.yml`). Betik yöntemini kullandıysanız zip'i açıp `Install-DentistDB.ps1`'i yeniden çalıştırın. Her iki yolda da veriler, PIN'ler ve ayarlar korunur (veriler `C:\ProgramData\DentistDB` altında, kurulumdan ayrı durur) ve veritabanı şeması otomatik güncellenir.
 
 Kaldırma: Windows **Ayarlar → Uygulamalar → DentistDB → Kaldır**. Program ve servis kaldırılır; hasta verileri ve yedekler `C:\ProgramData\DentistDB` altında **silinmeden kalır** (istemezseniz o klasörü elle silin).
 

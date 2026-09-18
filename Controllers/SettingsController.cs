@@ -20,6 +20,7 @@ public class SettingsController : ClinicControllerBase
     private readonly BackupRunner _backupRunner;
     private readonly IWebHostEnvironment _env;
     private readonly StorageOptions _storage;
+    private readonly IUpdateChecker _updates;
 
     public SettingsController(
         ApplicationDbContext db,
@@ -28,7 +29,8 @@ public class SettingsController : ClinicControllerBase
         BackupService backup,
         BackupRunner backupRunner,
         IWebHostEnvironment env,
-        IOptions<StorageOptions> storage) : base(db)
+        IOptions<StorageOptions> storage,
+        IUpdateChecker updates) : base(db)
     {
         _settings = settings;
         _pins = pins;
@@ -36,10 +38,17 @@ public class SettingsController : ClinicControllerBase
         _backupRunner = backupRunner;
         _env = env;
         _storage = storage.Value;
+        _updates = updates;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(bool refreshUpdate = false)
     {
+        if (refreshUpdate)
+        {
+            // User-initiated "check again": contact GitHub now (bounded by the checker's own timeout).
+            await _updates.RefreshAsync(HttpContext.RequestAborted);
+        }
+
         return View(await BuildIndexAsync(null, null));
     }
 
@@ -425,7 +434,8 @@ public class SettingsController : ClinicControllerBase
             DatabasePath = dbPath,
             DatabaseSizeBytes = size,
             ScanStoragePath = DeploymentPaths.ResolveScanStoragePath(_storage.ScanStoragePath, _env),
-            AppVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.4.0"
+            AppVersion = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "0.4.0",
+            Update = _updates.Current
         };
     }
 }

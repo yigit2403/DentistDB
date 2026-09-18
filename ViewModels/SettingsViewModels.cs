@@ -16,6 +16,7 @@ public class SettingsIndexViewModel
     public string ScanStoragePath { get; set; } = string.Empty;
     public long DatabaseSizeBytes { get; set; }
     public string AppVersion { get; set; } = string.Empty;
+    public Services.UpdateInfo? Update { get; set; }
 }
 
 public class ClinicSettingsFormModel

@@ -1,5 +1,6 @@
 @inject DentistDB.Services.ISettingsService SettingsService
 @inject DentistDB.Services.BackupRunner BackupRunner
+@inject DentistDB.Services.IUpdateChecker UpdateChecker
 @{
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
@@ -10,6 +11,7 @@
     var title = ViewData["Title"]?.ToString() ?? clinic.ClinicName;
     var currentUrl = $"{Context.Request.Path}{Context.Request.QueryString}";
     var backup = isAdmin ? await BackupRunner.GetSettingsAsync() : null;
+    var update = isAdmin ? UpdateChecker.Current : null; // cached; never waits on the network
 
     string NavClass(params string[] controllers) => controllers.Contains(currentController) ? "nav-item active" : "nav-item";
 
@@ -90,6 +92,13 @@
                 }
 
                 <div class="sidebar-footer">
+                    @if (update is { IsNewer: true })
+                    {
+                        <a asp-controller="Settings" asp-action="Index" class="backup-pill is-update" title="Yeni sürüm hazır: @update.LatestVersion">
+                            <span class="dot"></span>
+                            <span class="truncate">Yeni sürüm: @update.LatestVersion</span>
+                        </a>
+                    }
                     @if (backup != null)
                     {
                         <a asp-controller="Settings" asp-action="Index" class="backup-pill @(backup.IsStale || backup.LastFailed ? "is-stale" : "")" title="@(backup.LastResult ?? "Henüz yedek alınmadı")">

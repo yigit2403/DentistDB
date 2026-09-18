@@ -37,6 +37,8 @@ OutputBaseFilename={#AppName}-Setup-{#AppVersion}
 Compression=lzma2/max
 SolidCompression=yes
 WizardStyle=modern
+; An existing install folder is expected on upgrade; PrepareToInstall cleans it itself.
+DirExistsWarning=no
 UninstallDisplayName={#AppName}
 UninstallDisplayIcon={app}\DentistDB.exe
 SetupLogging=yes
@@ -56,9 +58,14 @@ tr.Configuring=Servis, ayarlar ve güvenlik duvarı yapılandırılıyor...
 en.Configuring=Configuring the service, settings and firewall...
 tr.ConfiguringTs=Tailscale ayarlanıyor (tarayıcıda oturum açın)...
 en.ConfiguringTs=Setting up Tailscale (sign in via the browser)...
+tr.WipeDataTask=Mevcut hasta verilerini SİL ve sıfırdan başla (deneme verilerini temizlemek için; yedekler kalır)
+en.WipeDataTask=DELETE existing patient data and start fresh (clears trial data; backups are kept)
+tr.WipeDataConfirm=DİKKAT: %1 altındaki veritabanı, görüntüler ve anahtarlar kalıcı olarak silinecek. Yedek klasörü korunur.%n%nDevam edilsin mi?
+en.WipeDataConfirm=WARNING: the database, images and keys under %1 will be permanently deleted. The backups folder is kept.%n%nContinue?
 
 [Tasks]
 Name: "tailscale"; Description: "{cm:TailscaleTask}"; Flags: unchecked
+Name: "wipedata"; Description: "{cm:WipeDataTask}"; Flags: unchecked
 
 [Files]
 ; The whole self-contained publish output, minus the environment files the
@@ -114,8 +121,57 @@ begin
   Sleep(2000);
 end;
 
+// If the install folder already holds a previous DentistDB, empty it so files that
+// no longer exist in the new version (old DLLs, removed assets) do not linger.
+// The configured appsettings.Production.json (PINs, paths) is kept. Only folders
+// that really contain DentistDB are touched, so a wrong install path is not wiped.
+procedure CleanPreviousInstall;
+var
+  App, Settings, Saved: String;
+begin
+  App := ExpandConstant('{app}');
+  if not (FileExists(App + '\DentistDB.dll') or FileExists(App + '\DentistDB.exe')) then
+    Exit;
+
+  Settings := App + '\appsettings.Production.json';
+  Saved := ExpandConstant('{tmp}') + '\appsettings.Production.json';
+  if FileExists(Settings) then
+    FileCopy(Settings, Saved, False);
+
+  Log('Cleaning previous install in ' + App);
+  DelTree(App + '\*', False, True, True);
+
+  if FileExists(Saved) then
+  begin
+    ForceDirectories(App);
+    FileCopy(Saved, Settings, False);
+  end;
+end;
+
+// Optional "start fresh": remove the database, images and keys under the data root.
+// Backups are deliberately left alone. Asks once more before doing anything.
+procedure WipeDataIfRequested;
+var
+  DataRoot: String;
+begin
+  if not WizardIsTaskSelected('wipedata') then
+    Exit;
+  DataRoot := ExpandConstant('{commonappdata}\DentistDB');
+  if not DirExists(DataRoot) then
+    Exit;
+  if MsgBox(FmtMessage(CustomMessage('WipeDataConfirm'), [DataRoot]), mbConfirmation, MB_YESNO or MB_DEFBUTTON2) <> IDYES then
+    Exit;
+
+  Log('Wiping data under ' + DataRoot);
+  DelTree(DataRoot + '\data\*', False, True, True);
+  DelTree(DataRoot + '\scans\*', False, True, True);
+  DelTree(DataRoot + '\keys\*', False, True, True);
+end;
+
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
-  StopServiceIfRunning();
+  StopServiceIfRunning();   // must come first: the service holds the database and the exe
+  WipeDataIfRequested();
+  CleanPreviousInstall();
   Result := '';
 end;

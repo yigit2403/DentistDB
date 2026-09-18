@@ -838,6 +838,8 @@ td .sub { display: block; font-size: 0.78rem; color: var(--text-muted); }
 .backup-pill.is-stale { color: var(--danger); background: var(--danger-soft); }
 .backup-pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); flex: 0 0 auto; }
 .backup-pill.is-stale .dot { background: var(--danger); }
+.backup-pill.is-update { color: var(--primary-hover); background: var(--primary-soft); }
+.backup-pill.is-update .dot { background: var(--primary); }
 
 /* Follow-up dropdown ---------------------------------------------------------------- */
 .dropdown-menu { border-color: var(--border); border-radius: var(--radius); box-shadow: var(--shadow-md); font-size: 0.875rem; }

@@ -49,6 +49,13 @@ builder.Services.AddScoped<BackupRunner>();
 builder.Services.AddSingleton<IConnectionInfoService, ConnectionInfoService>();
 builder.Services.AddHostedService<NightlyBackupService>();
 
+// Release check: polls GitHub in the background and shows "new version" on Ayarlar. Off in Development/tests.
+builder.Services.Configure<UpdateOptions>(builder.Configuration.GetSection(UpdateOptions.SectionName));
+builder.Services.AddHttpClient("github");
+builder.Services.AddSingleton<UpdateChecker>();
+builder.Services.AddSingleton<IUpdateChecker>(sp => sp.GetRequiredService<UpdateChecker>());
+builder.Services.AddHostedService(sp => sp.GetRequiredService<UpdateChecker>());
+
 builder.Services.AddControllersWithViews(options =>
 {
     options.ModelBinderProviders.Insert(0, new InvariantDecimalModelBinderProvider());

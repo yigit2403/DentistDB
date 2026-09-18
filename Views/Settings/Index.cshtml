@@ -116,7 +116,46 @@
             <dl class="kv mt-3 small">
                 <dt>Veritabanı</dt><dd class="text-break">@Model.DatabasePath <span class="text-muted">(@((Model.DatabaseSizeBytes / 1024.0 / 1024.0).ToString("0.0")) MB)</span></dd>
                 <dt>Görüntü klasörü</dt><dd class="text-break">@Model.ScanStoragePath</dd>
-                <dt>Sürüm</dt><dd>DentistDB @Model.AppVersion</dd>
+                <dt>Sürüm</dt>
+                <dd>
+                    DentistDB @Model.AppVersion
+                    @{ var upd = Model.Update; }
+                    @if (upd is { Enabled: false })
+                    {
+                        <span class="text-muted"> · güncelleme kontrolü kapalı</span>
+                    }
+                    else if (upd is { IsNewer: true })
+                    {
+                        <span class="badge-soft warning ms-1">Yeni sürüm: @upd.LatestVersion</span>
+                        <div class="mt-2 d-flex flex-wrap gap-2 align-items-center">
+                            @if (!string.IsNullOrEmpty(upd.DownloadUrl))
+                            {
+                                <a href="@upd.DownloadUrl" class="btn btn-sm btn-primary"><svg class="icon"><use href="#i-download"/></svg> Kurulum dosyasını indir</a>
+                            }
+                            @if (!string.IsNullOrEmpty(upd.ReleaseUrl))
+                            {
+                                <a href="@upd.ReleaseUrl" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">Sürüm notları</a>
+                            }
+                            <span class="text-muted small">İndirdiğiniz dosyayı bu bilgisayarda çalıştırın; veriler ve ayarlar korunur.</span>
+                        </div>
+                    }
+                    else if (upd?.CheckedAt is not null && upd.Error is null)
+                    {
+                        <span class="text-muted"> · güncel</span>
+                    }
+                    else if (upd?.Error is not null)
+                    {
+                        <span class="text-muted" title="@upd.Error"> · sürüm kontrolü yapılamadı</span>
+                    }
+                    else
+                    {
+                        <span class="text-muted"> · sürüm henüz kontrol edilmedi</span>
+                    }
+                    @if (upd is { Enabled: true })
+                    {
+                        <a asp-action="Index" asp-route-refreshUpdate="true" class="ms-1 small">Yeniden kontrol et</a>
+                    }
+                </dd>
             </dl>
         </div>
     </div>
