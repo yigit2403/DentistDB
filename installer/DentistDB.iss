@@ -30,8 +30,8 @@ DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 DisableDirPage=auto
 PrivilegesRequired=admin
-ArchitecturesAllowed=x64
-ArchitecturesInstallIn64BitMode=x64
+ArchitecturesAllowed=x64compatible
+ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir={#PublishDir}\..
 OutputBaseFilename={#AppName}-Setup-{#AppVersion}
 Compression=lzma2/max
@@ -217,7 +217,7 @@ begin
   Settings := App + '\appsettings.Production.json';
   Saved := ExpandConstant('{tmp}') + '\appsettings.Production.json';
   if FileExists(Settings) then
-    FileCopy(Settings, Saved, False);
+    CopyFile(Settings, Saved, False);
 
   Log('Cleaning previous install in ' + App);
   DelTree(App + '\*', False, True, True);
@@ -225,7 +225,7 @@ begin
   if FileExists(Saved) then
   begin
     ForceDirectories(App);
-    FileCopy(Saved, Settings, False);
+    CopyFile(Saved, Settings, False);
   end;
 end;
 

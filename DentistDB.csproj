@@ -27,6 +27,9 @@
     <Compile Remove="tools\**" />
     <Content Remove="tools\**" />
     <None Remove="tools\**" />
+    <!-- Development-only scan uploads must never ship in a publish/installer. -->
+    <Content Remove="wwwroot\uploads\**" />
+    <None Remove="wwwroot\uploads\**" />
     <Content Remove=".codex-build\**" />
     <None Remove=".codex-build\**" />
   </ItemGroup>

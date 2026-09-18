@@ -48,12 +48,15 @@ if ($LASTEXITCODE -ne 0) { throw "dotnet publish başarısız." }
 # The graphical installer runs this in -ConfigureOnly mode.
 Copy-Item (Join-Path $root "scripts\Install-DentistDB.ps1") $publishDir -Force
 Remove-Item (Join-Path $publishDir "appsettings.Development.json") -ErrorAction SilentlyContinue
+# Belt and braces: the csproj already excludes dev uploads, but never let patient images into a package.
+Remove-Item (Join-Path $publishDir "wwwroot\uploads") -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Step "Inno Setup derleniyor"
 if (-not $Iscc) {
     $candidates = @(
         "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
-        "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+        "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+        "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"   # per-user install (winget without admin)
     )
     $Iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
 }
