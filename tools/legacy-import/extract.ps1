@@ -9,7 +9,7 @@
   Windows PowerShell (not pwsh) so System.Data.OleDb is available:
 
       powershell -ExecutionPolicy Bypass -File extract.ps1 `
-          -AccessPath "C:\path\db1.accdb" -Password "1970" -OutPath "patients.json"
+          -AccessPath "C:\path\db1.accdb" -Password "<parola>" -OutPath "patients.json"
 #>
 param(
     [Parameter(Mandatory = $true)][string]$AccessPath,
