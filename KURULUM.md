@@ -11,26 +11,26 @@ Bu rehber kliniğin bilgisayarına DentistDB'yi kurmak, ikinci bilgisayarı bağ
 
 ## 1. Kurulum paketi hazırlama (geliştirici bilgisayarında)
 
+**Önerilen — tek dosyalık kurulum sihirbazı:**
+
 ```powershell
-.\scripts\Publish-DentistDB.ps1
+.\installer\build-installer.ps1
 ```
 
-`publish\DentistDB-<sürüm>.zip` dosyası oluşur. Bu dosyayı klinik bilgisayarına taşıyın (USB, e-posta, bulut).
+`publish\DentistDB-Setup-<sürüm>.exe` oluşur. Bu tek dosyayı klinik bilgisayarına taşıyın. .NET çalışma zamanı bu pakete gömülüdür; klinik bilgisayarına ayrıca bir şey kurmak gerekmez. (Bu adım için geliştirici bilgisayarında bir kez Inno Setup kurulur: `winget install --id JRSoftware.InnoSetup --exact`.)
+
+**Alternatif — zip + betik:** `.\scripts\Publish-DentistDB.ps1` çalıştırıp `publish\DentistDB-<sürüm>.zip` üretebilirsiniz (bu yöntemde klinik bilgisayarında .NET 8 çalışma zamanı gerekir).
 
 ## 2. Klinik bilgisayarına kurulum
 
-1. Zip dosyasını bir klasöre çıkarın (örn. `Masaüstü\DentistDB`).
-2. Klasörün içinde boş bir yere **Shift + sağ tık → “PowerShell penceresini burada aç”** (veya Başlat → PowerShell → sağ tık → **Yönetici olarak çalıştır**, sonra `cd` ile klasöre gidin).
-3. Şunu çalıştırın:
+**Önerilen — sihirbaz:**
 
-   ```powershell
-   Set-ExecutionPolicy -Scope Process Bypass -Force
-   .\Install-DentistDB.ps1
-   ```
+1. `DentistDB-Setup-<sürüm>.exe` dosyasına çift tıklayın ve Windows'un yönetici sorusuna **Evet** deyin.
+2. Telefon erişimi için **“Tailscale kur ve ayarla”** kutusunu işaretleyin (isteğe bağlı). İşaretlerseniz kurulum sırasında tarayıcı açılır; **klinik için bir Tailscale hesabıyla** giriş yapın (Google/Microsoft/Apple ile ücretsiz). Telefonda da **aynı hesap** kullanılacak.
+3. Kurulum uygulamayı `C:\Program Files\DentistDB` altına yerleştirir, servisi başlatır, güvenlik duvarını açar ve gerekiyorsa Tailscale'i ayarlar.
+4. Sonunda **Kurulum Bilgileri** penceresi açılır: klinik içi adres ve **Yönetici / Çalışan PIN** buradadır. Not alın (dosya olarak da `C:\Program Files\DentistDB\KURULUM-BILGILERI.txt` içinde durur).
 
-4. Betik sırasıyla .NET çalışma zamanını kurar, uygulamayı `C:\Program Files\DentistDB` altına yerleştirir, servisi başlatır, güvenlik duvarını açar ve Tailscale'i kurar.
-5. Tailscale adımında tarayıcı açılır: **klinik için bir Tailscale hesabı** oluşturun ya da giriş yapın (Google/Microsoft/Apple hesabı ile ücretsiz). Telefonda da **aynı hesap** kullanılacak.
-6. Sonunda ekranda **Yönetici PIN** ve **Çalışan PIN** yazar. Not alın.
+**Alternatif — betik:** zip'i bir klasöre çıkarın, klasörde **yönetici PowerShell** açın ve `Set-ExecutionPolicy -Scope Process Bypass -Force; .\Install-DentistDB.ps1` çalıştırın.
 
 Bilgisayar adı `klinik-pc` ise uygulama şurada açılır: `http://klinik-pc:5000`
 
@@ -57,7 +57,9 @@ Randevuların telefonun takvimine düşmesi için aynı sayfadaki “Telefon tak
 
 ## 5. Güncelleme
 
-Yeni bir paket geldiğinde zip'i açın ve `Install-DentistDB.ps1` betiğini yeniden çalıştırın. Veriler, PIN'ler ve ayarlar korunur; veritabanı şeması otomatik güncellenir.
+Yeni sürümün kurulum dosyasını (`DentistDB-Setup-<sürüm>.exe`) çalıştırmanız yeterli; eskisinin üzerine kurar. Betik yöntemini kullandıysanız zip'i açıp `Install-DentistDB.ps1`'i yeniden çalıştırın. Her iki yolda da veriler, PIN'ler ve ayarlar korunur (veriler `C:\ProgramData\DentistDB` altında, kurulumdan ayrı durur) ve veritabanı şeması otomatik güncellenir.
+
+Kaldırma: Windows **Ayarlar → Uygulamalar → DentistDB → Kaldır**. Program ve servis kaldırılır; hasta verileri ve yedekler `C:\ProgramData\DentistDB` altında **silinmeden kalır** (istemezseniz o klasörü elle silin).
 
 ## Sorun giderme
 

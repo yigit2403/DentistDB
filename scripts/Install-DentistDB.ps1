@@ -32,7 +32,14 @@ param(
     [string]$WorkerPin,
     [string]$ServiceName = "DentistDB",
     [switch]$SkipTailscale,
-    [switch]$SkipDotnetCheck
+    [switch]$SkipDotnetCheck,
+    # Set by the Inno Setup installer: the app files are already in place, so skip the
+    # runtime check and the file copy and only configure folders, settings, the service,
+    # the firewall and (unless -SkipTailscale) Tailscale.
+    [switch]$ConfigureOnly,
+    # When given, the closing summary (addresses and generated PINs) is also written here
+    # so the graphical installer can show it to the user.
+    [string]$SummaryFile
 )
 
 $ErrorActionPreference = "Stop"
@@ -48,17 +55,23 @@ if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administra
     throw "Bu betiği yönetici olarak çalıştırın (PowerShell'e sağ tıklayın → Yönetici olarak çalıştır)."
 }
 
-if (-not (Test-Path (Join-Path $PublishPath "DentistDB.dll"))) {
-    # Allow running from the repo's scripts folder next to a publish output.
-    $candidate = Join-Path (Split-Path $PublishPath -Parent) "publish\DentistDB"
-    if (Test-Path (Join-Path $candidate "DentistDB.dll")) { $PublishPath = $candidate }
-    else { throw "DentistDB.dll bulunamadı. Yayınlanmış uygulama klasörünü -PublishPath ile verin (bkz. Publish-DentistDB.ps1)." }
+if ($ConfigureOnly) {
+    # Files were placed by the graphical installer; configure them in place.
+    $PublishPath = $InstallPath
+    Write-Ok "Yapılandırma modu: $InstallPath"
+} else {
+    if (-not (Test-Path (Join-Path $PublishPath "DentistDB.dll"))) {
+        # Allow running from the repo's scripts folder next to a publish output.
+        $candidate = Join-Path (Split-Path $PublishPath -Parent) "publish\DentistDB"
+        if (Test-Path (Join-Path $candidate "DentistDB.dll")) { $PublishPath = $candidate }
+        else { throw "DentistDB.dll bulunamadı. Yayınlanmış uygulama klasörünü -PublishPath ile verin (bkz. Publish-DentistDB.ps1)." }
+    }
+    $PublishPath = (Resolve-Path $PublishPath).Path
+    Write-Ok "Kaynak: $PublishPath"
 }
-$PublishPath = (Resolve-Path $PublishPath).Path
-Write-Ok "Kaynak: $PublishPath"
 
 # --- 1. .NET runtime ----------------------------------------------------------
-if (-not $SkipDotnetCheck) {
+if (-not $SkipDotnetCheck -and -not $ConfigureOnly) {
     Write-Step ".NET 8 çalışma zamanı kontrol ediliyor"
     $hasRuntime = $false
     try {
@@ -94,9 +107,11 @@ if (Test-Path $settingsFile) {
     try { $existingSettings = Get-Content $settingsFile -Raw | ConvertFrom-Json } catch { $existingSettings = $null }
 }
 
-& robocopy $PublishPath $InstallPath /MIR /NFL /NDL /NJH /NJS /NP /XF appsettings.Production.json | Out-Null
-if ($LASTEXITCODE -ge 8) { throw "Dosya kopyalama başarısız (robocopy kodu $LASTEXITCODE)." }
-Write-Ok "Uygulama: $InstallPath"
+if (-not $ConfigureOnly) {
+    & robocopy $PublishPath $InstallPath /MIR /NFL /NDL /NJH /NJS /NP /XF appsettings.Production.json | Out-Null
+    if ($LASTEXITCODE -ge 8) { throw "Dosya kopyalama başarısız (robocopy kodu $LASTEXITCODE)." }
+    Write-Ok "Uygulama: $InstallPath"
+}
 
 # --- 3. Settings and PINs ---------------------------------------------------------
 Write-Step "Ayarlar yazılıyor"
@@ -185,17 +200,28 @@ if (-not $SkipTailscale) {
 # --- 7. Summary -----------------------------------------------------------------------
 $lanIp = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.PrefixOrigin -ne "WellKnown" -and $_.IPAddress -notlike "169.254.*" -and $_.IPAddress -ne "127.0.0.1" -and $_.InterfaceAlias -notlike "*Tailscale*" } | Select-Object -First 1).IPAddress
 
-Write-Host ""
-Write-Host "================= DentistDB kuruldu =================" -ForegroundColor Green
-Write-Host " Klinik içi adres : http://$($env:COMPUTERNAME.ToLower()):$Port   (veya http://$lanIp`:$Port)"
-if ($tailscaleUrl) { Write-Host " Telefon / uzak   : $tailscaleUrl" }
+$summary = New-Object System.Collections.Generic.List[string]
+$summary.Add("================= DentistDB kuruldu =================")
+$summary.Add(" Klinik ici adres : http://$($env:COMPUTERNAME.ToLower()):$Port   (veya http://$lanIp`:$Port)")
+if ($tailscaleUrl) { $summary.Add(" Telefon / uzak   : $tailscaleUrl") }
 if ($pinsGenerated) {
-    Write-Host ""
-    Write-Host " Yönetici PIN : $adminPinValue" -ForegroundColor Yellow
-    Write-Host " Çalışan PIN  : $workerPinValue" -ForegroundColor Yellow
-    Write-Host " Bu PIN'leri not alın; Ayarlar → Erişim PIN'leri bölümünden değiştirebilirsiniz."
+    $summary.Add("")
+    $summary.Add(" Yonetici PIN : $adminPinValue")
+    $summary.Add(" Calisan PIN  : $workerPinValue")
+    $summary.Add(" Bu PIN'leri not alin; Ayarlar > Erisim PIN'leri bolumunden degistirebilirsiniz.")
 }
+$summary.Add("")
+$summary.Add(" Sonraki adim: uygulamada Ayarlar > Cihaz Baglantisi sayfasini acin; telefon icin QR kodlar oradadir.")
+$summary.Add(" Veriler: $DataRoot   (yedekler: $DataRoot\backups)")
+$summary.Add("======================================================")
+
 Write-Host ""
-Write-Host " Sonraki adım: uygulamada Ayarlar → Cihaz Bağlantısı sayfasını açın; telefon için QR kodlar oradadır."
-Write-Host " Veriler: $DataRoot   (yedekler: $DataRoot\backups)"
-Write-Host "======================================================" -ForegroundColor Green
+$summary | ForEach-Object { Write-Host $_ -ForegroundColor Green }
+
+if ($SummaryFile) {
+    try {
+        $summary | Set-Content -Path $SummaryFile -Encoding UTF8
+    } catch {
+        Write-Warn2 "Özet dosyası yazılamadı: $SummaryFile"
+    }
+}
