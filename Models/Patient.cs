@@ -14,9 +14,12 @@ public class Patient
     [Display(Name = "Telefon")]
     public string? Phone { get; set; }
 
-    [Required, MaxLength(11)]
+    // Nullable because patients imported from the old Access database often have no
+    // national ID on file. The unique index tolerates many NULLs on SQLite; the
+    // interactive create/edit form still requires a valid TCKN (see PatientFormViewModel).
+    [MaxLength(11)]
     [Display(Name = "TCKN")]
-    public string Tckn { get; set; } = string.Empty;
+    public string? Tckn { get; set; }
 
     [MaxLength(150)]
     [Display(Name = "E-posta")]
@@ -110,6 +113,15 @@ public class Patient
     public string SearchIndex { get; set; } = string.Empty;
 
     public bool IsArchived { get; set; }
+
+    /// <summary>Set when the record was brought in from the old Access database.</summary>
+    public bool IsImported { get; set; }
+
+    /// <summary>The old program's KisiNumara, kept so a re-import updates rather than duplicates. Null for app-created patients.</summary>
+    public int? LegacyKey { get; set; }
+
+    /// <summary>An imported patient whose national ID still needs to be recorded at the next visit.</summary>
+    public bool NeedsTckn => IsImported && string.IsNullOrWhiteSpace(Tckn);
 
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;

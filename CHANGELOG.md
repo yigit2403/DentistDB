@@ -20,6 +20,7 @@ Clinical workflow release. The schema is upgraded automatically at startup (migr
 - **Scan viewer**: zoom, pan, rotate, flip, brightness/contrast, negative, side-by-side compare with synced pan/zoom, keyboard shortcuts.
 - Clinic identity settings (dentist name, title, diploma no, address, phone, tax no) used on printouts.
 - Printable day sheet with phone numbers, agenda keyboard shortcuts (N, ←, →, T, G, H, A, L, P), larger touch targets on touch devices.
+- **Legacy data import**: a two-step tool (`tools/legacy-import/extract.ps1` + `tools/LegacyImport`) brings patient records across from the old Microsoft Access program. Names are title-cased, phones normalized, addresses assembled, and dates sanity-checked. TCKN is now optional on a patient (stored as null when unknown) so imported records without a national ID can be kept; such patients show a "TCKN eksik" badge and are prompted to complete it, while the new-patient form still requires a valid TCKN. Re-running the import updates rather than duplicates (matched on the old KisiNumara).
 - **Tooth selector rebuilt**: numbers drawn inside the SVG (no drifting overlay buttons), click or drag to select several teeth, quadrant shortcuts (Üst çene, Alt çene, Sağ üst…), typed numbers field, removable chips, hover names (e.g. "16 · Üst sağ 1. büyük azı"), keyboard access, and a Kalıcı / Süt switch for deciduous teeth (51–85). Same chart powers the odontogram.
 
 ### Fixed

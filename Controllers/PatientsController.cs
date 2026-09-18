@@ -52,6 +52,7 @@ public class PatientsController : ClinicControllerBase
                 Id = p.Id,
                 FullName = p.FullName,
                 Tckn = p.Tckn,
+                NeedsTckn = p.IsImported && (p.Tckn == null || p.Tckn == ""),
                 Phone = p.Phone,
                 Email = p.Email,
                 BirthDate = p.BirthDate,
@@ -232,8 +233,8 @@ public class PatientsController : ClinicControllerBase
         {
             Id = patient.Id,
             FullName = patient.FullName,
+            Tckn = patient.Tckn ?? string.Empty,
             Phone = patient.Phone,
-            Tckn = patient.Tckn,
             Email = patient.Email,
             BirthDate = patient.BirthDate,
             ArrivalDate = patient.ArrivalDate,
@@ -311,7 +312,7 @@ public class PatientsController : ClinicControllerBase
 
         patient.FullName = vm.FullName;
         patient.Phone = vm.Phone;
-        patient.Tckn = vm.Tckn;
+        patient.Tckn = string.IsNullOrWhiteSpace(vm.Tckn) ? null : vm.Tckn;
         patient.Email = vm.Email;
         patient.BirthDate = vm.BirthDate;
         patient.ArrivalDate = vm.ArrivalDate;

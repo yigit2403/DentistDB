@@ -22,7 +22,7 @@
             <p class="page-subtitle">
                 @if (p.Age is { } age) { <text>@age yaşında · </text> }
                 @if (!string.IsNullOrEmpty(p.Phone)) { <a href="tel:@SearchNormalizer.DigitsOnly(p.Phone)">@p.Phone.FormatPhone()</a><text> · </text> }
-                <span class="num">TCKN @p.Tckn</span>
+                @if (p.NeedsTckn) { <span class="badge-soft warning">TCKN eksik</span> } else { <span class="num">TCKN @p.Tckn</span> }
                 @if (!string.IsNullOrEmpty(p.GuardianName)) { <text> · Veli: @p.GuardianName</text> }
             </p>
         </div>
@@ -75,7 +75,7 @@
                 <div class="card-header"><h3 class="card-title">Kimlik ve İletişim</h3></div>
                 <div class="card-body">
                     <dl class="kv">
-                        <dt>TCKN</dt><dd class="num">@p.Tckn</dd>
+                        <dt>TCKN</dt><dd class="num">@(p.NeedsTckn ? "" : p.Tckn)@if (p.NeedsTckn) { <span class="badge-soft warning">Eksik — eski kayıttan aktarıldı</span> }</dd>
                         <dt>Telefon</dt><dd class="num">@(p.Phone.FormatPhone() ?? "—")</dd>
                         <dt>E-posta</dt><dd>@(string.IsNullOrEmpty(p.Email) ? "—" : p.Email)</dd>
                         <dt>Doğum Tarihi</dt><dd>@(p.BirthDate.HasValue ? $"{p.BirthDate.Value.ToShortDate()} ({p.Age} yaş)" : "—")</dd>

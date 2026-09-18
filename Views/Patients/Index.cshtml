@@ -88,7 +88,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="num">@p.Tckn</td>
+                            <td class="num">@(p.NeedsTckn ? "" : p.Tckn)@if (p.NeedsTckn) { <span class="badge-soft warning" title="Eski kayıttan aktarıldı, TCKN eksik">eksik</span> }</td>
                             <td class="num">@(p.Phone.FormatPhone() ?? "—")</td>
                             <td class="num">@(age?.ToString() ?? "—")</td>
                             <td>@(p.LastVisit?.ToShortDate() ?? "—")</td>

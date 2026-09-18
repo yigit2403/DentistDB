@@ -100,7 +100,8 @@ public class PatientListItem
 {
     public int Id { get; set; }
     public string FullName { get; set; } = string.Empty;
-    public string Tckn { get; set; } = string.Empty;
+    public string? Tckn { get; set; }
+    public bool NeedsTckn { get; set; }
     public string? Phone { get; set; }
     public string? Email { get; set; }
     public DateOnly? BirthDate { get; set; }

@@ -29,6 +29,7 @@ public class ApplicationDbContext : DbContext
         {
             e.HasIndex(p => p.FullName);
             e.HasIndex(p => p.Tckn).IsUnique();
+            e.HasIndex(p => p.LegacyKey).IsUnique();
             e.HasIndex(p => p.SearchIndex);
             e.HasIndex(p => p.ArrivalDate);
         });

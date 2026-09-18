@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>DentistDB.Tools.LegacyImport</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The referenced app is a Web SDK project; pull in the ASP.NET shared framework so it resolves. -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\..\DentistDB.csproj" />
+  </ItemGroup>
+
+</Project>
